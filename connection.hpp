@@ -1,7 +1,8 @@
 #pragma once
 #include "arpa/inet.h"
 #include "unistd.h"
-#include <string>
+#include <vector>
+#include <cstddef>
 
 class Connection
 {
@@ -12,6 +13,8 @@ class Connection
     Connection(int socket, struct sockaddr_in address);
     ~Connection();
 
-    void sendData(std::string data);
-    std::string receiveData();
+    void sendData(std::vector<std::byte> data);
+
+    /* Returns at most 1024 bytes of data */
+    std::vector<std::byte> receiveData();
 };

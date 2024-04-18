@@ -11,12 +11,13 @@ Connection::~Connection()
     close(this->socket);
 }
 
-void Connection::sendData(std::string data) {
-    send(this->socket, data.c_str(), data.size(), 0);
+void Connection::sendData(std::vector<std::byte> data) {
+    send(this->socket, data.data(), data.size(), 0);
 }
 
-std::string Connection::receiveData() {
-    char buffer[1024] = {0};
-    int valread = read(this->socket, buffer, 1024);
-    return std::string(buffer);
+std::vector<std::byte> Connection::receiveData() {
+    std::vector<std::byte> buffer(1024);
+    int bytesRead = recv(this->socket, buffer.data(), buffer.size(), 0);
+    buffer.resize(bytesRead);
+    return buffer;
 }

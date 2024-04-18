@@ -1,22 +1,32 @@
 #pragma once
 #include <arpa/inet.h>
-#include <string>
 #include <vector>
+#include <cstddef>
+#include <cstdint>
+#include <string>
 
 class Message {
 private:
+uint32_t length;
 sockaddr_in from;
 sockaddr_in to;
-unsigned int id;
-std::string message;
+uint32_t id;
+std::string payload;
+
 
 
 public:
-Message(sockaddr_in from, sockaddr_in to, unsigned int id, std::string message);
+Message(sockaddr_in from, sockaddr_in to, unsigned int id, std::string payload);
 
-/* Serialize the message to a string */
-std::string serialize();
+/* Serialize the message to a byte sequence */
+std::vector<std::byte> serialize();
 
 /* Deserialize a string to a message */
-static Message deserialize(std::string message);
+static Message deserialize(std::vector<std::byte> messageData);
+
+/* Serialize IP address and port */
+static std::vector<std::byte> serializeAddress(sockaddr_in address);
+
+/* Deserialize IP address and port */
+static sockaddr_in deserializeAddress(std::vector<std::byte> addressData);
 };

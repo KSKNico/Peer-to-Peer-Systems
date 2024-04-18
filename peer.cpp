@@ -42,7 +42,7 @@ std::vector<Message> Peer::receiveAll() {
     std::vector<Message> messages;
     for (Connection connection : this->connections)
     {
-        std::string data = connection.receiveData();
+        auto data = connection.receiveData();
         Message message = Message::deserialize(data);
         messages.push_back(message);
     }
