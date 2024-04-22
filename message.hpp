@@ -4,6 +4,7 @@
 #include <cstddef>
 #include <cstdint>
 #include <string>
+#include <queue>
 
 class Message {
 private:
@@ -21,7 +22,7 @@ Message(sockaddr_in from, sockaddr_in to, unsigned int id, std::string payload);
 /* Serialize the message to a byte sequence */
 std::vector<std::byte> serialize();
 
-/* Deserialize a string to a message */
+/* Deserialize a byte sequence to a message */
 static Message deserialize(std::vector<std::byte> messageData);
 
 /* Serialize IP address and port */

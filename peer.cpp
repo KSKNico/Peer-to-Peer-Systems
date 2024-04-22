@@ -1,6 +1,6 @@
 #include "peer.hpp"
 
-Peer::Peer(std::vector<std::string> ipAddresses, int port)
+Peer::Peer(std::vector<std::string> ipAddresses, int port) : receiver(connections), sender(connections)
 {
     // start thread for listener
     std::thread listenerThread(&Peer::startListener, &(*this));
@@ -30,22 +30,25 @@ void Peer::startListener() {
     }
 }
 
-void Peer::sendAll(Message message) {
-    for (Connection connection : connections)
+void Peer::startReceiver() {
+    std::vector<Message> messages;
+    while (true)
     {
-        auto data = message.serialize();
-        connection.sendData(data);
+        messages = receiver.receiveMessages();
+        for (Message message : messages)
+        {
+            receivedMessages.push(message);
+        }
     }
 }
 
-std::vector<Message> Peer::receiveAll() {
-    std::vector<Message> messages;
-    for (Connection connection : this->connections)
+void Peer::startSender() {
+    while (true)
     {
-        auto data = connection.receiveData();
-        Message message = Message::deserialize(data);
-        messages.push_back(message);
+        if (!toSendMessages.empty())
+        {
+            // TODO: send messages
+        }
     }
-    return messages;
 }
 

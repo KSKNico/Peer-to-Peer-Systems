@@ -18,5 +18,6 @@ target_sources(prime-finder
     "connector.cpp"
     "connection.cpp"
     "message.cpp"
-
+    "receiver.cpp"
+    "sender.cpp"
 )

@@ -13,8 +13,7 @@ class Connection
     Connection(int socket, struct sockaddr_in address);
     ~Connection();
 
-    void sendData(std::vector<std::byte> data);
+    void sendData(std::vector<std::byte> data) const;
 
-    /* Returns at most 1024 bytes of data */
-    std::vector<std::byte> receiveData();
+    std::vector<std::byte> receiveData(uint32_t size = 1024) const;
 };
