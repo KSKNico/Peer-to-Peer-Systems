@@ -30,4 +30,7 @@ static std::vector<std::byte> serializeAddress(sockaddr_in address);
 
 /* Deserialize IP address and port */
 static sockaddr_in deserializeAddress(std::vector<std::byte> addressData);
+
+/* Get the receiver */
+sockaddr_in getReceiver() const;
 };

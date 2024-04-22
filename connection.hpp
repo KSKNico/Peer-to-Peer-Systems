@@ -16,4 +16,7 @@ class Connection
     void sendData(std::vector<std::byte> data) const;
 
     std::vector<std::byte> receiveData(uint32_t size = 1024) const;
+
+    /* Get the connection address */
+    sockaddr_in getAddress() const;
 };

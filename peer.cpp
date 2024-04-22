@@ -48,6 +48,9 @@ void Peer::startSender() {
         if (!toSendMessages.empty())
         {
             // TODO: send messages
+            auto message = toSendMessages.front();
+            sender.sendMessage(message);
+            toSendMessages.pop();
         }
     }
 }

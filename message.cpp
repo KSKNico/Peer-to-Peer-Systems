@@ -90,3 +90,7 @@ sockaddr_in Message::deserializeAddress(std::vector<std::byte> addressData) {
     address.sin_port |= static_cast<uint16_t>(std::to_integer<int>(addressData[5])) << 8;
     return address;
 }
+
+sockaddr_in Message::getReceiver() const {
+    return this->to;
+}

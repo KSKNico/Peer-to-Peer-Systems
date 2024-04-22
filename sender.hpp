@@ -13,5 +13,5 @@ class Sender{
     Sender(const std::vector<Connection>& Connections);
 
     /* Sends a message to all connections */
-    void sendMessages(std::vector<Message> messages) const;
+    bool sendMessage(Message message) const;
 };

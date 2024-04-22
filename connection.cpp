@@ -22,3 +22,7 @@ std::vector<std::byte> Connection::receiveData(uint32_t size) const {
     buffer.resize(bytesRead);
     return buffer;
 }
+
+sockaddr_in Connection::getAddress() const {
+    return this->address;
+}
