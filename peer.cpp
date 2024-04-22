@@ -3,13 +3,16 @@
 Peer::Peer(std::vector<std::string> ipAddresses, int port) : receiver(connections), sender(connections)
 {
     // start thread for listener
-    std::thread listenerThread(&Peer::startListener, &(*this));
     for (std::string ipAddress : ipAddresses)
     {
         struct sockaddr_in address = convertToAddress(ipAddress, port);
         Connection connection = connector.connectTo(address);
         connections.push_back(connection);
     }
+    // TODO: these require locking!
+    std::thread listenerThread(&Peer::startListener, &(*this));
+    std::thread receiverThread(&Peer::startReceiver, &(*this));
+    std::thread senderThread(&Peer::startSender, &(*this));
 }
 
 sockaddr_in Peer::convertToAddress(std::string ipAddress, int port)
