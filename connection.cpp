@@ -18,6 +18,7 @@ void Connection::sendData(std::vector<std::byte> data) const {
 std::vector<std::byte> Connection::receiveData(uint32_t size) const {
     std::vector<std::byte> buffer(size);
     
+    // recv blocks if there is no data to receive
     int bytesRead = recv(this->socket, buffer.data(), buffer.size(), 0);
     buffer.resize(bytesRead);
     return buffer;
