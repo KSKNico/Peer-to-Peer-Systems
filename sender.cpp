@@ -8,9 +8,11 @@ bool operator!=(const sockaddr_in& lhs, const sockaddr_in& rhs) {
     return !(lhs == rhs);
 }
 
-Sender::Sender(const std::vector<Connection>& Connections) : connections(Connections) {}
+Sender::Sender(const std::vector<Connection>& Connections, std::mutex& connectionMutex) :
+connections(Connections), connectionMutex(connectionMutex) {}
 
 bool Sender::sendMessage(Message message) const {
+    std::lock_guard<std::mutex> lock(connectionMutex);
     for (auto& connection : connections) {
         // check if message corresponds to the connection
         if (message.getReceiver() != connection.getAddress()) {

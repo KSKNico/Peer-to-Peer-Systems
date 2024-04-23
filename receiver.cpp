@@ -1,11 +1,13 @@
 #include "receiver.hpp"
 
-Receiver::Receiver(const std::vector<Connection>& Connections) : connections(Connections) {}
+Receiver::Receiver(const std::vector<Connection>& Connections, std::mutex& conncetionMutex) : 
+connections(Connections), connectionMutex(connectionMutex) {}
 
 std::vector<Message> Receiver::receiveMessages() {
     // the idea is to get exactly one message from each connection
     // if a connection has no data to receive, it will return no message
     std::vector<Message> messages;
+    std::lock_guard<std::mutex> lock(connectionMutex);
     for (auto& connection : connections) {
         std::vector<std::byte> lengthData = connection.receiveData(4);
         if (lengthData.empty() ) {

@@ -1,6 +1,6 @@
 #include "peer.hpp"
 
-Peer::Peer(std::vector<std::string> ipAddresses, int port) : receiver(connections), sender(connections)
+Peer::Peer(std::vector<std::string> ipAddresses, int port) : connectionMutex(), receiver(connections, connectionMutex), sender(connections, connectionMutex)
 {
     // start thread for listener
     for (std::string ipAddress : ipAddresses)
@@ -29,7 +29,9 @@ void Peer::startListener() {
     {
         Connection connection = listener.acceptConnection();
         std::cout << "Connection accepted" << std::endl;
+        std::unique_lock<std::mutex> lock(connectionMutex);
         connections.push_back(connection);
+        lock.unlock();
     }
 }
 

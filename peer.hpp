@@ -8,22 +8,18 @@
 #include "message.hpp"
 #include "sender.hpp"
 #include "receiver.hpp"
-
-struct OtherPeer {
-    sockaddr_in address;
-    int connectionCount;
-    int timestamp;
-};
+#include <mutex>
 
 class Peer
 {
 private:
+    std::mutex connectionMutex;
     Listener listener;
     Connector connector;
     Receiver receiver;
     Sender sender;
     std::vector<Connection> connections;
-    std::vector<OtherPeer> otherPeers;
+
 
     std::queue<Message> receivedMessages;
     std::queue<Message> toSendMessages;
@@ -36,6 +32,12 @@ public:
 
     /* Converts an IPv4 address in the format x.x.x.x and a port to a socket address struct */
     static sockaddr_in convertToAddress(std::string ipAddress, int port);
+
+    /* Add message to send */
+    void addMessageToSend(Message message);
+
+    /* Get all received messages */
+    std::vector<Message> getReceivedMessages();
 
     /* Starts the listener in a loop */
     void startListener();
