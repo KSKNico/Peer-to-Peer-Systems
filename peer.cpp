@@ -9,7 +9,8 @@ Peer::Peer(std::vector<std::string> ipAddresses, int port) : connectionMutex(), 
         Connection connection = connector.connectTo(address);
         connections.push_back(connection);
     }
-    // TODO: these require locking!
+    // TODO: this is absolutely uselesss (I think)
+    // the code should make use of poll() or select()
     std::thread listenerThread(&Peer::startListener, &(*this));
     std::thread receiverThread(&Peer::startReceiver, &(*this));
     std::thread senderThread(&Peer::startSender, &(*this));
