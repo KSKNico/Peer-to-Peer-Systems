@@ -1,19 +1,46 @@
 #include "peer.hpp"
 
-Peer::Peer(std::vector<std::string> ipAddresses, int port) : connectionMutex(), receiver(connections, connectionMutex), sender(connections, connectionMutex)
+Peer::Peer(std::vector<std::string> ipAddresses, int port)
 {
-    // start thread for listener
     for (std::string ipAddress : ipAddresses)
     {
         struct sockaddr_in address = convertToAddress(ipAddress, port);
         Connection connection = connector.connectTo(address);
         connections.push_back(connection);
     }
-    // TODO: this is absolutely uselesss (I think)
-    // the code should make use of poll() or select()
-    std::thread listenerThread(&Peer::startListener, &(*this));
-    std::thread receiverThread(&Peer::startReceiver, &(*this));
-    std::thread senderThread(&Peer::startSender, &(*this));
+}
+
+void Peer::pollConnections() {
+    std::vector<pollfd> pollStructs;
+    for (auto& connection : connections)
+    {
+        pollfd pollStruct = pollfd();
+        pollStruct.fd = connection.getSocket();
+        pollStruct.events = POLLIN;
+        pollStruct.revents = 0;
+        pollStructs.push_back(pollStruct);
+    }
+
+    poll(pollStructs.data(), pollStructs.size(), -1);
+
+    // update the connections with the new return events
+    for (size_t i = 0; i < connections.size(); i++)
+    {
+        connections[i].updateReturnEvents(pollStructs[i].revents);
+    }
+}
+
+void Peer::readMessages() {
+    for (auto& connection : connections)
+    {
+        if (connection.getReturnEvents() & POLLIN)
+        {
+            // TODO
+        }
+    }
+}
+
+void Peer::writeMessages() {
 }
 
 sockaddr_in Peer::convertToAddress(std::string ipAddress, int port)
@@ -23,41 +50,5 @@ sockaddr_in Peer::convertToAddress(std::string ipAddress, int port)
     address.sin_port = htons(port);
     inet_pton(AF_INET, ipAddress.c_str(), &address.sin_addr);
     return address;
-}
-
-void Peer::startListener() {
-    while (true)
-    {
-        Connection connection = listener.acceptConnection();
-        std::cout << "Connection accepted" << std::endl;
-        std::unique_lock<std::mutex> lock(connectionMutex);
-        connections.push_back(connection);
-        lock.unlock();
-    }
-}
-
-void Peer::startReceiver() {
-    std::vector<Message> messages;
-    while (true)
-    {
-        messages = receiver.receiveMessages();
-        for (Message message : messages)
-        {
-            receivedMessages.push(message);
-        }
-    }
-}
-
-void Peer::startSender() {
-    while (true)
-    {
-        if (!toSendMessages.empty())
-        {
-            // TODO: send messages
-            auto message = toSendMessages.front();
-            sender.sendMessage(message);
-            toSendMessages.pop();
-        }
-    }
 }
 

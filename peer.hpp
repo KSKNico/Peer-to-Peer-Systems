@@ -6,9 +6,9 @@
 #include "connector.hpp"
 #include "connection.hpp"
 #include "message.hpp"
-#include "sender.hpp"
-#include "receiver.hpp"
 #include <mutex>
+#include <cstddef>
+#include <array>
 
 class Peer
 {
@@ -16,10 +16,7 @@ private:
     std::mutex connectionMutex;
     Listener listener;
     Connector connector;
-    Receiver receiver;
-    Sender sender;
     std::vector<Connection> connections;
-
 
     std::queue<Message> receivedMessages;
     std::queue<Message> toSendMessages;
@@ -39,12 +36,14 @@ public:
     /* Get all received messages */
     std::vector<Message> getReceivedMessages();
 
-    /* Starts the listener in a loop */
-    void startListener();
+    /* */
 
-    /* Start the receiver in a loop */
-    void startReceiver();
+    /* updates all connections events by polling the corresponding sockets */
+    void pollConnections();
 
-    /* Start the sender in a loop */
-    void startSender();
+    /* reads all messages from the connections */
+    void readMessages();
+
+    /* write Messages */
+    void writeMessages();
 };

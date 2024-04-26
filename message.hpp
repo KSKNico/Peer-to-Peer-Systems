@@ -6,6 +6,16 @@
 #include <string>
 #include <queue>
 
+/* 
+A message has the following structure: 
+- 4 bytes for the length of the message
+- 6 bytes for the sender address
+- 6 bytes for the receiver address
+- 4 bytes for the message id
+- n bytes for the payload
+
+*/
+
 class Message {
 private:
 uint32_t length;

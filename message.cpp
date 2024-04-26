@@ -48,11 +48,11 @@ std::vector<std::byte> Message::serialize() {
 Message Message::deserialize(std::vector<std::byte> messageData) {
     sockaddr_in from = deserializeAddress(std::vector<std::byte>(messageData.begin() + 4, messageData.begin() + 10));
     sockaddr_in to = deserializeAddress(std::vector<std::byte>(messageData.begin() + 10, messageData.begin() + 16));
-    unsigned int id = 0;
-    id |= std::to_integer<int>(messageData[16]);
-    id |= std::to_integer<int>(messageData[17]) << 8;
-    id |= std::to_integer<int>(messageData[18]) << 16;
-    id |= std::to_integer<int>(messageData[19]) << 24;
+    uint32_t id = 0;
+    id |= std::to_integer<uint32_t>(messageData[16]);
+    id |= std::to_integer<uint32_t>(messageData[17]) << 8;
+    id |= std::to_integer<uint32_t>(messageData[18]) << 16;
+    id |= std::to_integer<uint32_t>(messageData[19]) << 24;
     std::string payload;
     for (size_t i = 20; i < messageData.size(); i++)
     {
