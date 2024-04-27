@@ -10,7 +10,7 @@ class Listener
     public:
     int serverSocket;
     struct sockaddr_in address;
-    Listener();
+    Listener(uint16_t port);
     ~Listener();
 
     /* Accepts an incoming socket connection and returns it */

@@ -5,13 +5,10 @@ bool operator==(const sockaddr_in& lhs, const sockaddr_in& rhs)
     return lhs.sin_addr.s_addr == rhs.sin_addr.s_addr && lhs.sin_port == rhs.sin_port;
 }
 
-Peer::Peer(std::vector<std::string> ipAddresses, int port)
-{
-    for (std::string ipAddress : ipAddresses)
+Peer::Peer(uint16_t listeningPort, std::vector<sockaddr_in> addresses) : listener(listeningPort), connector() {
+    for (auto& address : addresses)
     {
-        struct sockaddr_in address = convertToAddress(ipAddress, port);
-        Connection connection = connector.connectTo(address);
-        connections.push_back(connection);
+        connections.push_back(connector.connectTo(address));
     }
 }
 
@@ -69,14 +66,5 @@ void Peer::sendMessage(Message message) {
             connection.writeMessage(message);
         }   
     }
-}
-
-sockaddr_in Peer::convertToAddress(std::string ipAddress, int port)
-{
-    struct sockaddr_in address;
-    address.sin_family = AF_INET;
-    address.sin_port = htons(port);
-    inet_pton(AF_INET, ipAddress.c_str(), &address.sin_addr);
-    return address;
 }
 

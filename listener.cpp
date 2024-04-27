@@ -1,6 +1,6 @@
 #include "listener.hpp"
 
-Listener::Listener() {
+Listener::Listener(uint16_t port) {
     // creates the socket
     this->serverSocket = socket(AF_INET, SOCK_STREAM, 0);
     if (serverSocket == -1)
@@ -13,7 +13,7 @@ Listener::Listener() {
     // binds the socket to an interface and a port
     sockaddr_in serverAddress;
     serverAddress.sin_family = AF_INET;
-    serverAddress.sin_port = htons(12345); // Port number
+    serverAddress.sin_port = htons(port); // Port number
     serverAddress.sin_addr.s_addr = INADDR_ANY; // Bind to any available interface 
 
     if (bind(serverSocket, (struct sockaddr *)&serverAddress, sizeof(serverAddress)) == -1) {
