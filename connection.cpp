@@ -41,7 +41,7 @@ short Connection::getReturnEvents() const {
     return this->revents;
 }
 
-std::optional<Message> Connection::getMessage() {
+std::optional<Message> Connection::readMessage() {
     int count = this->receiveData();
     
     auto message = std::optional<Message>(); 
@@ -78,4 +78,9 @@ std::optional<Message> Connection::getMessage() {
     firstPart = true;
 
     return message;
+}
+
+void Connection::writeMessage(Message message) {
+    auto data = message.serialize();
+    sendData(data);
 }

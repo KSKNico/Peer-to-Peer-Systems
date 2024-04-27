@@ -1,5 +1,10 @@
 #include "peer.hpp"
 
+bool operator==(const sockaddr_in& lhs, const sockaddr_in& rhs)
+{
+    return lhs.sin_addr.s_addr == rhs.sin_addr.s_addr && lhs.sin_port == rhs.sin_port;
+}
+
 Peer::Peer(std::vector<std::string> ipAddresses, int port)
 {
     for (std::string ipAddress : ipAddresses)
@@ -30,17 +35,40 @@ void Peer::pollConnections() {
     }
 }
 
-void Peer::readMessages() {
+std::vector<Message> Peer::getMessages() {
+    auto messages = std::vector<Message>();
     for (auto& connection : connections)
     {
-        if (connection.getReturnEvents() & POLLIN)
+        auto message = getMessage(connection);
+
+        if (!message.has_value())
         {
-            // TODO
+            continue;
         }
+        messages.push_back(message.value());
     }
+    return messages;
 }
 
-void Peer::writeMessages() {
+std::optional<Message> Peer::getMessage(Connection& connection) {
+    auto message = std::optional<Message>();
+    if (!(connection.getReturnEvents() & POLLIN))
+    {
+        return message;
+    }
+    
+    message = connection.readMessage();
+
+    return message;
+}   
+
+void Peer::sendMessage(Message message) {
+    for (auto& connection : connections)
+    {
+        if (connection.getAddress() == message.getReceiver()) {
+            connection.writeMessage(message);
+        }   
+    }
 }
 
 sockaddr_in Peer::convertToAddress(std::string ipAddress, int port)

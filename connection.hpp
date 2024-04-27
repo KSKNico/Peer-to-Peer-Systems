@@ -40,7 +40,10 @@ class Connection
     int receiveData();
 
     /* Gets a single message if at all. A message can't be longer than bufferSize */
-    std::optional<Message> getMessage();
+    std::optional<Message> readMessage();
+
+    /* Sends a message */
+    void writeMessage(Message message);
 
     /* Get the connection address */
     sockaddr_in getAddress() const;

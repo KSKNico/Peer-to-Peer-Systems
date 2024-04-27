@@ -30,20 +30,15 @@ public:
     /* Converts an IPv4 address in the format x.x.x.x and a port to a socket address struct */
     static sockaddr_in convertToAddress(std::string ipAddress, int port);
 
-    /* Add message to send */
-    void addMessageToSend(Message message);
-
-    /* Get all received messages */
-    std::vector<Message> getReceivedMessages();
-
-    /* */
-
-    /* updates all connections events by polling the corresponding sockets */
+    /* Updates all connections events by polling the corresponding sockets */
     void pollConnections();
 
-    /* reads all messages from the connections */
-    void readMessages();
+    /* Reads one message from the connection */
+    std::optional<Message> getMessage(Connection& connection);
 
-    /* write Messages */
-    void writeMessages();
+    /* Reads all messages from the connections */
+    std::vector<Message> getMessages();
+
+    /* write Message */
+    void sendMessage(Message message);
 };
