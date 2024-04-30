@@ -16,7 +16,7 @@ FetchContent_Declare(
   URL https://github.com/google/googletest/archive/f8d7d77c06936315286eb55f8de22cd23c188571.zip
 )
 # For Windows: Prevent overriding the parent project's compiler/linker settings
-set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
+# set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
 FetchContent_MakeAvailable(googletest)
 
 target_sources(prime-finder
@@ -28,3 +28,18 @@ target_sources(prime-finder
     "connection.cpp"
     "message.cpp"
 )
+
+enable_testing()
+
+add_executable(
+  send_receive
+  tests/send_receive.cpp
+)
+
+target_link_libraries(
+  send_receive
+  GTest::gtest_main
+)
+
+include(GoogleTest)
+gtest_discover_tests(send_receive)
