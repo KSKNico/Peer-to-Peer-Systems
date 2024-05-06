@@ -35,7 +35,8 @@ Listener::~Listener() {
     close(serverSocket);
 }
 
-Connection Listener::acceptConnection() {
+
+Connection Listener::acceptConnection() const {
     // accepts a connection
     struct sockaddr_in clientAddress;
     socklen_t clientAddressLength = sizeof(clientAddress);
@@ -49,4 +50,25 @@ Connection Listener::acceptConnection() {
     // creates a connection object
     Connection connection(clientSocket, clientAddress);
     return connection;
+}
+
+int Listener::getSocket() const {
+    return serverSocket;
+}
+
+
+bool Listener::pollForConnection() const {
+    pollfd pollStruct = pollfd();
+    pollStruct.fd = serverSocket;
+    pollStruct.events = POLLIN;
+    pollStruct.revents = 0;
+
+    poll(&pollStruct, 1, -1);
+
+    if (pollStruct.revents & POLLIN)
+    {
+        return true;
+    }
+
+    return false;
 }

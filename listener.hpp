@@ -14,5 +14,10 @@ class Listener
     ~Listener();
 
     /* Accepts an incoming socket connection and returns it */
-    Connection acceptConnection();
+    Connection acceptConnection() const;
+
+    /* Checks whether there is an incoming connection */
+    bool pollForConnection() const;
+
+    int getSocket() const;
 };
