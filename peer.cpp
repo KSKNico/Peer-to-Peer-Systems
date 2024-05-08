@@ -68,3 +68,9 @@ void Peer::sendMessage(Message message) {
     }
 }
 
+void Peer::sendMessage(std::string message_string, sockaddr_in address)  {
+    // construct a message first
+    Message message = Message(listener.address, address, 0, message_string);
+    sendMessage(message);
+}
+

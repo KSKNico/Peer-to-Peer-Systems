@@ -36,4 +36,5 @@ public:
 
     /* write Message */
     void sendMessage(Message message);
+    void sendMessage(std::string message_string, sockaddr_in address);
 };

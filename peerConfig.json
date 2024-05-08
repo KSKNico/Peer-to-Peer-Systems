@@ -1,4 +1,4 @@
 {"listeningPort": 12345,
-"known_hosts" : [
+"knownHosts" : [
     "192.168.178.1:12345"
 ]}
