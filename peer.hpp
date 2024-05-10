@@ -37,4 +37,10 @@ public:
     /* write Message */
     void sendMessage(Message message);
     void sendMessage(std::string message_string, sockaddr_in address);
+
+    /* Accepts all incoming connections and adds them to the connections vector */
+    void acceptConnections();
+
+    /* Connects to address */
+    void connectTo(sockaddr_in address);
 };

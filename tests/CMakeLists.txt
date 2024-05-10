@@ -13,7 +13,7 @@ set(SOURCES ../peer.cpp ../message.cpp ../connection.cpp ../peerConfig.cpp
 ../listener.cpp
 ../connector.cpp)
 
-set(TEST_SOURCES send_receive.cpp)
+set(TEST_SOURCES tests.cpp)
 
 add_executable(
 peerTest

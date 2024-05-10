@@ -74,3 +74,13 @@ void Peer::sendMessage(std::string message_string, sockaddr_in address)  {
     sendMessage(message);
 }
 
+void Peer::acceptConnections() {
+    while (listener.pollForConnection())
+    {
+        connections.push_back(listener.acceptConnection());
+    }
+}
+
+void Peer::connectTo(sockaddr_in address) {
+    connections.push_back(connector.connectTo(address));
+}
