@@ -21,6 +21,7 @@ public:
     Peer(Peer& peer) = delete;
     Peer(Peer&& peer) = delete;
     Peer(uint16_t listeningPort, std::vector<sockaddr_in> addresses);
+    Peer(uint16_t listeningPort);
 
     /* Converts an IPv4 address with a port in the format x.x.x.x:yyyy to a socket address struct */
     static sockaddr_in convertToAddress(std::string addressString);

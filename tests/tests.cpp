@@ -6,13 +6,10 @@
 #include <thread>
 #include <chrono>
 
-void createPeerAndSendMessage(std::vector<sockaddr_in> peer1_addr_v, std::vector<sockaddr_in> peer2_addr_v) {
-    Peer peer1(peer1_addr_v[0].sin_port, peer2_addr_v);
-    peer1.connectTo(peer2_addr_v[0]);
-    std::this_thread::sleep_for(std::chrono::milliseconds(1000));
-
-    peer1.sendMessage("Hello", peer2_addr_v[0]);
-    std::this_thread::sleep_for(std::chrono::milliseconds(1000));
+void createPeerAndSendMessage(sockaddr_in peer1_addr, sockaddr_in peer2_addr) {
+    Peer peer1(peer1_addr.sin_port);
+    peer1.connectTo(peer2_addr);
+    peer1.sendMessage("Hello", peer2_addr);
 }
 
 TEST(PeerTest, SendAndReceive) {
@@ -20,12 +17,12 @@ TEST(PeerTest, SendAndReceive) {
 
     auto peer2_addr = PeerConfig::convertToAddress("127.0.0.1:2002");
     auto peer1_addr = PeerConfig::convertToAddress("127.0.0.1:2001");
-    std::vector<sockaddr_in> peer1_addr_v = {peer1_addr};
-    std::vector<sockaddr_in> peer2_addr_v = {peer2_addr};
 
 
-    Peer peer2(2002, {});
-    std::thread t1(createPeerAndSendMessage, peer1_addr_v, peer2_addr_v);
+    Peer peer2(2002);
+    std::thread t1(createPeerAndSendMessage, peer1_addr, peer2_addr);
+
+    std::this_thread::sleep_for(std::chrono::milliseconds(100));
 
     peer2.acceptConnections();
 

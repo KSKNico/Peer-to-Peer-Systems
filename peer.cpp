@@ -12,6 +12,8 @@ Peer::Peer(uint16_t listeningPort, std::vector<sockaddr_in> addresses) : listene
     }
 }
 
+Peer::Peer(uint16_t listeningPort) : listener(listeningPort), connector() {}
+
 void Peer::pollConnections() {
     std::vector<pollfd> pollStructs;
     for (auto& connection : connections)
