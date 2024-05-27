@@ -14,6 +14,8 @@ Peer::Peer(uint16_t listeningPort, std::vector<sockaddr_in> addresses) : listene
 
 Peer::Peer(uint16_t listeningPort) : listener(listeningPort), connector() {}
 
+// TODO: this function is a bit of a mess, because the polling should be done on the connection object 
+// but poll allows for multiple file descriptors to be polled at once, reducing the amount of system calls (?)
 void Peer::pollConnections() {
     std::vector<pollfd> pollStructs;
     for (auto& connection : connections)
