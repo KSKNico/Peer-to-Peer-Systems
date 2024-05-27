@@ -26,9 +26,6 @@ public:
     /* Converts an IPv4 address with a port in the format x.x.x.x:yyyy to a socket address struct */
     static sockaddr_in convertToAddress(std::string addressString);
 
-    /* Updates all connections events by polling the corresponding sockets */
-    void pollConnections();
-
     /* Reads one message from the connection */
     std::optional<Message> getMessage(Connection& connection);
 
@@ -37,7 +34,7 @@ public:
 
     /* write Message */
     void sendMessage(Message message);
-    void sendMessage(std::string message_string, sockaddr_in address);
+    void sendMessage(std::string messageString, sockaddr_in address);
 
     /* Accepts all incoming connections and adds them to the connections vector */
     void acceptConnections();

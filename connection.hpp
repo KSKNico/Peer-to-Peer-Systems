@@ -8,6 +8,7 @@
 #include <cstddef>
 #include "message.hpp"
 #include <optional>
+#include <iostream>
 
 class Connection
 {
@@ -30,12 +31,6 @@ class Connection
     /* Sends variable length data over the network */
     void sendData(std::vector<std::byte> data) const;
 
-    /* Get return events */
-    short getReturnEvents() const;
-
-    /* Update return events */
-    void updateReturnEvents(short revents);
-
     /* Returns at most (bufferSize - offset) bytes from this connection */
     int receiveData();
 
@@ -43,11 +38,20 @@ class Connection
     std::optional<Message> readMessage();
 
     /* Sends a message */
-    void writeMessage(Message message);
+    void writeMessage(Message message) const;
 
     /* Get the connection address */
     sockaddr_in getAddress() const;
 
     /* Get the socket id */
     int getSocket() const;
+
+    /* Returns true if the socket is connected */
+    bool isValid() const;
+
+    /* Returns true if the socket has data to read */
+    bool hasData() const;
+
+    /* Returns true if the socket is writable */
+    bool isWritable() const;
 };

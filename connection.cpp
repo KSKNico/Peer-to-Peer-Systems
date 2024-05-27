@@ -4,15 +4,51 @@ Connection::Connection(int socket, struct sockaddr_in address)
 {
     this->socket = socket;
     this->address = address;
-    this->events = POLLIN;
-    this->revents = 0;
-    this->buffer = std::array<std::byte, 1024>();
+    this->buffer = std::array<std::byte, bufferSize>();
     this->offset = 0;
 }
 
 Connection::~Connection()
 {
     close(this->socket);
+}
+
+bool Connection::isWritable() const {
+    struct pollfd pfd;
+    pfd.fd = socket;
+    pfd.events = POLLOUT;
+
+    if (poll(&pfd, 1, -1) == 1) {
+        return pfd.revents & POLLOUT;
+    } else {
+        throw std::runtime_error("Error polling socket");
+    }
+}
+
+bool Connection::isValid() const {
+    int error = 0;
+    socklen_t len = sizeof(error);
+    if (getsockopt(socket, SOL_SOCKET, SO_ERROR, &error, &len) != 0) {
+        throw std::runtime_error("Error getting socket options");
+    }
+
+    if (error != 0) {
+        return false;
+    }
+
+    return true;
+}
+
+bool Connection::hasData() const {
+    struct pollfd pfd;
+    pfd.fd = socket;
+    pfd.events = POLLIN;
+
+    if (poll(&pfd, 1, -1) == 1) {
+        return pfd.revents & POLLIN;
+    } else {
+        throw std::runtime_error("Error polling socket");
+    }
 }
 
 void Connection::sendData(std::vector<std::byte> data) const {
@@ -31,14 +67,6 @@ sockaddr_in Connection::getAddress() const {
 
 int Connection::getSocket() const {
     return this->socket;
-}
-
-void Connection::updateReturnEvents(short revents) {
-    this->revents = revents;
-}
-
-short Connection::getReturnEvents() const {
-    return this->revents;
 }
 
 std::optional<Message> Connection::readMessage() {
@@ -80,7 +108,7 @@ std::optional<Message> Connection::readMessage() {
     return message;
 }
 
-void Connection::writeMessage(Message message) {
+void Connection::writeMessage(Message message) const {
     auto data = message.serialize();
     sendData(data);
 }

@@ -14,28 +14,6 @@ Peer::Peer(uint16_t listeningPort, std::vector<sockaddr_in> addresses) : listene
 
 Peer::Peer(uint16_t listeningPort) : listener(listeningPort), connector() {}
 
-// TODO: this function is a bit of a mess, because the polling should be done on the connection object 
-// but poll allows for multiple file descriptors to be polled at once, reducing the amount of system calls (?)
-void Peer::pollConnections() {
-    std::vector<pollfd> pollStructs;
-    for (auto& connection : connections)
-    {
-        pollfd pollStruct = pollfd();
-        pollStruct.fd = connection.getSocket();
-        pollStruct.events = POLLIN;
-        pollStruct.revents = 0;
-        pollStructs.push_back(pollStruct);
-    }
-
-    poll(pollStructs.data(), pollStructs.size(), -1);
-
-    // update the connections with the new return events
-    for (size_t i = 0; i < connections.size(); i++)
-    {
-        connections[i].updateReturnEvents(pollStructs[i].revents);
-    }
-}
-
 std::vector<Message> Peer::getMessages() {
     auto messages = std::vector<Message>();
     for (auto& connection : connections)
@@ -53,9 +31,9 @@ std::vector<Message> Peer::getMessages() {
 
 std::optional<Message> Peer::getMessage(Connection& connection) {
     auto message = std::optional<Message>();
-    if (!(connection.getReturnEvents() & POLLIN))
+    if (connection.hasData())
     {
-        return message;
+        message = connection.readMessage();
     }
     
     message = connection.readMessage();
@@ -72,9 +50,9 @@ void Peer::sendMessage(Message message) {
     }
 }
 
-void Peer::sendMessage(std::string message_string, sockaddr_in address)  {
+void Peer::sendMessage(std::string messageString, sockaddr_in address)  {
     // construct a message first
-    Message message = Message(listener.address, address, 0, message_string);
+    Message message = Message(listener.address, address, 0, messageString);
     sendMessage(message);
 }
 
