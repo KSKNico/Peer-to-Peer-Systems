@@ -2,7 +2,7 @@
 
 Listener::Listener(uint16_t port) {
     // creates the socket
-    this->serverSocket = socket(AF_INET, SOCK_STREAM, 0);
+    this->serverSocket = socket(AF_INET, SOCK_STREAM | SOCK_NONBLOCK, 0);
     if (serverSocket == -1)
     {
         std::cerr << "Error creating server socket" << std::endl;
