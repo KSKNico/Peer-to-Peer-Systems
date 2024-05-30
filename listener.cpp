@@ -48,8 +48,7 @@ Connection Listener::acceptConnection() const {
     }
 
     // creates a connection object
-    Connection connection(clientSocket, clientAddress);
-    return connection;
+    return Connection(clientSocket, clientAddress);
 }
 
 int Listener::getSocket() const {

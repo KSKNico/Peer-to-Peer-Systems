@@ -13,7 +13,7 @@ class Listener
     Listener(uint16_t port);
     ~Listener();
 
-    /* Accepts an incoming socket connection and returns it */
+    /* Accepts an incoming socket connection and returns it. If there is no connection it blocks. */
     Connection acceptConnection() const;
 
     /* Checks whether there is an incoming connection */
