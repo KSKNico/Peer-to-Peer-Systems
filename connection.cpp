@@ -10,7 +10,7 @@ Connection::Connection(int socket, struct sockaddr_in address)
 
 Connection::~Connection()
 {
-    close(this->socket);
+    // close(this->socket);
 }
 
 bool Connection::isWritable() const {
