@@ -35,8 +35,6 @@ std::optional<Message> Peer::getMessage(Connection& connection) {
     {
         message = connection.readMessage();
     }
-    
-    message = connection.readMessage();
 
     return message;
 }   
