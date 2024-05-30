@@ -33,8 +33,8 @@ public:
     std::vector<Message> getMessages();
 
     /* write Message */
-    void sendMessage(Message message);
-    void sendMessage(std::string messageString, sockaddr_in address);
+    bool sendMessage(Message message);
+    bool sendMessage(std::string messageString, sockaddr_in address);
 
     /* Accepts all incoming connections and adds them to the connections vector */
     void acceptConnections();

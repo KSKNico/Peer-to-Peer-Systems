@@ -41,19 +41,26 @@ std::optional<Message> Peer::getMessage(Connection& connection) {
     return message;
 }   
 
-void Peer::sendMessage(Message message) {
+bool Peer::sendMessage(Message message) {
     for (auto& connection : connections)
     {
-        if (connection.getAddress() == message.getReceiver()) {
-            connection.writeMessage(message);
-        }   
+        if (!(connection.getAddress() == message.getReceiver())) {
+            continue;
+        }    
+
+        if (connection.isValid() && connection.isWritable()) {
+            connection.sendData(message.serialize());
+            return true;
+        }
+
+        return false;
     }
 }
 
-void Peer::sendMessage(std::string messageString, sockaddr_in address)  {
+bool Peer::sendMessage(std::string messageString, sockaddr_in address)  {
     // construct a message first
     Message message = Message(listener.address, address, 0, messageString);
-    sendMessage(message);
+    return sendMessage(message);
 }
 
 void Peer::acceptConnections() {
