@@ -41,4 +41,7 @@ public:
 
     /* Connects to address */
     void connectTo(sockaddr_in address);
+
+    /* Get connection by address */
+    Connection getConnection(sockaddr_in address);
 };

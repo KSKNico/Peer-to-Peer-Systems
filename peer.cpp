@@ -71,3 +71,14 @@ void Peer::acceptConnections() {
 void Peer::connectTo(sockaddr_in address) {
     connections.push_back(connector.connectTo(address));
 }
+
+Connection Peer::getConnection(sockaddr_in address) {
+    for (auto& connection : connections)
+    {
+        if (connection.getAddress() == address)
+        {
+            return connection;
+        }
+    }
+    throw std::runtime_error("Connection not found");
+}
