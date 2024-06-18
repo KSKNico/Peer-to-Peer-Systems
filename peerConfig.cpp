@@ -2,7 +2,7 @@
 
 
 PeerConfig::PeerConfig(std::string filename) {
-    loadConfig("config.json");
+    loadConfig("peerConfig.json");
 }
 
 void PeerConfig::loadConfig(std::string filename) {

@@ -12,10 +12,12 @@ set(CMAKE_COLOR_MAKEFILE ON)
 file(GLOB SOURCES "*.cpp")
 
 
+find_package(Poco REQUIRED COMPONENTS Net Util Foundation)
+
 add_executable(${PROJECT_NAME} ${SOURCES})
 
+target_link_libraries(${PROJECT_NAME} Poco::Net Poco::Util Poco::Foundation)
+
+
 set_target_properties(${PROJECT_NAME} PROPERTIES RUNTIME_OUTPUT_DIRECTORY ${CMAKE_SOURCE_DIR}/bin)
-
-
-add_subdirectory(tests)
 
