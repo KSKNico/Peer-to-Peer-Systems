@@ -6,7 +6,7 @@
 
 class MySocketConnector : public Poco::Net::SocketConnector<MyConnectionHandler> {
 public:
-    MySocketConnector(const Poco::Net::SocketAddress& address);
+    MySocketConnector(const Poco::Net::SocketAddress& address, Poco::Net::SocketReactor& reactor);
 
 protected:
     MyConnectionHandler* createServiceHandler();

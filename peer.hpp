@@ -15,9 +15,14 @@
 class Peer {
     public:
     Peer(Poco::Net::SocketAddress ownAddress, Poco::Net::SocketAddress remoteAddress);
+    Peer(Poco::Net::SocketAddress ownAddress);
     Poco::Net::ServerSocket serverSocket;
     // FingerTable fingerTable;
     Poco::Net::SocketAddress address;
+
+    Poco::Net::SocketReactor reactor;
+
+    Poco::Thread thread;
 
     Hash getHash() const;
 
