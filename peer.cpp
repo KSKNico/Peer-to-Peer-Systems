@@ -1,5 +1,5 @@
 #include "peer.hpp" 
-
+#include <iostream>
 
 Peer::Peer(Poco::Net::SocketAddress ownAddress, Poco::Net::SocketAddress remoteAddress) {
     // Initialize the server socket
