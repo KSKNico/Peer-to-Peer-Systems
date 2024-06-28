@@ -8,10 +8,12 @@
 #include "Poco/Net/NetException.h"
 
 #include "fingertable.hpp"
+#include "myConnectionHandler.hpp"
+#include "mySocketConnector.hpp"
 
 class Peer {
     public:
-    Peer(Poco::Net::SocketAddress ownAddress, std::vector<Poco::Net::SocketAddress> knownHosts);
+    Peer(Poco::Net::SocketAddress ownAddress, Poco::Net::SocketAddress remoteAddress);
     Poco::Net::ServerSocket serverSocket;
     // FingerTable fingerTable;
     Poco::Net::SocketAddress address;
