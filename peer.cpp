@@ -11,7 +11,8 @@ Peer::Peer(Poco::Net::SocketAddress ownAddress, Poco::Net::SocketAddress remoteA
     std::cout << "Peer created with address: " << address.toString() << std::endl;
     std::cout << "Peer has hash: " << hashToString(id) << std::endl;
 
-
+    MySocketConnector connector(address);
+    MySocketAcceptor acceptor(serverSocket);
 }
 
 

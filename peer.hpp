@@ -10,6 +10,7 @@
 #include "fingertable.hpp"
 #include "myConnectionHandler.hpp"
 #include "mySocketConnector.hpp"
+#include "mySocketAcceptor.hpp"
 
 class Peer {
     public:
