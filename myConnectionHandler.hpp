@@ -6,6 +6,7 @@
 class MyConnectionHandler {
 public:
     MyConnectionHandler(const Poco::Net::StreamSocket& socket, Poco::Net::SocketReactor& reactor);
+    ~MyConnectionHandler();
     void onReadable(Poco::Net::ReadableNotification* pNf);
     void onWritable(Poco::Net::WritableNotification* pNf);
 

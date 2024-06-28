@@ -6,6 +6,11 @@ MyConnectionHandler::MyConnectionHandler(const Poco::Net::StreamSocket& socket, 
     _reactor.addEventHandler(_socket, Poco::Observer<MyConnectionHandler, Poco::Net::WritableNotification>(*this, &MyConnectionHandler::onWritable));
 }
 
+MyConnectionHandler::~MyConnectionHandler() {
+    _reactor.removeEventHandler(_socket, Poco::Observer<MyConnectionHandler, Poco::Net::ReadableNotification>(*this, &MyConnectionHandler::onReadable));
+    _reactor.removeEventHandler(_socket, Poco::Observer<MyConnectionHandler, Poco::Net::WritableNotification>(*this, &MyConnectionHandler::onWritable));
+}
+
 void MyConnectionHandler::onReadable(Poco::Net::ReadableNotification* pNf) {
     std::cout << "Received data" << std::endl;
 }
