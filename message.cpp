@@ -13,3 +13,7 @@ Poco::Buffer<char> Message::toBuffer(const Message &message) {
     std::copy(message.data.begin(), message.data.end(), buffer.begin());
     return buffer;
 }
+
+bool Message::isEmpty() const {
+    return data[0] == '\0';
+}

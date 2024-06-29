@@ -24,10 +24,13 @@ public:
     MessageType type;
     MessageData data;
 
+    bool isEmpty() const;
+
     MessageData serialize();
     static Message deserialize(MessageData data);
 
     static Message fromBuffer(const Poco::Buffer<char> &buffer);
     static Poco::Buffer<char> toBuffer(const Message &message);
+    
 
 };

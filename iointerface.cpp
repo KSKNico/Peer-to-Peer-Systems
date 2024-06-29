@@ -3,7 +3,7 @@
 Message IOInterface::dequeueIncomingMessage() {
     std::lock_guard<std::mutex> lock(incomingMutex);
     if (incoming.empty()) {
-        return Message(Message::MessageData());
+        return Message({'\0'});
     }
     auto message = incoming.front();
     incoming.pop();
@@ -23,7 +23,7 @@ void IOInterface::queueIncomingMessage(Message message) {
 Message IOInterface::dequeueOutgoingMessage() {
     std::lock_guard<std::mutex> lock(outgoingMutex);
     if (outgoing.empty()) {
-        return Message::MessageData();
+        return Message::MessageData({'\0'});
     }
     auto message = outgoing.front();
     outgoing.pop();
