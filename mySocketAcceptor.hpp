@@ -9,5 +9,5 @@ public:
     MySocketAcceptor(Poco::Net::ServerSocket& socket, Poco::Net::SocketReactor& reactor);
 
 protected:
-    MyConnectionHandler* createServiceHandler(const Poco::Net::StreamSocket& socket);
+    MyConnectionHandler* createServiceHandler(Poco::Net::StreamSocket& socket);
 };
