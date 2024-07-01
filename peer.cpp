@@ -4,7 +4,7 @@
 #include "Poco/Net/SocketReactor.h"
 
 Peer::Peer(Poco::Net::SocketAddress ownAddress, std::vector<Poco::Net::SocketAddress> remoteAddresses) :
-reactor(), serverSocket(ownAddress), acceptor(serverSocket, reactor), id(Hash::hashSocketAddress(ownAddress)) {
+reactor(), serverSocket(ownAddress), acceptor(serverSocket, reactor, connections, connectionsMutex), id(Hash::hashSocketAddress(ownAddress)) {
     address = serverSocket.address();
     id = Hash::hashSocketAddress(address);
 
@@ -21,7 +21,7 @@ reactor(), serverSocket(ownAddress), acceptor(serverSocket, reactor), id(Hash::h
 }
 
 Peer::Peer(Poco::Net::SocketAddress ownAddress, Poco::Net::SocketAddress remoteAddress) :
-reactor(), serverSocket(ownAddress), acceptor(serverSocket, reactor), id(Hash::hashSocketAddress(ownAddress)) {
+reactor(), serverSocket(ownAddress), acceptor(serverSocket, reactor, connections, connectionsMutex), id(Hash::hashSocketAddress(ownAddress)) {
     address = serverSocket.address();
     id = Hash::hashSocketAddress(address);
 
@@ -37,9 +37,8 @@ reactor(), serverSocket(ownAddress), acceptor(serverSocket, reactor), id(Hash::h
     
 }
 
-
 Peer::Peer(Poco::Net::SocketAddress ownAddress) : 
-reactor(), serverSocket(ownAddress), acceptor(serverSocket, reactor), id(Hash::hashSocketAddress(ownAddress)) {
+reactor(), serverSocket(ownAddress), acceptor(serverSocket, reactor, connections, connectionsMutex), id(Hash::hashSocketAddress(ownAddress)) {
     address = serverSocket.address();
     id = Hash::hashSocketAddress(address);
 

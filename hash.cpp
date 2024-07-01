@@ -40,3 +40,7 @@ std::size_t Hash::Hasher::operator()(const Hash &hash) const {
     std::memcpy(&hashCode, hash.bytes.data(), sizeof(hashCode));
     return hashCode;
 }
+
+bool Hash::operator==(const Hash &other) const {
+    return compareHashes(*this, other);
+}

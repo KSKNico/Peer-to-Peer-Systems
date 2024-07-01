@@ -32,4 +32,6 @@ public:
     struct Hasher {
         std::size_t operator()(const Hash& hash) const;
     };
+
+    bool operator==(const Hash& other) const;
 };

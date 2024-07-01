@@ -29,7 +29,11 @@ class Peer {
     MySocketAcceptor acceptor;
     std::vector<std::unique_ptr<MySocketConnector>> connectors;
 
+    // needs to be locked with the connectionsMutex
     std::unordered_map<Hash, MyConnectionHandler*, Hash::Hasher> connections;
+
+    // mutex for the connections unordered_map
+    std::mutex connectionsMutex;
 
     Hash getHash() const;
 
