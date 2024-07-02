@@ -41,10 +41,17 @@ public:
     };
 
     bool operator==(const Hash& other) const;
+    bool operator!=(const Hash& other) const;
+    bool operator<(const Hash& other) const;
+    bool operator>(const Hash& other) const;
+    bool operator<=(const Hash& other) const;
+    bool operator>=(const Hash& other) const;
+    
 
     // this wraps around if the sum is greater than 2^HASH_BIT_SIZE
     Hash operator+(const Hash& other) const;
 
+    // this wraps around if the difference is negative
     Hash operator-(const Hash& other) const;
 
     private:

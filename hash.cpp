@@ -44,6 +44,26 @@ Hash Hash::operator+(const Hash &other) const {
     return Hash(this->hashValue + other.hashValue);
 }
 
+bool Hash::operator<(const Hash &other) const {
+    return this->hashValue < other.hashValue;
+}
+
+bool Hash::operator!=(const Hash &other) const {
+    return !(*this == other);
+}
+
+bool Hash::operator>(const Hash &other) const {
+    return other < *this;
+}
+
+bool Hash::operator<=(const Hash &other) const {
+    return !(*this > other);
+}
+
+bool Hash::operator>=(const Hash &other) const {
+    return !(*this < other);
+}
+
 std::size_t Hash::Hasher::operator()(const Hash& hash) const {
     return hash.hashValue;
 }
