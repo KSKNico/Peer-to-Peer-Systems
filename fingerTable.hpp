@@ -10,7 +10,7 @@ class FingerTable {
         void removeFinger();
         void updateFinger();
         void getFinger();*/
-        constexpr static int FINGER_TABLE_SIZE = Hash::HASH_EXPONENT;
+        constexpr static int FINGER_TABLE_SIZE = Hash::HASH_BIT_SIZE;
     private:
         std::array<Hash, FINGER_TABLE_SIZE> fingers;
         Hash predecessor;
