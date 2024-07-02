@@ -52,3 +52,14 @@ reactor(), serverSocket(ownAddress), acceptor(serverSocket, reactor, connections
 Hash Peer::getHash() const {
     return id;
 }
+
+void Peer::run() {
+    while (true) {
+
+        std::unique_lock<std::mutex> connectionsLock(connectionsMutex);
+        for (auto& connection : connections) {
+            connection.second->ioInterface.dequeueIncomingMessage();
+        }
+        connectionsLock.unlock();
+    }
+}

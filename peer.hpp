@@ -30,14 +30,17 @@ class Peer {
     std::unordered_map<Hash, std::unique_ptr<MySocketConnector>, Hash::Hasher> connectors;
 
     // needs to be locked with the connectionsMutex
-    std::unordered_map<Hash, MyConnectionHandler*, Hash::Hasher> connections;
+    using ConnectionHandlerMap = std::unordered_map<Hash, MyConnectionHandler*, Hash::Hasher>;
+    ConnectionHandlerMap connections;
 
     // mutex for the connections unordered_map
     std::mutex connectionsMutex;
 
     Hash getHash() const;
+    void run();
 
     private:
+    void processMessage();
     Hash id;
     Poco::Thread thread;
 };
