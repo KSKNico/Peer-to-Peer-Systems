@@ -1,46 +1,64 @@
 #include "hash.hpp"
 
+#include <algorithm>
+
 Poco::SHA2Engine256 Hash::engine;
 
-Hash::Hash(const std::array<uint8_t, HASH_BYTE_SIZE> &bytes) : bytes(bytes) {
-}
+Hash::Hash(uint64_t hashValue) : hashValue(hashValue) {}
 
 Hash Hash::hashSocketAddress(Poco::Net::SocketAddress const &address) {
     engine.update(address.toString());
     auto d = engine.digest();
-    std::array<uint8_t, HASH_BYTE_SIZE> bytes;
-    for (int i = 0; i < HASH_BYTE_SIZE; i++) {
-        bytes[i] = d[i];
+    uint64_t hashValue = 0;
+    for (int i = 0; i < sizeof(uint64_t); i++) {
+        hashValue = (hashValue << 8) | d[i];
     }
-    return Hash(bytes);
+    return Hash(hashValue);
 }
 
 bool Hash::compareHashes(Hash const &hash1, Hash const &hash2) {
-    for (int i = 0; i < HASH_BYTE_SIZE; i++) {
-        if (hash1.bytes[i] != hash2.bytes[i]) {
-            return false;
-        }
-    }
-    return true;
+    return hash1.hashValue == hash2.hashValue;
 }
 
 
 std::string Hash::toString() const {
-    std::stringstream ss("");
-    for (int i = 0; i < HASH_BYTE_SIZE; i++) {
-        ss << std::hex << std::setw(2) << std::setfill('0') << (int) bytes[i];
-    }
+    std::stringstream ss;
+    ss << std::hex << this->hashValue;
     return ss.str();
 }
 
-std::size_t Hash::Hasher::operator()(const Hash &hash) const {
-    // Use the first sizeof(std::size_t) bytes of the hash value as the hash code.
-    // This assumes that sizeof(std::size_t) <= HASH_BYTE_SIZE.
-    std::size_t hashCode = 0;
-    std::memcpy(&hashCode, hash.bytes.data(), sizeof(hashCode));
-    return hashCode;
+Hash Hash::fromString(std::string &str) {
+    std::stringstream ss;
+    ss << std::hex << str;
+    uint64_t hashValue;
+    ss >> hashValue;
+    return Hash(hashValue);
 }
+
 
 bool Hash::operator==(const Hash &other) const {
     return compareHashes(*this, other);
+}
+
+Hash Hash::operator+(const Hash &other) const {
+    return Hash(this->hashValue + other.hashValue);
+}
+
+std::size_t Hash::Hasher::operator()(const Hash& hash) const {
+    return hash.hashValue;
+}
+
+Hash Hash::fromExponent(const uint8_t exponent) {
+    uint64_t hashValue = 1;
+    hashValue <<= exponent;
+    return Hash(hashValue);
+}
+
+Hash Hash::operator-(const Hash &other) const {
+    return Hash(this->hashValue - other.hashValue);
+}
+
+Hash Hash::distance(Hash const &other) const {
+    // return the smaller distance!
+    return std::min((*this-other).hashValue, (other-*this).hashValue);
 }
