@@ -13,7 +13,8 @@ reactor(), serverSocket(ownAddress), acceptor(serverSocket, reactor, connections
 
 
     for (const auto& remoteAddress : remoteAddresses) {
-        connectors.push_back(std::make_unique<MySocketConnector>(remoteAddress, reactor));
+        // connectors is an unordered_map of unique_ptrs to MySocketConnectors
+        connectors[Hash::hashSocketAddress(remoteAddress)] = std::make_unique<MySocketConnector>(remoteAddress, reactor, connections, connectionsMutex);
     }
 
     // different thread for the reactor
@@ -29,7 +30,7 @@ reactor(), serverSocket(ownAddress), acceptor(serverSocket, reactor, connections
     std::cout << "Peer has hash: " << id.toString() << std::endl;
 
 
-    connectors.push_back(std::make_unique<MySocketConnector>(remoteAddress, reactor));
+    connectors[Hash::hashSocketAddress(remoteAddress)] = std::make_unique<MySocketConnector>(remoteAddress, reactor, connections, connectionsMutex);
 
     // different thread for the reactor
     

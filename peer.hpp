@@ -27,7 +27,7 @@ class Peer {
     Poco::Net::SocketReactor reactor;
 
     MySocketAcceptor acceptor;
-    std::vector<std::unique_ptr<MySocketConnector>> connectors;
+    std::unordered_map<Hash, std::unique_ptr<MySocketConnector>, Hash::Hasher> connectors;
 
     // needs to be locked with the connectionsMutex
     std::unordered_map<Hash, MyConnectionHandler*, Hash::Hasher> connections;
