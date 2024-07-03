@@ -9,16 +9,16 @@
 class Message {
 public:
     /*
-     * structure of GET: "<IP address from sender>, <first number of requested interval>"
+     * structure of GET: "<type>, <IP address from sender>, <first number of requested interval>"
      * example: if peer 127.0.0.1:5001 wants to get primes of the interval [1, 1000] from peer 127.0.0.1:5002 it sends:
-     * "127.0.0.1:5001,1" so "," is the delimiter
+     * "GET,127.0.0.1:5001,1" so "," is the delimiter
      *
-     * structure of PUT: "IP address from sender, <first number of interval>[, value1, value2, ...]"
+     * structure of PUT: "<type>, <IP address from sender>, <first number of interval>[, value1, value2, ...]"
      * example: if peer 127.0.0.1:5001 wants to put the primes 2 and 3 in the interval [1, 1000] for which
      * peer 127.0.0.1:5002 is responsible it sends:
-     * "127.0.0.1:5001,1,2,3"
+     * "PUT,127.0.0.1:5001,1,2,3"
      * if this PUT is the answer of a GET message and the peer has yet no results for this interval it sends:
-     * "127.0.0.1:5001,1"
+     * "PUT,127.0.0.1:5001,1"
      */
     enum class MessageType {
         GET,

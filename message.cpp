@@ -31,7 +31,6 @@ Message::get_message Message::decode_get_message() {
         std::cout << "No ',' in GET message" << std::endl;
         return info;
     }
-
     info.IP_address = str.substr(0, pos);
     info.start_of_interval = std::stoi(str.substr(pos+1));
 
