@@ -60,19 +60,30 @@ Hash Peer::getHash() const {
     return id;
 }
 
-void process_get_message(Message message, std::unordered_map<unsigned long long, std::vector<unsigned long long>> prime_intervals) {
+void Peer::process_get_message(Message message, std::pair<const Hash, MyConnectionHandler*> connection) {
     Message::get_message message_info = message.decode_get_message();
+    Message::MessageData data{};
+
+    std::string ip = address.toString();
+    std::string interval = std::to_string(message_info.start_of_interval);
+    std::string all = ip + "," + interval;
+
     if(prime_intervals.contains(message_info.start_of_interval)){      // if peer stores the primes of the requested interval
         std::vector<unsigned long long> result = prime_intervals[message_info.start_of_interval];
-        // TODO: send a put message to the peer that requested the result
+        for(auto prime : result){
+            std::string str = std::to_string(prime);
+            all += "," + str;
+        }
         std::cout << "sending results" << std::endl;
     } else{
-        // TODO: send a put message without content
         std::cout << "sending empty put message" << std::endl;
     }
+    std::strncpy(data.data(), all.c_str(), all.size());
+    Message return_message(data);
+    connection.second->ioInterface.queueOutgoingMessage(return_message);
 }
 
-void process_put_message(Message message, std::unordered_map<unsigned long long, std::vector<unsigned long long>> prime_intervals) {
+void Peer::process_put_message(Message message) {
     Message::put_message message_info = message.decode_put_message();
 
     if(message_info.primes.empty()){
@@ -90,12 +101,12 @@ void process_put_message(Message message, std::unordered_map<unsigned long long,
     }
 }
 
-void Peer::processMessage(Message message) {
+void Peer::processMessage(Message message, std::pair<const Hash, MyConnectionHandler *> connection) {
     switch (message.type) {
         case Message::MessageType::GET:
-            process_get_message(message, prime_intervals);
+            process_get_message(message, connection);
         case Message::MessageType::PUT:
-            process_put_message(message, prime_intervals);
+            process_put_message(message);
         case Message::MessageType::JOIN:
             break;
         default:
@@ -110,7 +121,7 @@ void Peer::run() {
         std::unique_lock<std::mutex> connectionsLock(connectionsMutex);
         for (auto &connection: connections) {
             Message message = connection.second->ioInterface.dequeueIncomingMessage();
-            if (!message.isEmpty()) processMessage(message);
+            if (!message.isEmpty()) processMessage(message, connection);
         }
         connectionsLock.unlock();
     }

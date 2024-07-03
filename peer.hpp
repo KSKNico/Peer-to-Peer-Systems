@@ -41,7 +41,9 @@ class Peer {
 
     private:
     std::unordered_map<unsigned long long, std::vector<unsigned long long>> prime_intervals;
-    void processMessage(Message message);
+    void processMessage(Message message, std::pair<const Hash, MyConnectionHandler *> connection);
+    void process_put_message(Message message);
+    void process_get_message(Message message, std::pair<const Hash, MyConnectionHandler*> connection);
     Hash id;
     Poco::Thread thread;
 };
