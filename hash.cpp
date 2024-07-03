@@ -82,3 +82,7 @@ Hash Hash::distance(Hash const &other) const {
     // return the smaller distance!
     return std::min((*this-other).hashValue, (other-*this).hashValue);
 }
+
+bool Hash::isBefore(Hash const &other) const {
+    return this->distance(other) == (other - *this).hashValue;
+}

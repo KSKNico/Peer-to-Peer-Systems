@@ -35,6 +35,8 @@ public:
 
     static bool compareHashes(Hash const &hash1, Hash const &hash2);
 
+    bool isBefore(Hash const &other) const;
+
     struct Hasher {
         // returns a hash type compatible with map types
         std::size_t operator()(const Hash& hash) const;
