@@ -15,11 +15,13 @@ public:
     std::mutex& connectionsMutex
     );
 
+    bool isFinished() const;
 
 protected:
     MyConnectionHandler* createServiceHandler();
 
 private:
     std::unordered_map<Hash, MyConnectionHandler*, Hash::Hasher>& connections;
-    std::mutex& connectionsMutex;    
+    std::mutex& connectionsMutex;
+    bool finished;  
 };

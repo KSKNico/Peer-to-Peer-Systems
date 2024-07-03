@@ -61,5 +61,13 @@ void Peer::run() {
             connection.second->ioInterface.dequeueIncomingMessage();
         }
         connectionsLock.unlock();
+
+        for (auto& connector : connectors) {
+            if (!connector.second->isFinished()) {
+                // remove it from the map
+                // this also removes the mySocketConnector object as it is a unique_ptr
+                connectors.erase(connector.first);
+            }
+        }
     }
 }
