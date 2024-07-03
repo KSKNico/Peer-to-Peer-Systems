@@ -40,7 +40,8 @@ class Peer {
     void run();
 
     private:
-    void processMessage();
+    std::unordered_map<unsigned long long, std::vector<unsigned long long>> prime_intervals;
+    void processMessage(Message message);
     Hash id;
     Poco::Thread thread;
 };
