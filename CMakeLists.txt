@@ -3,7 +3,7 @@ cmake_minimum_required(VERSION 3.28) # CMake 3.12 or higher is required for CXX_
 project(prime-finder)
 
 
-set(CMAKE_CXX_STANDARD 17) # Set C++ standard to C++20
+set(CMAKE_CXX_STANDARD 20) # Set C++ standard to C++20
 
 
 set(CMAKE_COLOR_MAKEFILE ON)
