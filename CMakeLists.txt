@@ -14,7 +14,12 @@ file(GLOB SOURCES "*.cpp")
 
 find_package(Poco REQUIRED COMPONENTS Foundation Util Net)
 
-add_executable(${PROJECT_NAME} ${SOURCES})
+add_executable(${PROJECT_NAME} ${SOURCES}
+        mySocketConnector.cpp
+        mySocketAcceptor.cpp
+        primeCalculation.cpp
+        primeCalculation.hpp
+)
 
 target_link_libraries(${PROJECT_NAME} Poco::Foundation Poco::Util Poco::Net)
 
