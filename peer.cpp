@@ -102,6 +102,63 @@ void Peer::process_put_message(Message message) {
     }
 }
 
+void Peer::process_join_message(Message message, std::pair<const Hash, MyConnectionHandler *> connection) {
+    Message::join_message msg = message.decode_join_message();
+    Message::MessageData data{};
+
+    // TODO implement findClosestPeer
+    std::string closestIP = findClosestPeer(msg.IP_address);
+    // TODO add peer to finger table?
+
+    std::string ip = address.toString();
+    std::string fullMessage = "JOINACK," + ip + "," + closestIP;
+
+    std::strncpy(data.data(), fullMessage.c_str(), data.size());
+    Message ans(data);
+    connection.second->ioInterface.queueOutgoingMessage(ans);
+}
+
+void Peer::process_joinack_message(Message message) {
+    Message::joinack_message msg = message.decode_joinack_message();
+    Message::MessageData data{};
+
+    // TODO send SUCC message to msg.ClosestKnownIP
+}
+
+void Peer::process_succ_message(Message message, std::pair<const Hash, MyConnectionHandler *> connection) {
+    Message::succ_message msg = message.decode_succ_message();
+    Message::MessageData data{};
+
+    // TODO implement findClosestPeer
+    std::string closestIP = findClosestPeer(msg.IP_address);
+    // TODO add peer to finger table?
+
+    std::string ip = address.toString();
+
+    if(closestIP == ip) {
+        // set closestIP to successor
+
+        // set successor to msg.IP_address
+    }
+
+    std::string fullMessage = "SUCCACK," + ip + "," + closestIP;
+
+    std::strncpy(data.data(), fullMessage.c_str(), data.size());
+    Message ans(data);
+    connection.second->ioInterface.queueOutgoingMessage(ans);
+}
+
+void Peer::process_succack_message(Message message) {
+    Message::succack_message msg = message.decode_succack_message();
+    Message::MessageData data{};
+
+    if (comesAfterMe(msg.ClosestKnownIP)) {
+        // set successor to msg.IP_address
+    } else {
+        // TODO send SUCC message to msg.ClosestKnownIP
+    }
+}
+
 void Peer::processMessage(Message message, std::pair<const Hash, MyConnectionHandler *> connection) {
     std::string message_type(message.data.data(), message.data.size());
     size_t pos = message_type.find(',');
@@ -130,10 +187,31 @@ void Peer::processMessage(Message message, std::pair<const Hash, MyConnectionHan
         process_put_message(message);
     } else if (message_type.substr(0, pos) == "JOIN") {
         message.type = Message::MessageType::JOIN;
-        // TODO: JOIN function,
+        process_join_message(message, connection);
+    } else if ((message_type.substr(0, pos) == "JOINACK")) {
+        message.type = Message::MessageType::JOINACK;
+        process_joinack_message(message);
+    } else if ((message_type.substr(0, pos) == "SUCC")) {
+        message.type = Message::MessageType::SUCC;
+        process_succ_message(message, connection);
+    } else if ((message_type.substr(0, pos) == "SUCCACK")) {
+        message.type = Message::MessageType::SUCCACK;
+        process_succack_message(message);
     } else {
         std::cout << "Message from an unknown type, ignore it.";
     }
+}
+
+void Peer::stabilize() {
+    /*
+     * send message to successor -> "who is your predecessor"
+     *
+     * if (predecessor not me)
+     *  updateSuccessor(predecessor)
+     *  send message to successor -> "im now your predecessor"
+     *  await response -> "no my predecessor is closer" | "ok"
+     *
+     */
 }
 
 void Peer::run() {

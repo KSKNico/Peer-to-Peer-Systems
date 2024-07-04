@@ -66,3 +66,55 @@ Message::put_message Message::decode_put_message() {
 
     return msg;
 }
+
+Message::join_message Message::decode_join_message() {
+    join_message msg;
+    std::string str(data.data(), data.size());
+
+    msg.IP_address = str;
+
+    return msg;
+}
+
+Message::joinack_message Message::decode_joinack_message() {
+    joinack_message msg;
+    std::string str(data.data(), data.size());
+
+    size_t pos = str.find(',');
+
+    if(pos == std::string::npos){
+        std::cout << "No ',' in JOINACK message" << std::endl;
+        return msg;
+    }
+
+    msg.IP_address = str.substr(0, pos);
+    msg.ClosestKnownIP = str.substr(pos+1);
+
+    return msg;
+}
+
+Message::succ_message Message::decode_succ_message() {
+    succ_message msg;
+    std::string str(data.data(), data.size());
+
+    msg.IP_address = str;
+
+    return msg;
+}
+
+Message::succack_message Message::decode_succack_message() {
+    succack_message msg;
+    std::string str(data.data(), data.size());
+
+    size_t pos = str.find(',');
+
+    if(pos == std::string::npos){
+        std::cout << "No ',' in SUCCACK message" << std::endl;
+        return msg;
+    }
+
+    msg.IP_address = str.substr(0, pos);
+    msg.ClosestKnownIP = str.substr(pos+1);
+
+    return msg;
+}

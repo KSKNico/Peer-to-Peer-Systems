@@ -19,11 +19,23 @@ public:
      * "PUT,127.0.0.1:5001,1,2,3"
      * if this PUT is the answer of a GET message and the peer has yet no results for this interval it sends:
      * "PUT,127.0.0.1:5001,1"
+     *
+     * structure of JOIN: "<type>, <IP address from sender>"
+     *
+     * structure of JOINACK: "<type>, <IP address from sender>, <IP of closest known peer before searcher in the circle>"
+     *
+     * structure of SUCC: "<type<, <IP address from sender>"
+     *
+     * structure of SUCCACK: "<type>, <IP address from sender>, <IP of closest known peer>"
+     * closest IP in SUCCACK should be in the last step the successor of the requester
      */
     enum class MessageType {
         GET,
         PUT,
         JOIN,
+        JOINACK,
+        SUCC,
+        SUCCACK,
     };
     struct get_message{
         std::string IP_address;
@@ -33,6 +45,20 @@ public:
         std::string IP_address;
         unsigned long long start_of_interval;
         std::vector<unsigned long long> primes;
+    };
+    struct join_message{
+        std::string IP_address;
+    };
+    struct joinack_message{
+        std::string IP_address;
+        std::string ClosestKnownIP;
+    };
+    struct succ_message{
+        std::string IP_address;
+    };
+    struct succack_message{
+        std::string IP_address;
+        std::string ClosestKnownIP;
     };
     constexpr static int FIXED_MESSAGE_SIZE = 1024;
 
@@ -55,4 +81,8 @@ public:
     
     get_message decode_get_message();
     put_message decode_put_message();
+    join_message decode_join_message();
+    joinack_message decode_joinack_message();
+    succ_message decode_succ_message();
+    succack_message decode_succack_message();
 };
