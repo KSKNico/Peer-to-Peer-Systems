@@ -106,7 +106,6 @@ void Peer::process_join_message(Message message, std::pair<const Hash, MyConnect
     Message::join_message msg = message.decode_join_message();
     Message::MessageData data{};
 
-    // TODO implement findClosestPeer
     std::string closestIP = findClosestPeer(msg.IP_address);
     // TODO add peer to finger table?
 
@@ -123,13 +122,39 @@ void Peer::process_joinack_message(Message message) {
     Message::MessageData data{};
 
     // TODO send SUCC message to msg.ClosestKnownIP
+
+    auto peer_addr = Poco::Net::SocketAddress(msg.ClosestKnownIP);
+
+    connectors[Hash::hashSocketAddress(peer_addr)] = std::make_unique<MySocketConnector>(peer_addr, reactor,
+                                                                                             connections,
+                                                                                             connectionsMutex);
+
+    std::string ip = address.toString();
+    std::string fullMessage = "SUCC," + ip;
+    std::strncpy(data.data(), fullMessage.c_str(), data.size());
+    Message ans(data);
+
+    connections[Hash::hashSocketAddress(peer_addr)]->ioInterface.queueOutgoingMessage(ans);
+}
+
+std::string Peer::findClosestPeer(std::string& peerIP) {
+    auto peer_addr = Poco::Net::SocketAddress(peerIP);
+    Hash peerPosition = Hash::hashSocketAddress(peer_addr);
+    Hash closestPeer = Hash::hashSocketAddress(address);
+
+    for (const auto& entry: fingerTable) {
+        if ((entry.first < peerPosition) && (entry.first > closestPeer)) {
+            closestPeer = entry.first;
+        }
+    }
+
+    return closestPeer.toString();
 }
 
 void Peer::process_succ_message(Message message, std::pair<const Hash, MyConnectionHandler *> connection) {
     Message::succ_message msg = message.decode_succ_message();
     Message::MessageData data{};
 
-    // TODO implement findClosestPeer
     std::string closestIP = findClosestPeer(msg.IP_address);
     // TODO add peer to finger table?
 
@@ -137,8 +162,10 @@ void Peer::process_succ_message(Message message, std::pair<const Hash, MyConnect
 
     if(closestIP == ip) {
         // set closestIP to successor
+        closestIP = successor.toString();
 
         // set successor to msg.IP_address
+        successor = Poco::Net::SocketAddress(msg.IP_address);
     }
 
     std::string fullMessage = "SUCCACK," + ip + "," + closestIP;
@@ -152,10 +179,26 @@ void Peer::process_succack_message(Message message) {
     Message::succack_message msg = message.decode_succack_message();
     Message::MessageData data{};
 
-    if (comesAfterMe(msg.ClosestKnownIP)) {
+    Hash myPosition = Hash::hashSocketAddress(address);
+    auto closestIP = Poco::Net::SocketAddress(msg.ClosestKnownIP);
+    Hash closestIPPosition = Hash::hashSocketAddress(closestIP);
+
+    if (closestIPPosition > myPosition) {
         // set successor to msg.IP_address
+        successor = closestIP;
     } else {
         // TODO send SUCC message to msg.ClosestKnownIP
+
+        connectors[Hash::hashSocketAddress(closestIP)] = std::make_unique<MySocketConnector>(closestIP, reactor,
+                                                                                             connections,
+                                                                                             connectionsMutex);
+
+        std::string ip = address.toString();
+        std::string fullMessage = "SUCC," + ip;
+        std::strncpy(data.data(), fullMessage.c_str(), data.size());
+        Message ans(data);
+
+        connections[Hash::hashSocketAddress(closestIP)]->ioInterface.queueOutgoingMessage(ans);
     }
 }
 
