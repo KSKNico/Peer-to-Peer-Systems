@@ -9,7 +9,7 @@ class primeCalculation {
 
 
 
-public: static void calculateCurrentSector();
+public: static std::future<vector<unsigned long long >> calculateCurrentSector();
 
     static unsigned long long getLowerBound();
 
