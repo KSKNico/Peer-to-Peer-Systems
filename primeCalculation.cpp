@@ -53,7 +53,7 @@ vector<unsigned long long > primeCalculation::calculatePrimes(unsigned long long
             if(isPrime)
             {
                 primes.push_back(i);
-                cout << "prime "<< i << " | ";
+                //cout << "prime "<< i << " | ";
             }
         }
         return primes;
