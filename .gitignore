@@ -2,3 +2,5 @@ build
 bin
 .vscode
 .idea/
+Makefile
+cmake_install.cmake

@@ -2,6 +2,7 @@
 #include <string>
 #include <array>
 #include <cstdint>
+#include <vector>
 
 #include "Poco/Buffer.h"
 
