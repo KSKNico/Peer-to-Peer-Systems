@@ -11,6 +11,9 @@ connectionsMutex(connectionsMutex)
  {}
 
 MyConnectionHandler* MySocketConnector::createServiceHandler() {
-    return new MyConnectionHandler(Poco::Net::SocketConnector<MyConnectionHandler>::socket(), 
-                                    *Poco::Net::SocketConnector<MyConnectionHandler>::reactor());
+    std::unique_lock<std::mutex> lock(connectionsMutex);
+    Hash hash = Hash::hashSocketAddress(socket().peerAddress());
+    MyConnectionHandler *connectionHandler = new MyConnectionHandler(socket(), *reactor());
+    connections[hash] = connectionHandler;
+    return connectionHandler;
 }
