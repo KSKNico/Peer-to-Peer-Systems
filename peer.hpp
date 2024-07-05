@@ -51,7 +51,7 @@ class Peer {
 
     std::string findClosestPeer(std::string& peerIP);
 
-    std::unordered_map<Hash, Poco::Net::SocketAddress> fingerTable;
+    std::unordered_map<Hash, Poco::Net::SocketAddress, Hash::Hasher> fingerTable;
     Poco::Net::SocketAddress successor;
     Poco::Net::SocketAddress predecessor;
 
