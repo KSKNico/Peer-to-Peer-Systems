@@ -10,14 +10,25 @@ using namespace std;
 
     unsigned long long primeCalculation::getLowerBound(){
         //TODO
-        unsigned long long lowerBound = 0;
+        unsigned long long lowerBound;
+        try {
+            //future<unsigned long long> lowerBound = async();
+            lowerBound = static_cast<unsigned long long int>(0);
+        } catch (const exception e){
+            cerr << e.what();
+        }
         return lowerBound;
 }
     unsigned long long primeCalculation::getUpperBound(){
         //TODO
+        unsigned long long upperBound;
+        try {
+            //future<unsigned long long> lowerBound = async();
+            upperBound = static_cast<unsigned long long int>(1000);
 
-        unsigned long long upperBound = 1000;
-        return upperBound;
+        } catch (const exception e){
+            cerr << e.what();
+        }return upperBound;
 }
 
 
@@ -53,11 +64,36 @@ void primeCalculation::calculateCurrentSector() {
         unsigned long long  upperBound = getUpperBound();
 
         //vector<int > test3 = primeCalculation::calculatePrimes(test,test2);
-        cout << "Test1 \n";
+        //cout << "Test1 \n";
         std::future<vector<unsigned long long>> currentSectorPrimes = std::async (primeCalculation::calculatePrimes,lowerBound,upperBound);
-        cout << "Test2 \n";
+        //cout << "Test2 \n";
         vector<unsigned long long >  currentSectorPrimeResult = currentSectorPrimes.get();
-        cout << "\n" << "Test3 \n";
+        //cout << "\n" << "Test3 \n";
 
 }
+
+void primeCalculation::checkSectorResult(const vector<unsigned long long>& sectorResult, unsigned long long lowerBound, unsigned long long upperBound){
+        //TODO search if SectorResults already exist before calculating again
+        vector<unsigned long long > ownCalculation = calculatePrimes(lowerBound, upperBound);
+        bool correctSector = true;
+        if (ownCalculation.size() != sectorResult.size()){
+            correctSector = false;
+            cout << "Wrong number of results";
+            goto endloop;
+        }
+        for (int i = 0; i < ownCalculation.size(); ++i) {
+            if (ownCalculation[i] != sectorResult[i]){
+                cout << "Value at position " << i << " is " << sectorResult[i] << " should be " << ownCalculation[i];
+                //TODO save Results as wrong? or throw away?
+                correctSector = false;
+                break;
+            }
+        }
+        endloop:
+        if (correctSector){
+            //TODO increase number of correct results
+            cout << "Sector correct";
+        }
+
+    }
 
