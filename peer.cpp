@@ -76,11 +76,43 @@ void Peer::process_get_message(Message message, std::pair<const Hash, MyConnecti
         }
         std::cout << "sending results" << std::endl;
     } else {
-        std::cout << "sending empty put message" << std::endl;
+        Hash interval_hash = Hash::hashInterval(message_info.start_of_interval);
+
+        std::string closestIP = findClosestPeer(interval_hash);
+        if (closestIP == ip) {
+            closestIP = successor.toString();
+        }
+        all = "GETACK," + ip + "," + interval + "," + closestIP;
+
+        std::cout << "sending getack message" << std::endl;
     }
     std::strncpy(data.data(), all.c_str(), data.size());
     Message return_message(data);
     connection.second->ioInterface.queueOutgoingMessage(return_message);
+}
+
+void Peer::process_getack_message(Message message) {
+    Message::getack_message msg = message.decode_getack_message();
+    Message::MessageData data{};
+
+    auto routing_addr = Poco::Net::SocketAddress(msg.RoutingIP);
+    Hash routing_hash = Hash::hashSocketAddress(routing_addr);
+
+    std::string ip = address.toString();
+    std::string interval = std::to_string(msg.start_of_interval);
+    std::string all = "GET," + ip + "," + interval;
+
+    std::strncpy(data.data(), all.c_str(), data.size());
+    Message ans(data);
+
+    if (connections.find(routing_hash) != connections.end()) {
+        connections[routing_hash]->ioInterface.queueOutgoingMessage(ans);
+    } else {
+        connectors[routing_hash] = std::make_unique<MySocketConnector>(routing_addr, reactor,
+                                                                    connections,
+                                                                    connectionsMutex);
+        outgoingMessages[routing_hash].push_back(ans);
+    }
 }
 
 void Peer::process_put_message(Message message) {
@@ -106,7 +138,10 @@ void Peer::process_join_message(Message message, std::pair<const Hash, MyConnect
     Message::join_message msg = message.decode_join_message();
     Message::MessageData data{};
 
-    std::string closestIP = findClosestPeer(msg.IP_address);
+    auto peerIP = Poco::Net::SocketAddress(msg.IP_address);
+    Hash peerPosition = Hash::hashSocketAddress(peerIP);
+
+    std::string closestIP = findClosestPeer(peerPosition);
 
     std::string ip = address.toString();
     std::string fullMessage = "JOINACK," + ip + "," + closestIP;
@@ -138,13 +173,11 @@ void Peer::process_joinack_message(Message message) {
     }
 }
 
-std::string Peer::findClosestPeer(std::string& peerIP) {
-    auto peer_addr = Poco::Net::SocketAddress(peerIP);
-    Hash peerPosition = Hash::hashSocketAddress(peer_addr);
+std::string Peer::findClosestPeer(Hash& position) {
     Hash closestPeer = Hash::hashSocketAddress(address);
 
     for (const auto& entry: fingerTable) {
-        if ((entry.first.isBefore(peerPosition)) && (!entry.first.isBefore(closestPeer))) {
+        if ((entry.first.isBefore(position)) && (!entry.first.isBefore(closestPeer))) {
             closestPeer = entry.first;
         }
     }
@@ -156,7 +189,10 @@ void Peer::process_succ_message(Message message, std::pair<const Hash, MyConnect
     Message::succ_message msg = message.decode_succ_message();
     Message::MessageData data{};
 
-    std::string closestIP = findClosestPeer(msg.IP_address);
+    auto peerIP = Poco::Net::SocketAddress(msg.IP_address);
+    Hash peerPosition = Hash::hashSocketAddress(peerIP);
+
+    std::string closestIP = findClosestPeer(peerPosition);
 
     std::string ip = address.toString();
 
@@ -231,7 +267,7 @@ void Peer::process_fingack_message(Message message) {
     Hash half_hash = Hash::fromString(half);
 
     // if the finger is less than half a circle away, request his successor
-    if ((fing_hash - me_hash).isBefore(half_hash)) {
+    if ((fing_hash - me_hash) < half_hash) {
 
         std::string ip = address.toString();
         std::string fullMessage = "FING," + ip;
@@ -293,6 +329,9 @@ void Peer::processMessage(Message message, std::pair<const Hash, MyConnectionHan
     } else if ((message_type.substr(0, pos) == "FINGACK")) {
         message.type = Message::MessageType::FINGACK;
         process_fingack_message(message);
+    } else if ((message_type.substr(0, pos) == "GETACK")) {
+        message.type = Message::MessageType::GETACK;
+        process_getack_message(message);
     } else {
         std::cout << "Message from an unknown type, ignore it.";
     }

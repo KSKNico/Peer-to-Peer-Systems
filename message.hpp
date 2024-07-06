@@ -14,6 +14,8 @@ public:
      * example: if peer 127.0.0.1:5001 wants to get primes of the interval [1, 1000] from peer 127.0.0.1:5002 it sends:
      * "GET,127.0.0.1:5001,1" so "," is the delimiter
      *
+     * structure of GETACK : "<type>, <IP address from sender>, <IP address for routing>"
+     *
      * structure of PUT: "<type>, <IP address from sender>, <first number of interval>[, value1, value2, ...]"
      * example: if peer 127.0.0.1:5001 wants to put the primes 2 and 3 in the interval [1, 1000] for which
      * peer 127.0.0.1:5002 is responsible it sends:
@@ -36,6 +38,7 @@ public:
      */
     enum class MessageType {
         GET,
+        GETACK,
         PUT,
         JOIN,
         JOINACK,
@@ -47,6 +50,11 @@ public:
     struct get_message{
         std::string IP_address;
         unsigned long long start_of_interval;
+    };
+    struct getack_message{
+        std::string IP_address;
+        unsigned long long start_of_interval;
+        std::string RoutingIP;
     };
     struct put_message{
         std::string IP_address;
@@ -92,8 +100,9 @@ public:
 
     static Message fromBuffer(const Poco::Buffer<char> &buffer);
     static Poco::Buffer<char> toBuffer(const Message &message);
-    
+
     get_message decode_get_message();
+    getack_message decode_getack_message();
     put_message decode_put_message();
     join_message decode_join_message();
     joinack_message decode_joinack_message();

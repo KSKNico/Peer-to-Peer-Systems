@@ -144,3 +144,24 @@ Message::fingack_message Message::decode_fingack_message() {
 
     return msg;
 }
+
+Message::getack_message Message::decode_getack_message() {
+    getack_message msg;
+    std::string str(data.data(), data.size());
+
+    size_t pos = str.find(',');
+
+    if(pos == std::string::npos){
+        std::cout << "No ',' in GETACK message" << std::endl;
+        return msg;
+    }
+
+    msg.IP_address = str.substr(0, pos);
+    std::string rest = str.substr(pos+1);
+
+    pos = str.find(',');
+    msg.start_of_interval = std::stoull(str.substr(0, pos));
+    msg.RoutingIP = str.substr(pos+1);
+
+    return msg;
+}
