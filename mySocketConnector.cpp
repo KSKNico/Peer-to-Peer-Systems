@@ -7,10 +7,17 @@ MySocketConnector::MySocketConnector(const Poco::Net::SocketAddress& address,
     ) : 
 Poco::Net::SocketConnector<MyConnectionHandler>(address, reactor),
 connections(connections),
-connectionsMutex(connectionsMutex)
+connectionsMutex(connectionsMutex),
+finished(false)
  {}
 
 MyConnectionHandler* MySocketConnector::createServiceHandler() {
-    return new MyConnectionHandler(Poco::Net::SocketConnector<MyConnectionHandler>::socket(), 
+    auto connectionHanlder = new MyConnectionHandler(Poco::Net::SocketConnector<MyConnectionHandler>::socket(), 
                                     *Poco::Net::SocketConnector<MyConnectionHandler>::reactor());
+    this->finished = true;
+    return connectionHanlder;
+}
+
+bool MySocketConnector::isFinished() const {
+    return finished;
 }
