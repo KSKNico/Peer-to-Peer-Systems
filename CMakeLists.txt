@@ -19,8 +19,8 @@ add_executable(${PROJECT_NAME} ${SOURCES}
         mySocketAcceptor.cpp
         primeCalculation.cpp
         primeCalculation.hpp
-        cmake-build-debug/sectorHandler.cpp
-        cmake-build-debug/sectorHandler.hpp
+        sectorHandler.cpp
+        sectorHandler.hpp
 )
 
 target_link_libraries(${PROJECT_NAME} Poco::Foundation Poco::Util Poco::Net)
