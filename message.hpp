@@ -2,6 +2,7 @@
 #include <string>
 #include <array>
 #include <cstdint>
+#include <vector>
 
 #include "Poco/Buffer.h"
 
@@ -24,10 +25,14 @@ public:
      *
      * structure of JOINACK: "<type>, <IP address from sender>, <IP of closest known peer before searcher in the circle>"
      *
-     * structure of SUCC: "<type<, <IP address from sender>"
+     * structure of SUCC: "<type>, <IP address from sender>"
      *
      * structure of SUCCACK: "<type>, <IP address from sender>, <IP of closest known peer>"
      * closest IP in SUCCACK should be in the last step the successor of the requester
+     *
+     * structure of FING: "<type>, <IP address from sender>"
+     *
+     * structure of FINGACK: "<type>, <IP address from sender>, <IP address of successor of sender>"
      */
     enum class MessageType {
         GET,
@@ -36,6 +41,8 @@ public:
         JOINACK,
         SUCC,
         SUCCACK,
+        FING,
+        FINGACK,
     };
     struct get_message{
         std::string IP_address;
@@ -59,6 +66,13 @@ public:
     struct succack_message{
         std::string IP_address;
         std::string ClosestKnownIP;
+    };
+    struct fing_message{
+        std::string IP_address;
+    };
+    struct fingack_message{
+        std::string IP_address;
+        std::string SuccessorIP;
     };
     constexpr static int FIXED_MESSAGE_SIZE = 1024;
 
@@ -85,4 +99,6 @@ public:
     joinack_message decode_joinack_message();
     succ_message decode_succ_message();
     succack_message decode_succack_message();
+    fing_message decode_fing_message();
+    fingack_message decode_fingack_message();
 };

@@ -188,6 +188,7 @@ void Peer::process_succack_message(Message message) {
     if (closestIPPosition > myPosition) {
         // set successor to msg.IP_address
         successor = closestIP;
+        predecessor = Poco::Net::SocketAddress(msg.IP_address);
     } else {
         connectors[closestIPPosition] = std::make_unique<MySocketConnector>(closestIP, reactor,
                                                                                              connections,
@@ -199,6 +200,46 @@ void Peer::process_succack_message(Message message) {
         Message ans(data);
 
         outgoingMessages[closestIPPosition].push_back(ans);
+    }
+}
+
+void Peer::process_fing_message(Message message, std::pair<const Hash, MyConnectionHandler *> connection) {
+    Message::fing_message msg = message.decode_fing_message();
+    Message::MessageData data{};
+
+    std::string ip = address.toString();
+    std::string succ = successor.toString();
+    std::string fullMessage = "FINGACC," + ip + "," + succ;
+    std::strncpy(data.data(), fullMessage.c_str(), data.size());
+    Message ans(data);
+
+    connection.second->ioInterface.queueOutgoingMessage(ans);
+}
+
+void Peer::process_fingack_message(Message message) {
+    Message::fingack_message msg = message.decode_fingack_message();
+    Message::MessageData data{};
+
+    auto fing_addr = Poco::Net::SocketAddress(msg.SuccessorIP);
+    Hash fing_hash = Hash::hashSocketAddress(fing_addr);
+    fingerTable[fing_hash] = fing_addr;
+
+    Hash me_hash = Hash(Hash::hashSocketAddress(address));
+    std::string half = "7fffffffffffffff";
+    Hash half_hash = Hash::fromString(half);
+
+    // if the finger is less than half a circle away, request his successor
+    if (fing_hash - me_hash < half_hash) {
+        connectors[fing_hash] = std::make_unique<MySocketConnector>(fing_addr, reactor,
+                                                                            connections,
+                                                                            connectionsMutex);
+
+        std::string ip = address.toString();
+        std::string fullMessage = "FING," + ip;
+        std::strncpy(data.data(), fullMessage.c_str(), data.size());
+        Message ans(data);
+
+        outgoingMessages[fing_hash].push_back(ans);
     }
 }
 
@@ -240,6 +281,12 @@ void Peer::processMessage(Message message, std::pair<const Hash, MyConnectionHan
     } else if ((message_type.substr(0, pos) == "SUCCACK")) {
         message.type = Message::MessageType::SUCCACK;
         process_succack_message(message);
+    } else if ((message_type.substr(0, pos) == "FING")) {
+        message.type = Message::MessageType::FING;
+        process_fing_message(message, connection);
+    } else if ((message_type.substr(0, pos) == "FINGACK")) {
+        message.type = Message::MessageType::FINGACK;
+        process_fingack_message(message);
     } else {
         std::cout << "Message from an unknown type, ignore it.";
     }
