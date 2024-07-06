@@ -3,7 +3,6 @@
 #include <list>
 #include <vector>
 #include <future>
-#include <utility>
 #include "primeCalculation.hpp"
 
 using namespace std;
@@ -72,28 +71,4 @@ vector<unsigned long long > primeCalculation::calculatePrimes(unsigned long long
 
 }
 
-void primeCalculation::checkSectorResult(const vector<unsigned long long>& sectorResult, unsigned long long lowerBound, unsigned long long upperBound){
-        //TODO search if SectorResults already exist before calculating again
-        vector<unsigned long long > ownCalculation = calculatePrimes(lowerBound, upperBound);
-        bool correctSector = true;
-        if (ownCalculation.size() != sectorResult.size()){
-            correctSector = false;
-            cout << "Wrong number of results";
-            goto endloop;
-        }
-        for (int i = 0; i < ownCalculation.size(); ++i) {
-            if (ownCalculation[i] != sectorResult[i]){
-                cout << "Value at position " << i << " is " << sectorResult[i] << " should be " << ownCalculation[i];
-                //TODO save Results as wrong? or throw away?
-                correctSector = false;
-                break;
-            }
-        }
-        endloop:
-        if (correctSector){
-            //TODO increase number of correct results
-            cout << "Sector correct";
-        }
-
-    }
 
