@@ -55,6 +55,8 @@ class Peer {
     Poco::Net::SocketAddress successor;
     Poco::Net::SocketAddress predecessor;
 
+    std::unordered_map<Hash, std::vector<Message>, Hash::Hasher> outgoingMessages;
+
     Hash id;
     Poco::Thread thread;
 

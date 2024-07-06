@@ -121,11 +121,10 @@ void Peer::process_joinack_message(Message message) {
     Message::joinack_message msg = message.decode_joinack_message();
     Message::MessageData data{};
 
-    // TODO send SUCC message to msg.ClosestKnownIP
-
     auto peer_addr = Poco::Net::SocketAddress(msg.ClosestKnownIP);
+    Hash peer_hash = Hash::hashSocketAddress(peer_addr);
 
-    connectors[Hash::hashSocketAddress(peer_addr)] = std::make_unique<MySocketConnector>(peer_addr, reactor,
+    connectors[peer_hash] = std::make_unique<MySocketConnector>(peer_addr, reactor,
                                                                                              connections,
                                                                                              connectionsMutex);
 
@@ -134,7 +133,9 @@ void Peer::process_joinack_message(Message message) {
     std::strncpy(data.data(), fullMessage.c_str(), data.size());
     Message ans(data);
 
-    connections[Hash::hashSocketAddress(peer_addr)]->ioInterface.queueOutgoingMessage(ans);
+    outgoingMessages[peer_hash].push_back(ans);
+
+    // connections[peer_hash]->ioInterface.queueOutgoingMessage(ans);
 }
 
 std::string Peer::findClosestPeer(std::string& peerIP) {
@@ -172,6 +173,7 @@ void Peer::process_succ_message(Message message, std::pair<const Hash, MyConnect
 
     std::strncpy(data.data(), fullMessage.c_str(), data.size());
     Message ans(data);
+
     connection.second->ioInterface.queueOutgoingMessage(ans);
 }
 
@@ -187,9 +189,7 @@ void Peer::process_succack_message(Message message) {
         // set successor to msg.IP_address
         successor = closestIP;
     } else {
-        // TODO send SUCC message to msg.ClosestKnownIP
-
-        connectors[Hash::hashSocketAddress(closestIP)] = std::make_unique<MySocketConnector>(closestIP, reactor,
+        connectors[closestIPPosition] = std::make_unique<MySocketConnector>(closestIP, reactor,
                                                                                              connections,
                                                                                              connectionsMutex);
 
@@ -198,7 +198,7 @@ void Peer::process_succack_message(Message message) {
         std::strncpy(data.data(), fullMessage.c_str(), data.size());
         Message ans(data);
 
-        connections[Hash::hashSocketAddress(closestIP)]->ioInterface.queueOutgoingMessage(ans);
+        outgoingMessages[closestIPPosition].push_back(ans);
     }
 }
 
@@ -264,6 +264,14 @@ void Peer::run() {
         for (auto &connection: connections) {
             Message message = connection.second->ioInterface.dequeueIncomingMessage();
             if (!message.isEmpty()) processMessage(message, connection);
+
+            auto it = outgoingMessages.find(connection.first);
+            if (it != outgoingMessages.end() && !it->second.empty()) {
+                for (const auto& msg : it->second) {
+                    connection.second->ioInterface.queueOutgoingMessage(msg);
+                }
+                outgoingMessages.erase(it);
+            }
         }
         connectionsLock.unlock();
     }
