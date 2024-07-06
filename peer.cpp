@@ -107,7 +107,6 @@ void Peer::process_join_message(Message message, std::pair<const Hash, MyConnect
     Message::MessageData data{};
 
     std::string closestIP = findClosestPeer(msg.IP_address);
-    // TODO add peer to finger table?
 
     std::string ip = address.toString();
     std::string fullMessage = "JOINACK," + ip + "," + closestIP;
@@ -124,18 +123,19 @@ void Peer::process_joinack_message(Message message) {
     auto peer_addr = Poco::Net::SocketAddress(msg.ClosestKnownIP);
     Hash peer_hash = Hash::hashSocketAddress(peer_addr);
 
-    connectors[peer_hash] = std::make_unique<MySocketConnector>(peer_addr, reactor,
-                                                                                             connections,
-                                                                                             connectionsMutex);
-
     std::string ip = address.toString();
     std::string fullMessage = "SUCC," + ip;
     std::strncpy(data.data(), fullMessage.c_str(), data.size());
     Message ans(data);
 
-    outgoingMessages[peer_hash].push_back(ans);
-
-    // connections[peer_hash]->ioInterface.queueOutgoingMessage(ans);
+    if (connections.find(peer_hash) != connections.end()) {
+        connections[peer_hash]->ioInterface.queueOutgoingMessage(ans);
+    } else {
+        connectors[peer_hash] = std::make_unique<MySocketConnector>(peer_addr, reactor,
+                                                                    connections,
+                                                                    connectionsMutex);
+        outgoingMessages[peer_hash].push_back(ans);
+    }
 }
 
 std::string Peer::findClosestPeer(std::string& peerIP) {
@@ -157,7 +157,6 @@ void Peer::process_succ_message(Message message, std::pair<const Hash, MyConnect
     Message::MessageData data{};
 
     std::string closestIP = findClosestPeer(msg.IP_address);
-    // TODO add peer to finger table?
 
     std::string ip = address.toString();
 
@@ -190,16 +189,19 @@ void Peer::process_succack_message(Message message) {
         successor = closestIP;
         predecessor = Poco::Net::SocketAddress(msg.IP_address);
     } else {
-        connectors[closestIPPosition] = std::make_unique<MySocketConnector>(closestIP, reactor,
-                                                                                             connections,
-                                                                                             connectionsMutex);
-
         std::string ip = address.toString();
         std::string fullMessage = "SUCC," + ip;
         std::strncpy(data.data(), fullMessage.c_str(), data.size());
         Message ans(data);
 
-        outgoingMessages[closestIPPosition].push_back(ans);
+        if (connections.find(closestIPPosition) != connections.end()) {
+            connections[closestIPPosition]->ioInterface.queueOutgoingMessage(ans);
+        } else {
+            connectors[closestIPPosition] = std::make_unique<MySocketConnector>(closestIP, reactor,
+                                                                                connections,
+                                                                                connectionsMutex);
+            outgoingMessages[closestIPPosition].push_back(ans);
+        }
     }
 }
 
@@ -230,16 +232,20 @@ void Peer::process_fingack_message(Message message) {
 
     // if the finger is less than half a circle away, request his successor
     if (fing_hash - me_hash < half_hash) {
-        connectors[fing_hash] = std::make_unique<MySocketConnector>(fing_addr, reactor,
-                                                                            connections,
-                                                                            connectionsMutex);
 
         std::string ip = address.toString();
         std::string fullMessage = "FING," + ip;
         std::strncpy(data.data(), fullMessage.c_str(), data.size());
         Message ans(data);
 
-        outgoingMessages[fing_hash].push_back(ans);
+        if (connections.find(fing_hash) != connections.end()) {
+            connections[fing_hash]->ioInterface.queueOutgoingMessage(ans);
+        } else {
+            connectors[fing_hash] = std::make_unique<MySocketConnector>(fing_addr, reactor,
+                                                                        connections,
+                                                                        connectionsMutex);
+            outgoingMessages[fing_hash].push_back(ans);
+        }
     }
 }
 
