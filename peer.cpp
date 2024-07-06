@@ -144,7 +144,7 @@ std::string Peer::findClosestPeer(std::string& peerIP) {
     Hash closestPeer = Hash::hashSocketAddress(address);
 
     for (const auto& entry: fingerTable) {
-        if ((entry.first < peerPosition) && (entry.first > closestPeer)) {
+        if ((entry.first.isBefore(peerPosition)) && (!entry.first.isBefore(closestPeer))) {
             closestPeer = entry.first;
         }
     }
@@ -184,7 +184,7 @@ void Peer::process_succack_message(Message message) {
     auto closestIP = Poco::Net::SocketAddress(msg.ClosestKnownIP);
     Hash closestIPPosition = Hash::hashSocketAddress(closestIP);
 
-    if (closestIPPosition > myPosition) {
+    if (myPosition.isBefore(closestIPPosition)) {
         // set successor to msg.IP_address
         successor = closestIP;
         predecessor = Poco::Net::SocketAddress(msg.IP_address);
@@ -231,7 +231,7 @@ void Peer::process_fingack_message(Message message) {
     Hash half_hash = Hash::fromString(half);
 
     // if the finger is less than half a circle away, request his successor
-    if (fing_hash - me_hash < half_hash) {
+    if ((fing_hash - me_hash).isBefore(half_hash)) {
 
         std::string ip = address.toString();
         std::string fullMessage = "FING," + ip;
