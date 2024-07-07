@@ -14,12 +14,9 @@ public:
     static void initialize();
 
 public:
-    static void saveResultLocally(const vector<unsigned long long int> &result,
+    static void saveResultLocally(const vector<unsigned long long int> &uncheckedVector,
                                   unsigned long long lowerBound,
                                   unsigned long long upperBound);
-
-public:
-    static tuple<vector<unsigned long long int>,unsigned long long, unsigned long long > findResultLocally (unsigned long long sectorId);
 
 public:
     static bool checkResult(
@@ -28,6 +25,20 @@ public:
             unsigned long long int upperBound
     );
 
+public:
+    static tuple<vector<unsigned long long int>,unsigned long long, unsigned long long > findConfirmedResultLocally (unsigned long long sectorId);
+
+public:
+    static tuple<
+            vector<unsigned long long int>,
+            unsigned long long int,
+            unsigned long long int,
+            int>
+            findUnconfirmedResultLocally(unsigned long long int sectorId);
+
+    static bool compareResult(vector<unsigned long long int> presentVector, vector<unsigned long long int> uncheckedVector);
+
+    static void printStuff();
 };
 
 

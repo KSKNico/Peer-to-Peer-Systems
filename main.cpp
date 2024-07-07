@@ -9,22 +9,26 @@
 
 
 int main() {
-
-    //std::future<vector<unsigned long long >> testFuture =  primeCalculation::calculateCurrentSector();
-    //vector<unsigned long long> result = testFuture.get();
-
     resultHandler::initialize();
+    ///*
+    vector<unsigned long long> testVector0 = primeCalculation::calculatePrimes(0,1000);
+    sectorHandler::handleSectorResultCalculated(testVector0,0,1000);
+    resultHandler::printStuff();
+    vector<unsigned long long> testVector1 = primeCalculation::calculatePrimes(1000,2000);
+    sectorHandler::handleSectorResultCalculated(testVector1,1000,2000);
+    resultHandler::printStuff();
+    vector<unsigned long long> testVector2 = primeCalculation::calculatePrimes(2000,3000);
+    sectorHandler::handleSectorResultCalculated(testVector2,2000,3000);
+    resultHandler::printStuff();
+    vector<unsigned long long> testVector3 = primeCalculation::calculatePrimes(9000,10000);
+    sectorHandler::handleSectorResultCalculated(testVector3,9000,10000);
+    resultHandler::printStuff();
+    sectorHandler::handleSectorResultCalculated(testVector1,1000,2000);
+    resultHandler::printStuff();
+    sectorHandler::handleSectorResultCalculated(testVector1,1000,2000);
+    resultHandler::printStuff();
 
-
-    sectorHandler::findResultLocally(0);
-    sectorHandler::findResultLocally(1000);
-    sectorHandler::findResultLocally(2000);
-    sectorHandler::findResultLocally(3000);
-
-    vector<unsigned long long> testVector = primeCalculation::calculatePrimes(0,1000);
-    resultHandler::saveResultLocally(testVector,0,1000);
-
-
+     //*/
     cout << "\n\n";
 
     auto peer_addr_1 = Poco::Net::SocketAddress("127.0.0.1:5001");
