@@ -17,10 +17,12 @@ find_package(Poco REQUIRED COMPONENTS Foundation Util Net)
 add_executable(${PROJECT_NAME} ${SOURCES}
         mySocketConnector.cpp
         mySocketAcceptor.cpp
-        primeCalculation.cpp
-        primeCalculation.hpp
-        sectorHandler.cpp
-        sectorHandler.hpp
+        sectorHandling/primeCalculation.cpp
+        sectorHandling/primeCalculation.hpp
+        sectorHandling/sectorHandler.cpp
+        sectorHandling/sectorHandler.hpp
+        sectorHandling/resultHandler.cpp
+        sectorHandling/resultHandler.hpp
 )
 
 target_link_libraries(${PROJECT_NAME} Poco::Foundation Poco::Util Poco::Net)
