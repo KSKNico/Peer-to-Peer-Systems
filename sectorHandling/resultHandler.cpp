@@ -38,7 +38,7 @@ void resultHandler::initialize() {
 
 }
 
-
+    //save result locally
 void resultHandler::saveResultLocally(const vector<unsigned long long >& uncheckedVector,
                                unsigned long long lowerBound,
                                unsigned long long upperBound
@@ -90,8 +90,6 @@ void resultHandler::saveResultLocally(const vector<unsigned long long >& uncheck
         }
     }
 }
-
-
 
 // if returned tuple vector has 0 as elements result was not present
 tuple<vector<unsigned long long int>,

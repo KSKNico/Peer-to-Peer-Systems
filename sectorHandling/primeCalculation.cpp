@@ -58,17 +58,4 @@ vector<unsigned long long > primeCalculation::calculatePrimes(unsigned long long
         return primes;
 }
 
-    std::future<vector<unsigned long long >> primeCalculation::calculateCurrentSector() {
-        unsigned long long  lowerBound = getLowerBound();
-        unsigned long long  upperBound = getUpperBound();
-
-        //vector<int > test3 = primeCalculation::calculatePrimes(test,test2);
-        //cout << "Test1 \n";
-        std::future<vector<unsigned long long>> currentSectorPrimes = std::async (primeCalculation::calculatePrimes,lowerBound,upperBound);
-        //cout << "Test2 \n";;
-        //cout << "\n" << "Test3 \n";
-        return currentSectorPrimes;
-
-}
-
 

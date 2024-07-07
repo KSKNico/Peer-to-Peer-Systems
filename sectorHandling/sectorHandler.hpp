@@ -7,13 +7,13 @@ using namespace std;
 class sectorHandler {
 
 
-    void handleSectorResultFromPeer(
+    static future<void> handleSectorResultFromPeer(
             vector<unsigned long long int> sectorResult,
             unsigned long long int lowerBound,
             unsigned long long int upperBound
             );
 public:
-    static void handleSectorResultCalculated(
+    static future<void> handleSectorResultCalculated(
             vector<unsigned long long int> sectorResult,
             unsigned long long int lowerBound,
             unsigned long long int upperBound
@@ -30,6 +30,10 @@ public:
     vector<unsigned long long int> getHighestLocalSector();
 
     vector<unsigned long long int> getHighestPeerSector();
+
+    static void initialize();
+
+    static future<void> calculateNewSector();
 };
 
 
