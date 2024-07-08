@@ -31,9 +31,11 @@ public:
 
     static void initialize();
 
-    static future<void> calculateNewSector();
+    static bool calculateNewSector();
 
-    static vector<unsigned long long int> findResultPeer(const string& ipAddress, unsigned long long int sectorId);
+    static void findResultPeer(const string& ipAddress, unsigned long long int sectorId);
+
+    static void testAll();
 };
 
 
