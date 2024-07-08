@@ -6,7 +6,8 @@ using namespace std;
 
 class primeCalculation {
 
-public: static std::future<vector<unsigned long long >> calculateCurrentSector();
+public:
+    static std::future<vector<unsigned long long >> calculateCurrentSector();
 
     static unsigned long long getLowerBound();
 

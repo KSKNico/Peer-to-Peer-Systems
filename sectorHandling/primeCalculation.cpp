@@ -58,4 +58,3 @@ vector<unsigned long long > primeCalculation::calculatePrimes(unsigned long long
         return primes;
 }
 
-

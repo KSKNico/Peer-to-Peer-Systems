@@ -14,7 +14,8 @@ public:
     static void handleSectorResultCalculated(
             vector<unsigned long long int> sectorResult,
             unsigned long long int lowerBound,
-            unsigned long long int upperBound
+            unsigned long long int upperBound,
+            string ipAddress
             );
 
 public:
@@ -23,9 +24,10 @@ public:
             unsigned long long >
             findResultLocally(unsigned long long int sectorId);
 
-    tuple<vector<unsigned long long>,unsigned long, unsigned long > getHighestLocalSector();
+    static tuple<vector<unsigned long long>,unsigned long, unsigned long > getHighestLocalSector();
 
-    tuple<vector<unsigned long long>,unsigned long, unsigned long > getHighestPeerSector(string ipAddress);
+    //static tuple<vector<unsigned long long>,unsigned long, unsigned long >
+    static void getHighestPeerSector(string ipAddress);
 
     static void initialize();
 
