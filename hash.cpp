@@ -16,6 +16,16 @@ Hash Hash::hashSocketAddress(Poco::Net::SocketAddress const &address) {
     return Hash(hashValue);
 }
 
+Hash Hash::hashInterval(unsigned long long intervalStart) {
+    engine.update(std::to_string(intervalStart));
+    auto d = engine.digest();
+    uint64_t hashValue = 0;
+    for (int i = 0; i < sizeof(uint64_t); i++) {
+        hashValue = (hashValue << 8) | d[i];
+    }
+    return Hash(hashValue);
+}
+
 bool Hash::compareHashes(Hash const &hash1, Hash const &hash2) {
     return hash1.hashValue == hash2.hashValue;
 }

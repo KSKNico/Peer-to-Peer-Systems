@@ -26,6 +26,8 @@ public:
 
     static Hash hashSocketAddress(Poco::Net::SocketAddress const &addr);
 
+    static Hash hashInterval(unsigned long long intervalStart);
+
     // calculates distance between two hashes
     // this wraps around the circle
     Hash distance(Hash const &other) const;

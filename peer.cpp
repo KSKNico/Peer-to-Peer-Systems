@@ -76,11 +76,43 @@ void Peer::process_get_message(Message message, std::pair<const Hash, MyConnecti
         }
         std::cout << "sending results" << std::endl;
     } else {
-        std::cout << "sending empty put message" << std::endl;
+        Hash interval_hash = Hash::hashInterval(message_info.start_of_interval);
+
+        std::string closestIP = findClosestPeer(interval_hash);
+        if (closestIP == ip) {
+            closestIP = successor.toString();
+        }
+        all = "GETACK," + ip + "," + interval + "," + closestIP;
+
+        std::cout << "sending getack message" << std::endl;
     }
     std::strncpy(data.data(), all.c_str(), data.size());
     Message return_message(data);
     connection.second->ioInterface.queueOutgoingMessage(return_message);
+}
+
+void Peer::process_getack_message(Message message) {
+    Message::getack_message msg = message.decode_getack_message();
+    Message::MessageData data{};
+
+    auto routing_addr = Poco::Net::SocketAddress(msg.RoutingIP);
+    Hash routing_hash = Hash::hashSocketAddress(routing_addr);
+
+    std::string ip = address.toString();
+    std::string interval = std::to_string(msg.start_of_interval);
+    std::string all = "GET," + ip + "," + interval;
+
+    std::strncpy(data.data(), all.c_str(), data.size());
+    Message ans(data);
+
+    if (connections.find(routing_hash) != connections.end()) {
+        connections[routing_hash]->ioInterface.queueOutgoingMessage(ans);
+    } else {
+        connectors[routing_hash] = std::make_unique<MySocketConnector>(routing_addr, reactor,
+                                                                    connections,
+                                                                    connectionsMutex);
+        outgoingMessages[routing_hash].push_back(ans);
+    }
 }
 
 void Peer::process_put_message(Message message) {
@@ -106,8 +138,10 @@ void Peer::process_join_message(Message message, std::pair<const Hash, MyConnect
     Message::join_message msg = message.decode_join_message();
     Message::MessageData data{};
 
-    std::string closestIP = findClosestPeer(msg.IP_address);
-    // TODO add peer to finger table?
+    auto peerIP = Poco::Net::SocketAddress(msg.IP_address);
+    Hash peerPosition = Hash::hashSocketAddress(peerIP);
+
+    std::string closestIP = findClosestPeer(peerPosition);
 
     std::string ip = address.toString();
     std::string fullMessage = "JOINACK," + ip + "," + closestIP;
@@ -121,29 +155,29 @@ void Peer::process_joinack_message(Message message) {
     Message::joinack_message msg = message.decode_joinack_message();
     Message::MessageData data{};
 
-    // TODO send SUCC message to msg.ClosestKnownIP
-
     auto peer_addr = Poco::Net::SocketAddress(msg.ClosestKnownIP);
-
-    connectors[Hash::hashSocketAddress(peer_addr)] = std::make_unique<MySocketConnector>(peer_addr, reactor,
-                                                                                             connections,
-                                                                                             connectionsMutex);
+    Hash peer_hash = Hash::hashSocketAddress(peer_addr);
 
     std::string ip = address.toString();
     std::string fullMessage = "SUCC," + ip;
     std::strncpy(data.data(), fullMessage.c_str(), data.size());
     Message ans(data);
 
-    connections[Hash::hashSocketAddress(peer_addr)]->ioInterface.queueOutgoingMessage(ans);
+    if (connections.find(peer_hash) != connections.end()) {
+        connections[peer_hash]->ioInterface.queueOutgoingMessage(ans);
+    } else {
+        connectors[peer_hash] = std::make_unique<MySocketConnector>(peer_addr, reactor,
+                                                                    connections,
+                                                                    connectionsMutex);
+        outgoingMessages[peer_hash].push_back(ans);
+    }
 }
 
-std::string Peer::findClosestPeer(std::string& peerIP) {
-    auto peer_addr = Poco::Net::SocketAddress(peerIP);
-    Hash peerPosition = Hash::hashSocketAddress(peer_addr);
+std::string Peer::findClosestPeer(Hash& position) {
     Hash closestPeer = Hash::hashSocketAddress(address);
 
     for (const auto& entry: fingerTable) {
-        if ((entry.first < peerPosition) && (entry.first > closestPeer)) {
+        if ((entry.first.isBefore(position)) && (!entry.first.isBefore(closestPeer))) {
             closestPeer = entry.first;
         }
     }
@@ -155,8 +189,10 @@ void Peer::process_succ_message(Message message, std::pair<const Hash, MyConnect
     Message::succ_message msg = message.decode_succ_message();
     Message::MessageData data{};
 
-    std::string closestIP = findClosestPeer(msg.IP_address);
-    // TODO add peer to finger table?
+    auto peerIP = Poco::Net::SocketAddress(msg.IP_address);
+    Hash peerPosition = Hash::hashSocketAddress(peerIP);
+
+    std::string closestIP = findClosestPeer(peerPosition);
 
     std::string ip = address.toString();
 
@@ -172,6 +208,7 @@ void Peer::process_succ_message(Message message, std::pair<const Hash, MyConnect
 
     std::strncpy(data.data(), fullMessage.c_str(), data.size());
     Message ans(data);
+
     connection.second->ioInterface.queueOutgoingMessage(ans);
 }
 
@@ -183,22 +220,68 @@ void Peer::process_succack_message(Message message) {
     auto closestIP = Poco::Net::SocketAddress(msg.ClosestKnownIP);
     Hash closestIPPosition = Hash::hashSocketAddress(closestIP);
 
-    if (closestIPPosition > myPosition) {
+    if (myPosition.isBefore(closestIPPosition)) {
         // set successor to msg.IP_address
         successor = closestIP;
+        predecessor = Poco::Net::SocketAddress(msg.IP_address);
     } else {
-        // TODO send SUCC message to msg.ClosestKnownIP
-
-        connectors[Hash::hashSocketAddress(closestIP)] = std::make_unique<MySocketConnector>(closestIP, reactor,
-                                                                                             connections,
-                                                                                             connectionsMutex);
-
         std::string ip = address.toString();
         std::string fullMessage = "SUCC," + ip;
         std::strncpy(data.data(), fullMessage.c_str(), data.size());
         Message ans(data);
 
-        connections[Hash::hashSocketAddress(closestIP)]->ioInterface.queueOutgoingMessage(ans);
+        if (connections.find(closestIPPosition) != connections.end()) {
+            connections[closestIPPosition]->ioInterface.queueOutgoingMessage(ans);
+        } else {
+            connectors[closestIPPosition] = std::make_unique<MySocketConnector>(closestIP, reactor,
+                                                                                connections,
+                                                                                connectionsMutex);
+            outgoingMessages[closestIPPosition].push_back(ans);
+        }
+    }
+}
+
+void Peer::process_fing_message(Message message, std::pair<const Hash, MyConnectionHandler *> connection) {
+    Message::fing_message msg = message.decode_fing_message();
+    Message::MessageData data{};
+
+    std::string ip = address.toString();
+    std::string succ = successor.toString();
+    std::string fullMessage = "FINGACC," + ip + "," + succ;
+    std::strncpy(data.data(), fullMessage.c_str(), data.size());
+    Message ans(data);
+
+    connection.second->ioInterface.queueOutgoingMessage(ans);
+}
+
+void Peer::process_fingack_message(Message message) {
+    Message::fingack_message msg = message.decode_fingack_message();
+    Message::MessageData data{};
+
+    auto fing_addr = Poco::Net::SocketAddress(msg.SuccessorIP);
+    Hash fing_hash = Hash::hashSocketAddress(fing_addr);
+    fingerTable[fing_hash] = fing_addr;
+
+    Hash me_hash = Hash(Hash::hashSocketAddress(address));
+    std::string half = "7fffffffffffffff";
+    Hash half_hash = Hash::fromString(half);
+
+    // if the finger is less than half a circle away, request his successor
+    if ((fing_hash - me_hash) < half_hash) {
+
+        std::string ip = address.toString();
+        std::string fullMessage = "FING," + ip;
+        std::strncpy(data.data(), fullMessage.c_str(), data.size());
+        Message ans(data);
+
+        if (connections.find(fing_hash) != connections.end()) {
+            connections[fing_hash]->ioInterface.queueOutgoingMessage(ans);
+        } else {
+            connectors[fing_hash] = std::make_unique<MySocketConnector>(fing_addr, reactor,
+                                                                        connections,
+                                                                        connectionsMutex);
+            outgoingMessages[fing_hash].push_back(ans);
+        }
     }
 }
 
@@ -240,6 +323,15 @@ void Peer::processMessage(Message message, std::pair<const Hash, MyConnectionHan
     } else if ((message_type.substr(0, pos) == "SUCCACK")) {
         message.type = Message::MessageType::SUCCACK;
         process_succack_message(message);
+    } else if ((message_type.substr(0, pos) == "FING")) {
+        message.type = Message::MessageType::FING;
+        process_fing_message(message, connection);
+    } else if ((message_type.substr(0, pos) == "FINGACK")) {
+        message.type = Message::MessageType::FINGACK;
+        process_fingack_message(message);
+    } else if ((message_type.substr(0, pos) == "GETACK")) {
+        message.type = Message::MessageType::GETACK;
+        process_getack_message(message);
     } else {
         std::cout << "Message from an unknown type, ignore it.";
     }
@@ -264,6 +356,14 @@ void Peer::run() {
         for (auto &connection: connections) {
             Message message = connection.second->ioInterface.dequeueIncomingMessage();
             if (!message.isEmpty()) processMessage(message, connection);
+
+            auto it = outgoingMessages.find(connection.first);
+            if (it != outgoingMessages.end() && !it->second.empty()) {
+                for (const auto& msg : it->second) {
+                    connection.second->ioInterface.queueOutgoingMessage(msg);
+                }
+                outgoingMessages.erase(it);
+            }
         }
         connectionsLock.unlock();
 
