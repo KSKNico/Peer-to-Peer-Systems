@@ -1,6 +1,7 @@
 
 #include <iostream>
 #include <list>
+#include <utility>
 #include <vector>
 #include <future>
 #include <map>
@@ -8,6 +9,8 @@
 #include "sectorHandler.hpp"
 #include "resultHandler.hpp"
 #include "primeCalculation.hpp"
+#include "../message.hpp"
+#include "../iointerface.hpp"
 
 using namespace std;
 
@@ -46,16 +49,18 @@ future<void> sectorHandler::calculateNewSector(){
 }
 
 //handle incoming result from another peer
-future<void> sectorHandler::handleSectorResultFromPeer(vector<unsigned long long> sectorResult,
-                                               unsigned long long lowerBound,
-                                               unsigned long long upperBound){
+void sectorHandler::handleSectorResultFromPeer(Message message){
+    Message::put_message decodePutMessage = message.decode_put_message();
+    vector<unsigned long long> sectorResult = decodePutMessage.primes;
+    unsigned long long lowerBound = decodePutMessage.start_of_interval;
+    unsigned long long upperBound  = lowerBound+1000;
     resultHandler::saveResultLocally(sectorResult,lowerBound,upperBound);
 }
 
      //handles calculation we did ourselves
-     //     save locally?
+     //     save locally
      //     send to responsible Peer
-future<void> sectorHandler::handleSectorResultCalculated(vector<unsigned long long> sectorResult,
+void sectorHandler::handleSectorResultCalculated(vector<unsigned long long> sectorResult,
                                                  unsigned long long lowerBound,
                                                  unsigned long long upperBound){
 
@@ -69,18 +74,37 @@ tuple<vector<unsigned long long >,unsigned long long, unsigned long long > secto
 }
 
 //find the highest Sector you have confirmed results for
-vector<unsigned long long> sectorHandler::getHighestLocalSector(){
-    //TODO
+tuple<vector<unsigned long long>,unsigned long, unsigned long > sectorHandler::getHighestLocalSector(){
+    return resultHandler::highestSector();
 }
 
 //get the highest confirmed Sector of a Peer
-vector<unsigned long long > sectorHandler::getHighestPeerSector() {
-    //TODO
+tuple<vector<unsigned long long int>, unsigned long, unsigned long> sectorHandler::getHighestPeerSector(string ipAddress) {
+    Message::MessageData data = std::array<char,1024>();
+    //char* chr = ipAddress.data();
+    const char *cstr1 = "FIND";
+    const char *cstr2 = ipAddress.c_str();
+    data.fill(*cstr1);
+    data.fill(*cstr2);
+    auto getMessage = Message(data);
+    IOInterface ioInterface;
+    ioInterface.queueOutgoingMessage(getMessage);
+
 }
 
 //get specific Result from another Peer
-vector<unsigned long long > sectorHandler::findResultPeer(unsigned long long sectorId){
-    //TODO
+vector<unsigned long long > sectorHandler::findResultPeer(const string& ipAddress,unsigned long long sectorId){
+    Message::MessageData data = std::array<char,1024>();
+    //char* chr = ipAddress.data();
+
+    const char *cstr1 = "GET";
+    const char *cstr2 = ipAddress.c_str();
+    data.fill(*cstr1);
+    data.fill(*cstr2);
+    auto getMessage = Message(data);
+    IOInterface ioInterface;
+    ioInterface.queueOutgoingMessage(getMessage);
+
 }
 
 

@@ -1,19 +1,17 @@
 
 #ifndef PRIME_FINDER_SECTORHANDLER_HPP
 #define PRIME_FINDER_SECTORHANDLER_HPP
+#include "../message.hpp"
 
 using namespace std;
 
 class sectorHandler {
 
-
-    static future<void> handleSectorResultFromPeer(
-            vector<unsigned long long int> sectorResult,
-            unsigned long long int lowerBound,
-            unsigned long long int upperBound
-            );
 public:
-    static future<void> handleSectorResultCalculated(
+    static void handleSectorResultFromPeer(Message message);
+
+public:
+    static void handleSectorResultCalculated(
             vector<unsigned long long int> sectorResult,
             unsigned long long int lowerBound,
             unsigned long long int upperBound
@@ -25,15 +23,15 @@ public:
             unsigned long long >
             findResultLocally(unsigned long long int sectorId);
 
-    vector<unsigned long long int> findResultPeer(unsigned long long int lowerBound);
+    tuple<vector<unsigned long long>,unsigned long, unsigned long > getHighestLocalSector();
 
-    vector<unsigned long long int> getHighestLocalSector();
-
-    vector<unsigned long long int> getHighestPeerSector();
+    tuple<vector<unsigned long long>,unsigned long, unsigned long > getHighestPeerSector(string ipAddress);
 
     static void initialize();
 
     static future<void> calculateNewSector();
+
+    static vector<unsigned long long int> findResultPeer(const string& ipAddress, unsigned long long int sectorId);
 };
 
 

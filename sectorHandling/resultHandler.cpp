@@ -39,9 +39,7 @@ void resultHandler::initialize() {
 }
 
     //save result locally
-void resultHandler::saveResultLocally(const vector<unsigned long long >& uncheckedVector,
-                               unsigned long long lowerBound,
-                               unsigned long long upperBound
+void resultHandler::saveResultLocally(const vector<unsigned long long >& uncheckedVector, unsigned long long lowerBound, unsigned long long upperBound
 ) {
     //check if result is in confirmed results
     tuple<vector<unsigned long long int>,
@@ -92,9 +90,7 @@ void resultHandler::saveResultLocally(const vector<unsigned long long >& uncheck
 }
 
 // if returned tuple vector has 0 as elements result was not present
-tuple<vector<unsigned long long int>,
-        unsigned long long,
-        unsigned long long > resultHandler::findConfirmedResultLocally(unsigned long long int sectorId) {
+tuple<vector<unsigned long long int>, unsigned long long, unsigned long long > resultHandler::findConfirmedResultLocally(unsigned long long int sectorId) {
 
     tuple<vector<unsigned long long>,
             unsigned long long,
@@ -115,41 +111,29 @@ tuple<vector<unsigned long long int>,
     return returnTuple;
 }
 
-
 // if returned tuple vector has 0 as elements result was not found
-tuple<vector<unsigned long long int>,
-        unsigned long long,
-        unsigned long long,
-        int> resultHandler::findUnconfirmedResultLocally(unsigned long long int sectorId) {
+tuple<vector<unsigned long long int>, unsigned long long, unsigned long long, int> resultHandler::findUnconfirmedResultLocally(unsigned long long int sectorId) {
 
-    tuple<vector<unsigned long long>,
-            unsigned long long,
-            unsigned long long,
-            int>
-            returnTuple;
+    tuple<vector<unsigned long long>, unsigned long long, unsigned long long, int> returnTuple;
     // init vector with zero values to distinguish result found from not found
     vector<unsigned long long> zeroVector;
     zeroVector.push_back(0);
     returnTuple = make_tuple(zeroVector, 0, 0, 0);
 
     for (const auto & [key, value] : unconfirmedResultsOrderedMap){
-
         vector <unsigned long long> neededResult = get<0>(value);
         unsigned long long lowerSectorBound = get<1>(value);
         unsigned long long upperSectorBound = get<2>(value);
         int numberReceived = get<3>(value);
 
         if (sectorId == lowerSectorBound) {
-
             returnTuple = make_tuple(neededResult, lowerSectorBound, upperSectorBound,numberReceived);
         }
     }
     return returnTuple;
 }
 
-bool resultHandler::checkResult( vector<unsigned long long int> sectorResult,
-                                 unsigned long long int lowerBound,
-                                 unsigned long long int upperBound){
+bool resultHandler::checkResult( vector<unsigned long long int> sectorResult, unsigned long long int lowerBound, unsigned long long int upperBound){
     bool sectorCorrect = true;
     vector<unsigned long long > ownCalculation = primeCalculation::calculatePrimes(lowerBound, upperBound);
 
@@ -179,6 +163,17 @@ bool resultHandler::compareResult(vector<unsigned long long int> presentVector, 
     return true;
 }
 
+tuple<vector<unsigned long long int>, unsigned long long, unsigned long > resultHandler::highestSector(){
+    if (!confirmedResultsOrderedMap.empty()){
+        return confirmedResultsOrderedMap.end()->second;
+    }
+
+    tuple<vector<unsigned long long int>, unsigned long long, unsigned long > returnTuple;
+    vector<unsigned long long> zeroVector;
+    zeroVector.push_back(0);
+    returnTuple = make_tuple(zeroVector, 0, 0);
+    return returnTuple;
+}
 
 void resultHandler::printStuff(){
     cout << "Confirmed\n";

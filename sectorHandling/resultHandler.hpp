@@ -39,6 +39,8 @@ public:
     static bool compareResult(vector<unsigned long long int> presentVector, vector<unsigned long long int> uncheckedVector);
 
     static void printStuff();
+
+    static tuple<vector<unsigned long long int>, unsigned long long int, unsigned long> highestSector();
 };
 
 
