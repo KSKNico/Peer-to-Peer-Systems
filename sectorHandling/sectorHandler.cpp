@@ -9,9 +9,8 @@
 #include "sectorHandler.hpp"
 #include "resultHandler.hpp"
 #include "primeCalculation.hpp"
-#include "../message.hpp"
 #include "../iointerface.hpp"
-
+#include "../peer.hpp"
 using namespace std;
 
 void sectorHandler::initialize(){
@@ -19,20 +18,20 @@ void sectorHandler::initialize(){
     resultHandler::initialize();
     ///* for testing purposes
     vector<unsigned long long> testVector0 = primeCalculation::calculatePrimes(0,1000);
-    sectorHandler::handleSectorResultCalculated(testVector0,0,1000,"192.168.178.1:12345");
+    sectorHandler::handleSectorResultCalculated(testVector0,0,1000,"-1");
     //resultHandler::printStuff();
     vector<unsigned long long> testVector1 = primeCalculation::calculatePrimes(1000,2000);
-    sectorHandler::handleSectorResultCalculated(testVector1,1000,2000,"192.168.178.1:12345");
+    sectorHandler::handleSectorResultCalculated(testVector1,1000,2000,"-1");
     //resultHandler::printStuff();
     vector<unsigned long long> testVector2 = primeCalculation::calculatePrimes(2000,3000);
-    sectorHandler::handleSectorResultCalculated(testVector2,2000,3000,"192.168.178.1:12345");
+    sectorHandler::handleSectorResultCalculated(testVector2,2000,3000,"-1");
     //resultHandler::printStuff();
     vector<unsigned long long> testVector3 = primeCalculation::calculatePrimes(9000,10000);
-    sectorHandler::handleSectorResultCalculated(testVector3,9000,10000,"192.168.178.1:12345");
+    sectorHandler::handleSectorResultCalculated(testVector3,9000,10000,"-1");
     //resultHandler::printStuff();
-    sectorHandler::handleSectorResultCalculated(testVector1,1000,2000,"192.168.178.1:12345");
+    sectorHandler::handleSectorResultCalculated(testVector1,1000,2000,"-1");
     //resultHandler::printStuff();
-    sectorHandler::handleSectorResultCalculated(testVector1,1000,2000,"192.168.178.1:12345");
+    sectorHandler::handleSectorResultCalculated(testVector1,1000,2000,"-1");
     //resultHandler::printStuff();
 
     //cout << "\n\n";
@@ -45,6 +44,8 @@ bool sectorHandler::calculateNewSector(){
     vector<unsigned long long> newCalc = primeCalculation::calculatePrimes(lowerBound,upperBound);
     sectorHandler::handleSectorResultCalculated(newCalc,lowerBound,upperBound,"-1");
     if (get<0>(resultHandler::findConfirmedResultLocally(lowerBound)).at(0) != 0){
+        //pair<unsigned long long, vector<unsigned long long >> newCalcPair (lowerBound,newCalc);
+        //Peer::prime_intervals.insert(newCalcPair);
         cout << "New Sector calculated\n";
         return true;
     }else if (get<0>(resultHandler::findUnconfirmedResultLocally(lowerBound)).at(0) != 0){
@@ -53,6 +54,10 @@ bool sectorHandler::calculateNewSector(){
     }
     return false;
 }
+//pair<unsigned long long, vector<unsigned long long >> newCalcPair (lowerBound,newCalc);
+//Peer::prime_intervals.insert(newCalcPair);
+
+
 
 //handle incoming result from another peer
 void sectorHandler::handleSectorResultFromPeer(Message message){
@@ -62,7 +67,6 @@ void sectorHandler::handleSectorResultFromPeer(Message message){
     unsigned long long lowerBound = decodePutMessage.start_of_interval;
     unsigned long long upperBound  = lowerBound+1000;
     resultHandler::saveResultLocally(sectorResult,lowerBound,upperBound);
-
 }
 
      //handles calculation we did ourselves
@@ -84,9 +88,10 @@ void sectorHandler::handleSectorResultCalculated(vector<unsigned long long> sect
         string s1 = "PUT"+delim;
         string s2 = ipAddressPeer+delim;
         string vectorString;
-        for (unsigned long long i : sectorResult) {
-            vectorString.append(to_string(i));
-            vectorString.append(delim);
+        for (int i = 0 ; i < sectorResult.size();i++) {
+            vectorString.append(to_string(sectorResult[i]));
+            if ((i<sectorResult.size()-1))
+                vectorString.append(",");
         }
         string s3 = vectorString;
         string s4 = s1+s2+s3;
@@ -97,7 +102,7 @@ void sectorHandler::handleSectorResultCalculated(vector<unsigned long long> sect
         auto putMessage = Message(data);
         IOInterface ioInterface;
         ioInterface.queueOutgoingMessage(putMessage);
-        //cout << "putMessage queued\n";
+        cout << "putMessage queued for Peer\n";
     }
 
 
@@ -108,7 +113,9 @@ void sectorHandler::handleSectorResultCalculated(vector<unsigned long long> sect
 //setting lowerBound to -1 indicates search for highest local sector
 tuple<vector<unsigned long long >,unsigned long long, unsigned long long > sectorHandler::findResultLocally(unsigned long long lowerBound){
     if (lowerBound == ULLONG_MAX){
+        cout << "Returning highest sector";
         return sectorHandler::getHighestLocalSector();
+
     }
     cout<< "Local Result found\n";
     return resultHandler::findConfirmedResultLocally(lowerBound);
@@ -175,12 +182,13 @@ void sectorHandler::testAll(){
     Message::MessageData data = std::array<char,1024>();
     string delim = ",";
     string s1 = "PUT"+delim;
-    string s2 = "127.0.0.1:5004"+delim;
+    string s2 = "127.0.0.1:5002"+delim+"10000,";
     string vectorString;
     vector<unsigned long long > vectorTest = primeCalculation::calculatePrimes(10000,11000);
-    for (unsigned long long i : vectorTest) {
-        vectorString.append(to_string(i));
-        vectorString.append(",");
+    for (int i = 0 ; i < vectorTest.size();i++) {
+        vectorString.append(to_string(vectorTest[i]));
+        if ((i<vectorTest.size()-1))
+            vectorString.append(",");
     }
     string s3 = vectorString;
     string s4 = s1+s2+s3;
@@ -189,10 +197,33 @@ void sectorHandler::testAll(){
     }
     auto putMessage = Message(data);
 
-    future<void> test5 = async(launch::async,sectorHandler::handleSectorResultFromPeer,putMessage);
+    //future<void> test5 = async(launch::async,sectorHandler::handleSectorResultFromPeer,putMessage);
+    auto peer_addr_1 = Poco::Net::SocketAddress("127.0.0.1:5005");
+    Peer peer_1(peer_addr_1);
+    peer_1.process_put_message(putMessage);
     cout<<"\n";
 
 }
+
+unordered_map<unsigned long long, vector<unsigned long long>> sectorHandler::getAllResults() {
+
+    map<unsigned long long, tuple<vector<unsigned long long>, unsigned long long, unsigned long long >>
+            mapUnedited = resultHandler::getAllConfirmedResults();
+    unordered_map<unsigned long long, vector<unsigned long long>> resultsEdited;
+
+    for (int i = 0; i < mapUnedited.size(); ++i) {
+        tuple<vector<unsigned long long>, unsigned long long, unsigned long long >tupleUnedited = mapUnedited[i];
+        vector<unsigned long long> vectorUnedited = get<0>(tupleUnedited);
+        unsigned long long lowerBound = get<1>(tupleUnedited);
+        //cout << lowerBound << " " << vectorUnedited.at(i) << "\n";
+        resultsEdited.insert(
+                pair <unsigned long long,
+                        vector<unsigned long long>>
+                        (lowerBound, vectorUnedited));
+    }
+    return resultsEdited;
+}
+
 
 
 

@@ -38,7 +38,8 @@ void resultHandler::initialize() {
 
 }
 
-    //save result locally
+
+//save result locally
 void resultHandler::saveResultLocally(const vector<unsigned long long >& uncheckedVector, unsigned long long lowerBound, unsigned long long upperBound
 ) {
     //check if result is in confirmed results
@@ -68,6 +69,7 @@ void resultHandler::saveResultLocally(const vector<unsigned long long >& uncheck
                     resultTupleLocally = make_tuple(uncheckedVector,lowerBound,upperBound);
                     unsigned long long test = lowerBound/1000;
                     confirmedResultsOrderedMap[test] = resultTupleLocally;
+
                     unconfirmedResultsOrderedMap.erase(test);
                 } else {
                 resultTupleLocallyUnconfirmed = make_tuple(uncheckedVector,lowerBound,upperBound,numberReceived);
@@ -139,7 +141,7 @@ bool resultHandler::checkResult( vector<unsigned long long int> sectorResult, un
 
     if (ownCalculation.size() != sectorResult.size()){
         sectorCorrect = false;
-        cout << "Wrong number of results";
+        cout << "Wrong number of results\n";
         goto endloop;
     }
     for (int i = 0; i < ownCalculation.size(); ++i) {
@@ -205,6 +207,11 @@ void resultHandler::printStuff(){
     }
 
     cout << "Round Finished\n\n";
+}
+
+map<unsigned long long, tuple<vector<unsigned long long>, unsigned long long, unsigned long long >>
+resultHandler::getAllConfirmedResults() {
+    return confirmedResultsOrderedMap;
 }
 
 

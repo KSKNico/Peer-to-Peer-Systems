@@ -1,13 +1,18 @@
 
 #ifndef PRIME_FINDER_SECTORHANDLER_HPP
 #define PRIME_FINDER_SECTORHANDLER_HPP
+
+#include <unordered_map>
 #include "../message.hpp"
 
 using namespace std;
 
 class sectorHandler {
-
 public:
+    static unordered_map<unsigned long long, vector<unsigned long long>> getAllResults();
+
+
+        public:
     static void handleSectorResultFromPeer(Message message);
 
 public:

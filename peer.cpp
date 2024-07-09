@@ -2,6 +2,7 @@
 #include <iostream>
 
 #include "Poco/Net/SocketReactor.h"
+#include "sectorHandling/sectorHandler.hpp"
 
 Peer::Peer(Poco::Net::SocketAddress ownAddress, std::vector<Poco::Net::SocketAddress> remoteAddresses) :
         reactor(), serverSocket(ownAddress), acceptor(serverSocket, reactor, connections, connectionsMutex),
@@ -68,8 +69,20 @@ void Peer::process_get_message(Message message, std::pair<const Hash, MyConnecti
     std::string interval = std::to_string(message_info.start_of_interval);
     std::string all = "PUT," + ip + "," + interval;
 
-    if (prime_intervals.contains(message_info.start_of_interval)) {      // if peer stores the primes of the requested interval
-        std::vector<unsigned long long> result = prime_intervals[message_info.start_of_interval];
+    //updating results for safety reasons
+    unordered_map<unsigned long long, vector<unsigned long long>> localResults = sectorHandler::getAllResults();
+    for (auto & localResult : localResults) {
+        unsigned long long key = localResult.first;
+        vector<unsigned long long > value = localResult.second;
+        prime_intervals.operator[](key) = value;
+        //cout << (prime_intervals.at(key)[0]);
+    }
+
+    if (prime_intervals.contains(message_info.start_of_interval)) {
+        // if peer stores the primes of the requested interval
+        //std::vector<unsigned long long> result = prime_intervals[message_info.start_of_interval];
+
+        std::vector<unsigned long long> result = get<0>(sectorHandler::findResultLocally(message_info.start_of_interval));
         for (auto prime: result) {
             std::string str = std::to_string(prime);
             all += "," + str;
@@ -89,6 +102,8 @@ void Peer::process_get_message(Message message, std::pair<const Hash, MyConnecti
     std::strncpy(data.data(), all.c_str(), data.size());
     Message return_message(data);
     connection.second->ioInterface.queueOutgoingMessage(return_message);
+
+
 }
 
 void Peer::process_getack_message(Message message) {
@@ -122,7 +137,16 @@ void Peer::process_put_message(Message message) {
         std::cout << "empty prime vector, nothing to store in map" << std::endl;
         return;
     }
-    if (prime_intervals.contains(message_info.start_of_interval)) {      // if peer already has results for this interval
+    unordered_map<unsigned long long, vector<unsigned long long>> localResults = sectorHandler::getAllResults();
+    for (auto & localResult : localResults) {
+        unsigned long long key = localResult.first;
+        vector<unsigned long long > value = localResult.second;
+        prime_intervals.operator[](key) = value;
+        //cout << (prime_intervals.at(key)[0]);
+    }
+
+    // if peer already has results for this interval
+    if (prime_intervals.contains(message_info.start_of_interval)) {
         std::vector<unsigned long long> result = prime_intervals[message_info.start_of_interval];
         if (!(message_info.primes.size() == result.size() &&
               std::equal(message_info.primes.begin(), message_info.primes.end(), result.begin()))) {
@@ -130,6 +154,7 @@ void Peer::process_put_message(Message message) {
         }
     } else {
         prime_intervals[message_info.start_of_interval] = message_info.primes;
+        sectorHandler::handleSectorResultFromPeer(message);
         std::cout << "updated map with results" << std::endl;
     }
 }

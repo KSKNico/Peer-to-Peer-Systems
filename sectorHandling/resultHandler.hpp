@@ -14,6 +14,10 @@ public:
     static void initialize();
 
 public:
+    static map<unsigned long long , tuple<vector<unsigned long long>,unsigned long long, unsigned long long >>
+    getAllConfirmedResults();
+
+public:
     static void saveResultLocally(const vector<unsigned long long int> &uncheckedVector,
                                   unsigned long long lowerBound,
                                   unsigned long long upperBound);

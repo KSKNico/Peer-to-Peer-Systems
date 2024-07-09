@@ -39,8 +39,11 @@ Message::get_message Message::decode_get_message() {
 
 Message::put_message Message::decode_put_message() {
     put_message msg;
-    std::string str(data.data(), data.size());
-
+    std::string str1(data.data(), data.size());
+    std::string str = str1;
+    if (!str1.starts_with("1")){
+         str = str1.substr(4,str1.size()-4);
+    }
     // find the first comma to separate IP_address and the rest
     size_t pos = str.find(',');
     if (pos != std::string::npos) {
