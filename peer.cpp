@@ -379,20 +379,21 @@ void Peer::processMessage(Message message, std::pair<const Hash, MyConnectionHan
 }
 
 void Peer::stabilize() {
-    Message::MessageData data = std::array<char,1024>();
-    std::string str1 = "GET,";
-    std::string str2 = std::move(address.toString())+",";
-    std::string str3 = std::to_string(-1);
-    std::string str4 = str1+str2+str3;
-    for (int i = 0; i < str4.size(); ++i) {
-        data[i] = str4.at(i);
-        //cout << data[i];
-    }
+    Message::MessageData data{};
+    std::string str = "PRED," + address.toString();
 
-    auto getMessage = Message(data);
+    std::strncpy(data.data(), str.c_str(), data.size());
+
+    Message message(data);
 
     MyConnectionHandler *handler = connections[Hash::hashSocketAddress(successor)];
-    handler->ioInterface.queueOutgoingMessage(getMessage);
+
+    if(handler == nullptr){
+        std::cout << "successor address not found" << std::endl;
+        return;
+    }
+
+    handler->ioInterface.queueOutgoingMessage(message);
     /*
      * send message to successor -> "who is your predecessor"
      *
