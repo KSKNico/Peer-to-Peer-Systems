@@ -349,6 +349,19 @@ void Peer::stabilize() {
      */
 }
 
+
+void Peer::initFingerTable(const std::pair<const Hash, MyConnectionHandler *> successorConnection) {
+    // sends the initial FING message to the successor
+    std::string ip = address.toString();
+    std::string fullMessage = "FING," + ip;
+    Message::MessageData data{};
+    std::strncpy(data.data(), fullMessage.c_str(), data.size());
+
+    Message message(data);
+
+    successorConnection.second->ioInterface.queueOutgoingMessage(message);
+}
+
 void Peer::run() {
     while (true) {
 

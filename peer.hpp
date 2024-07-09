@@ -51,6 +51,7 @@ class Peer {
     void process_succack_message(Message message);
     void process_fing_message(Message message, std::pair<const Hash, MyConnectionHandler *> connection);
     void process_fingack_message(Message message);
+    void initFingerTable(const std::pair<const Hash, MyConnectionHandler *> successorConnection);
 
     std::string findClosestPeer(Hash& position);
 
