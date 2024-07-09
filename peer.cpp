@@ -158,6 +158,8 @@ void Peer::process_joinack_message(Message message) {
     auto peer_addr = Poco::Net::SocketAddress(msg.ClosestKnownIP);
     Hash peer_hash = Hash::hashSocketAddress(peer_addr);
 
+    predecessor = peer_addr;
+
     std::string ip = address.toString();
     std::string fullMessage = "SUCC," + ip;
     std::strncpy(data.data(), fullMessage.c_str(), data.size());
