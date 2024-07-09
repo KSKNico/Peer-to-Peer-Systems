@@ -16,14 +16,13 @@ MyConnectionHandler::~MyConnectionHandler() {
 
 void MyConnectionHandler::onReadable(Poco::Net::ReadableNotification* pNf) {
     pNf->release();
-    
+
     int byteCount = _socket.receiveBytes(buffer);
 
-    if (buffer.sizeBytes() == Message::FIXED_MESSAGE_SIZE) {
+    if (buffer.used() == Message::FIXED_MESSAGE_SIZE) {
         // we have one full message
         auto msg = Message::fromBuffer(buffer);
-        buffer.clear(); 
-
+        buffer.drain();
         ioInterface.queueIncomingMessage(msg);
     }
 }
@@ -33,7 +32,7 @@ void MyConnectionHandler::onWritable(Poco::Net::WritableNotification* pNf) {
     
     if (ioInterface.getOutgoingMessageCount() > 0){
         auto msg = ioInterface.dequeueOutgoingMessage();
-        auto buffer = Message::toBuffer(msg);
-        _socket.sendBytes(buffer.begin(), buffer.sizeBytes());
+        auto _buffer = Message::toBuffer(msg);
+        _socket.sendBytes(_buffer.begin(), _buffer.sizeBytes());
     }
 }

@@ -5,6 +5,7 @@
 #include <vector>
 
 #include "Poco/Buffer.h"
+#include "Poco/FIFOBuffer.h"
 
 // a message is ascii encoded and is always 1024 bytes long
 class Message {
@@ -113,6 +114,7 @@ public:
     static Message deserialize(MessageData data);
 
     static Message fromBuffer(const Poco::Buffer<char> &buffer);
+    static Message fromBuffer(Poco::BasicFIFOBuffer<char> &buffer);
     static Poco::Buffer<char> toBuffer(const Message &message);
 
     get_message decode_get_message();

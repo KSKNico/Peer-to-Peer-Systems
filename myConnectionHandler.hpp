@@ -12,7 +12,7 @@ public:
     void onReadable(Poco::Net::ReadableNotification* pNf);
     void onWritable(Poco::Net::WritableNotification* pNf);
     IOInterface ioInterface;
-    Poco::Buffer<char> buffer;
+    Poco::BasicFIFOBuffer<char> buffer;
 
 private:
     Poco::Net::StreamSocket& _socket;
