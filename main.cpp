@@ -20,8 +20,6 @@ int main() {
 
     Peer peer_1(peer_addr_1);
     Peer peer_3(peer_addr_3);
-    Peer peer_2(peer_addr_2, {peer_addr_1,peer_addr_3});
-    Peer peer_4(peer_addr_4, {peer_addr_1,peer_addr_2});
 
     while(1) {}
 }

@@ -4,7 +4,7 @@
 #include "Poco/Net/SocketReactor.h"
 #include "sectorHandling/sectorHandler.hpp"
 
-Peer::Peer(Poco::Net::SocketAddress ownAddress, std::vector<Poco::Net::SocketAddress> remoteAddresses) :
+/* Peer::Peer(Poco::Net::SocketAddress ownAddress, std::vector<Poco::Net::SocketAddress> remoteAddresses) :
         reactor(), serverSocket(ownAddress), acceptor(serverSocket, reactor, connections, connectionsMutex),
         id(Hash::hashSocketAddress(ownAddress)) {
     address = serverSocket.address();
@@ -23,7 +23,7 @@ Peer::Peer(Poco::Net::SocketAddress ownAddress, std::vector<Poco::Net::SocketAdd
 
     // different thread for the reactor
     thread.start(reactor);
-}
+} */
 
 Peer::Peer(Poco::Net::SocketAddress ownAddress, Poco::Net::SocketAddress remoteAddress) :
         reactor(), serverSocket(ownAddress), acceptor(serverSocket, reactor, connections, connectionsMutex),
@@ -43,6 +43,14 @@ Peer::Peer(Poco::Net::SocketAddress ownAddress, Poco::Net::SocketAddress remoteA
 
     thread.start(reactor);
 
+    while(connections.empty()){
+        std::this_thread::sleep_for(std::chrono::milliseconds(100));
+    }
+
+    auto data = Message::MessageData{};
+    std::string str = "JOIN," + address.toString();
+    std::strncpy(data.data(), str.c_str(), data.size());
+    connections[Hash::hashSocketAddress(remoteAddress)]->ioInterface.queueOutgoingMessage(Message(data));
 }
 
 Peer::Peer(Poco::Net::SocketAddress ownAddress) :
@@ -431,7 +439,7 @@ void Peer::stabilize() {
 }
 
 
-void Peer::initFingerTable(const std::pair<const Hash, MyConnectionHandler *> successorConnection) {
+void Peer::initFingerTable(MyConnectionHandler * successorConnection) {
     // sends the initial FING message to the successor
     std::string ip = address.toString();
     std::string fullMessage = "FING," + ip;
@@ -440,10 +448,11 @@ void Peer::initFingerTable(const std::pair<const Hash, MyConnectionHandler *> su
 
     Message message(data);
 
-    successorConnection.second->ioInterface.queueOutgoingMessage(message);
+    successorConnection->ioInterface.queueOutgoingMessage(message);
 }
 
 void Peer::run() {
+    initFingerTable(connections[Hash::hashSocketAddress(successor)]);
     while (true) {
 
         std::unique_lock<std::mutex> connectionsLock(connectionsMutex);

@@ -17,7 +17,7 @@
 
 class Peer {
     public:
-    Peer(Poco::Net::SocketAddress ownAddress, std::vector<Poco::Net::SocketAddress> remoteAddresses);
+    // Peer(Poco::Net::SocketAddress ownAddress, std::vector<Poco::Net::SocketAddress> remoteAddresses);
     Peer(Poco::Net::SocketAddress ownAddress, Poco::Net::SocketAddress remoteAddress);
     Peer(Poco::Net::SocketAddress ownAddress);
     Poco::Net::ServerSocket serverSocket;
@@ -53,7 +53,7 @@ class Peer {
     void process_predack_message(Message message);
     void process_fing_message(Message message, std::pair<const Hash, MyConnectionHandler *> connection);
     void process_fingack_message(Message message);
-    void initFingerTable(const std::pair<const Hash, MyConnectionHandler *> successorConnection);
+    void initFingerTable(MyConnectionHandler * successorConnection);
 
     std::string findClosestPeer(Hash& position);
 
