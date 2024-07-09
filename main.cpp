@@ -24,10 +24,11 @@ int main() {
     Peer peer_4(peer_addr_4, peer_addr_1);
 
     // start two threads that use the run method
+    
     std::future<void> future_1 = std::async(std::launch::async, &Peer::run, &peer_1);
     std::future<void> future_2 = std::async(std::launch::async, &Peer::run, &peer_2);
     std::future<void> future_3 = std::async(std::launch::async, &Peer::run, &peer_3);
     std::future<void> future_4 = std::async(std::launch::async, &Peer::run, &peer_4);
-
+    
     while(1) {}
 }

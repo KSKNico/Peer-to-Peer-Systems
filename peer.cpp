@@ -50,6 +50,7 @@ Peer::Peer(Poco::Net::SocketAddress ownAddress, Poco::Net::SocketAddress remoteA
     auto data = Message::MessageData{};
     std::string str = "JOIN," + address.toString();
     std::strncpy(data.data(), str.c_str(), data.size());
+    std::unique_lock<std::mutex>(connectionsMutex);
     connections[Hash::hashSocketAddress(remoteAddress)]->ioInterface.queueOutgoingMessage(Message(data));
 }
 
@@ -452,7 +453,7 @@ void Peer::initFingerTable(MyConnectionHandler * successorConnection) {
 }
 
 void Peer::run() {
-    initFingerTable(connections[Hash::hashSocketAddress(successor)]);
+    // initFingerTable(connections[Hash::hashSocketAddress(successor)]);
     while (true) {
 
         std::unique_lock<std::mutex> connectionsLock(connectionsMutex);

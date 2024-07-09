@@ -15,6 +15,6 @@ public:
     Poco::BasicFIFOBuffer<char> buffer;
 
 private:
-    Poco::Net::StreamSocket& _socket;
+    Poco::Net::StreamSocket _socket;
     Poco::Net::SocketReactor& _reactor;
 };

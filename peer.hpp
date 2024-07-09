@@ -31,6 +31,8 @@ class Peer {
 
     // needs to be locked with the connectionsMutex
     using ConnectionHandlerMap = std::unordered_map<Hash, MyConnectionHandler*, Hash::Hasher>;
+
+    // THIS HAS TO BE LOCKED WHENEVER ACCESSED WITH THE CONNECTIONS MUTEX!!!
     ConnectionHandlerMap connections;
 
     // mutex for the connections unordered_map
