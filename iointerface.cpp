@@ -36,6 +36,6 @@ std::size_t IOInterface::getIncomingMessageCount() {
 }
 
 std::size_t IOInterface::getOutgoingMessageCount() {
-    std::unqiue_lock<std::mutex> lock(outgoingMutex);
+    std::unique_lock<std::mutex> lock(outgoingMutex);
     return outgoing.size();
 }
