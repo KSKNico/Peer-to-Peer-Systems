@@ -189,22 +189,20 @@ void Peer::process_succ_message(Message message, std::pair<const Hash, MyConnect
     Message::succ_message msg = message.decode_succ_message();
     Message::MessageData data{};
 
+    Hash myPosition = Hash::hashSocketAddress(address);
     auto peerIP = Poco::Net::SocketAddress(msg.IP_address);
     Hash peerPosition = Hash::hashSocketAddress(peerIP);
 
-    std::string closestIP = findClosestPeer(peerPosition);
-
+    std::string succ = successor.toString();  // send IP of old successor even if it changes
     std::string ip = address.toString();
 
-    if(closestIP == ip) {
-        // set closestIP to successor
-        closestIP = successor.toString();
-
-        // set successor to msg.IP_address
-        successor = Poco::Net::SocketAddress(msg.IP_address);
+    if(successor == address || myPosition.isBefore(peerPosition) && peerPosition.isBefore(Hash::hashSocketAddress(successor))){
+        // I have no succ or this peer is between my succ and me -> this peer will be my new succ
+        successor = peerIP;
     }
+    if(predecessor == address) predecessor = peerIP;    // if I'm the only peer, I was my pred -> new peer is not only my succ but also my pred
 
-    std::string fullMessage = "SUCCACK," + ip + "," + closestIP;
+    std::string fullMessage = "SUCCACK," + ip + "," + succ;
 
     std::strncpy(data.data(), fullMessage.c_str(), data.size());
     Message ans(data);
@@ -217,27 +215,62 @@ void Peer::process_succack_message(Message message) {
     Message::MessageData data{};
 
     Hash myPosition = Hash::hashSocketAddress(address);
+    auto peerIP = Poco::Net::SocketAddress(msg.IP_address);
+    Hash peerPosition = Hash::hashSocketAddress(peerIP);
     auto closestIP = Poco::Net::SocketAddress(msg.ClosestKnownIP);
     Hash closestIPPosition = Hash::hashSocketAddress(closestIP);
 
-    if (myPosition.isBefore(closestIPPosition)) {
-        // set successor to msg.IP_address
+    if (peerPosition.isBefore(myPosition) && myPosition.isBefore(closestIPPosition)) {
+        // if I'm between peers successor and peer -> peers succ will be my succ and peer will be my pred
         successor = closestIP;
-        predecessor = Poco::Net::SocketAddress(msg.IP_address);
-    } else {
-        std::string ip = address.toString();
-        std::string fullMessage = "SUCC," + ip;
-        std::strncpy(data.data(), fullMessage.c_str(), data.size());
-        Message ans(data);
+        predecessor = peerIP;
+    } else if(closestIP == address) return; // if I'm the successor, nothing to do
+    else if(peerIP == closestIP) predecessor = successor = peerIP;  // peer has itself as successor -> we are the only 2 peers in the system -> we are pred and succ for each other
+}
 
-        if (connections.find(closestIPPosition) != connections.end()) {
-            connections[closestIPPosition]->ioInterface.queueOutgoingMessage(ans);
-        } else {
-            connectors[closestIPPosition] = std::make_unique<MySocketConnector>(closestIP, reactor,
-                                                                                connections,
-                                                                                connectionsMutex);
-            outgoingMessages[closestIPPosition].push_back(ans);
-        }
+void Peer::process_pred_message(Message message, std::pair<const Hash, MyConnectionHandler *> connection) {
+    Message::pred_message msg = message.decode_pred_message();
+    Message::MessageData data{};
+
+    auto peerIP = Poco::Net::SocketAddress(msg.IP_address);
+    Hash peerPosition = Hash::hashSocketAddress(peerIP);
+
+    std::string pred = predecessor.toString();  // send IP of old predecessor even if it changes
+    std::string ip = address.toString();
+
+    if(predecessor == address || peerPosition.isBefore(Hash::hashSocketAddress(address)) && Hash::hashSocketAddress(predecessor).isBefore(peerPosition)){
+        // I have no pred or this peer is between my pred and me -> this peer will be my new pred
+        predecessor = peerIP;
+    }
+    if(successor == address) successor = peerIP;    // if I'm the only peer, I was my succ -> new peer is not only my pred but also my succ
+
+    std::string fullMessage = "PREDACK," + ip + "," + pred;
+
+    std::strncpy(data.data(), fullMessage.c_str(), data.size());
+    Message ans(data);
+
+    connection.second->ioInterface.queueOutgoingMessage(ans);
+}
+
+void Peer::process_predack_message(Message message) {
+    Message::predack_message msg = message.decode_predack_message();
+    Message::MessageData data{};
+
+    Hash myPosition = Hash::hashSocketAddress(address);
+    auto peerIP = Poco::Net::SocketAddress(msg.IP_address);
+    Hash peerPosition = Hash::hashSocketAddress(peerIP);
+    auto currentPred = Poco::Net::SocketAddress(msg.currentPred);
+    Hash currentPredPosition = Hash::hashSocketAddress(currentPred);
+
+    if(currentPred.toString() == msg.IP_address){
+        // peer was the only one -> we are just 2 peers in this network -> we are pred and succ for us
+        successor = predecessor = peerIP;
+    } else if(currentPred == address){
+        return; // if I'm already the predecessor, there is nothing to do
+    } else if(currentPredPosition.isBefore(myPosition) && myPosition.isBefore(peerPosition)){
+        // I'm between the pred of the peer and the peer -> this peer will be my succ and its pred will be my pred
+        successor = peerIP;
+        predecessor = currentPred;
     }
 }
 
@@ -323,6 +356,12 @@ void Peer::processMessage(Message message, std::pair<const Hash, MyConnectionHan
     } else if ((message_type.substr(0, pos) == "SUCCACK")) {
         message.type = Message::MessageType::SUCCACK;
         process_succack_message(message);
+    } else if ((message_type.substr(0, pos) == "PRED")) {
+        message.type = Message::MessageType::PRED;
+        process_pred_message(message, connection);
+    } else if ((message_type.substr(0, pos) == "PREDACK")) {
+        message.type = Message::MessageType::PREDACK;
+        process_predack_message(message);
     } else if ((message_type.substr(0, pos) == "FING")) {
         message.type = Message::MessageType::FING;
         process_fing_message(message, connection);
@@ -338,6 +377,20 @@ void Peer::processMessage(Message message, std::pair<const Hash, MyConnectionHan
 }
 
 void Peer::stabilize() {
+    Message::MessageData data = std::array<char,1024>();
+    std::string str1 = "GET,";
+    std::string str2 = std::move(address.toString())+",";
+    std::string str3 = std::to_string(-1);
+    std::string str4 = str1+str2+str3;
+    for (int i = 0; i < str4.size(); ++i) {
+        data[i] = str4.at(i);
+        //cout << data[i];
+    }
+
+    auto getMessage = Message(data);
+
+    MyConnectionHandler *handler = connections[Hash::hashSocketAddress(successor)];
+    handler->ioInterface.queueOutgoingMessage(getMessage);
     /*
      * send message to successor -> "who is your predecessor"
      *

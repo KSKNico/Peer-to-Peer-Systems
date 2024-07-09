@@ -49,14 +49,16 @@ class Peer {
     void process_joinack_message(Message message);
     void process_succ_message(Message message, std::pair<const Hash, MyConnectionHandler *> connection);
     void process_succack_message(Message message);
+    void process_pred_message(Message message, std::pair<const Hash, MyConnectionHandler *> connection);
+    void process_predack_message(Message message);
     void process_fing_message(Message message, std::pair<const Hash, MyConnectionHandler *> connection);
     void process_fingack_message(Message message);
 
     std::string findClosestPeer(Hash& position);
 
     std::unordered_map<Hash, Poco::Net::SocketAddress, Hash::Hasher> fingerTable;
-    Poco::Net::SocketAddress successor;
-    Poco::Net::SocketAddress predecessor;
+    Poco::Net::SocketAddress successor = address;   // initially you are your successor
+    Poco::Net::SocketAddress predecessor = address; // ~ predecessor
 
     std::unordered_map<Hash, std::vector<Message>, Hash::Hasher> outgoingMessages;
 

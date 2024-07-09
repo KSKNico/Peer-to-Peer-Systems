@@ -119,6 +119,33 @@ Message::succack_message Message::decode_succack_message() {
     return msg;
 }
 
+Message::pred_message Message::decode_pred_message() {
+    pred_message msg;
+    std::string str(data.data(), data.size());
+
+    msg.IP_address = str;
+
+    return msg;
+}
+
+Message::predack_message Message::decode_predack_message() {
+    predack_message msg;
+    std::string str(data.data(), data.size());
+
+    size_t pos = str.find(',');
+
+    if(pos == std::string::npos){
+        std::cout << "No ',' in PREDACK message" << std::endl;
+        return msg;
+    }
+
+    msg.IP_address = str.substr(0, pos);
+    msg.currentPred = str.substr(pos+1);
+
+    return msg;
+}
+
+
 Message::fing_message Message::decode_fing_message() {
     fing_message msg;
     std::string str(data.data(), data.size());

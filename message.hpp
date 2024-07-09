@@ -30,6 +30,11 @@ public:
      * structure of SUCC: "<type>, <IP address from sender>"
      *
      * structure of SUCCACK: "<type>, <IP address from sender>, <IP of closest known peer>"
+     *
+     * structure of PRED: "<type>, <IP address from sender>"
+     *
+     * structure of PREDACK: "<type>, <IP address from sender>, <IP of closest known peer>"
+     *
      * closest IP in SUCCACK should be in the last step the successor of the requester
      *
      * structure of FING: "<type>, <IP address from sender>"
@@ -44,6 +49,8 @@ public:
         JOINACK,
         SUCC,
         SUCCACK,
+        PRED,
+        PREDACK,
         FING,
         FINGACK,
     };
@@ -74,6 +81,13 @@ public:
     struct succack_message{
         std::string IP_address;
         std::string ClosestKnownIP;
+    };
+    struct pred_message{
+        std::string IP_address;
+    };
+    struct predack_message{
+        std::string IP_address;
+        std::string currentPred;
     };
     struct fing_message{
         std::string IP_address;
@@ -108,6 +122,8 @@ public:
     joinack_message decode_joinack_message();
     succ_message decode_succ_message();
     succack_message decode_succack_message();
+    pred_message decode_pred_message();
+    predack_message decode_predack_message();
     fing_message decode_fing_message();
     fingack_message decode_fingack_message();
 };
