@@ -6,10 +6,14 @@
 
 Message::Message(MessageData data) : data(data) {}
 
-Message::Message(std::string str) {
+Message::Message(std::string str) : data() {
     assert (str.size() <= FIXED_MESSAGE_SIZE);
+    assert (str.size() > 0);
+
     std::copy(str.begin(), str.end(), data.begin());
 }
+
+Message::Message() : data() {}
 
 Message Message::fromBuffer(Poco::BasicFIFOBuffer<char> &buffer) {
     MessageData data;
@@ -24,7 +28,7 @@ Poco::Buffer<char> Message::toBuffer(const Message &message) {
 }
 
 bool Message::isEmpty() const {
-    return data[0] == '\0';
+    return data[0] == 0;
 }
 
 Message::get_message Message::decode_get_message() {

@@ -29,3 +29,11 @@ TEST(MessageTests, ToAndFromBuffer) {
         ASSERT_EQ(m1.data[i], m2.data[i]);
     }
 }
+
+TEST(MessageTests, IsEmpty) {
+    auto msg = Message();
+
+    printf("msg.data[0]: %d\n", msg.data[0]);
+
+    ASSERT_TRUE(msg.isEmpty());
+}

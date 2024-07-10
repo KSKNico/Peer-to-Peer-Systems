@@ -3,7 +3,7 @@
 Message IOInterface::dequeueIncomingMessage() {
     std::unique_lock<std::mutex> lock(incomingMutex);
     if (incoming.empty()) {
-        return Message("");
+        return Message();
     }
     auto message = incoming.front();
     incoming.pop();
@@ -23,7 +23,7 @@ void IOInterface::queueIncomingMessage(Message message) {
 Message IOInterface::dequeueOutgoingMessage() {
     std::unique_lock<std::mutex> lock(outgoingMutex);
     if (outgoing.empty()) {
-        return Message("");
+        return Message();
     }
     auto message = outgoing.front();
     outgoing.pop();

@@ -106,6 +106,7 @@ public:
 
     Message(MessageData data);
     Message(std::string str);
+    Message();
     MessageType type;
     MessageData data;
 
