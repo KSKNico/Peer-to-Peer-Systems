@@ -439,6 +439,13 @@ void Peer::stabilize() {
      */
 }
 
+void Peer::printConnections() {
+    std::unique_lock<std::mutex> connectionsLock(connectionsMutex);
+    for (const auto& connection : connections) {
+        std::cout << connection.first.toString() << std::endl;
+    }
+}
+
 
 void Peer::initFingerTable(MyConnectionHandler * successorConnection) {
     // sends the initial FING message to the successor
