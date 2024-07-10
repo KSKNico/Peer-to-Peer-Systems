@@ -130,11 +130,11 @@ void Peer::process_getack_message(Message message) {
     Message ans(data);
 
     if (connections.find(routing_hash) != connections.end()) {
-        connections[routing_hash]->ioInterface.queueOutgoingMessage(ans);
+        connections.at(routing_hash)->ioInterface.queueOutgoingMessage(ans);
     } else {
-        connectors[routing_hash] = std::make_unique<MySocketConnector>(routing_addr, reactor,
-                                                                    connections,
-                                                                    connectionsMutex);
+        connectors.insert(std::make_pair(routing_hash, std::make_unique<MySocketConnector>(routing_addr, reactor,
+                                                                                           connections,
+                                                                                           connectionsMutex)));
         outgoingMessages[routing_hash].push_back(ans);
     }
 }
@@ -195,16 +195,16 @@ void Peer::process_joinack_message(Message message) {
     predecessor = peer_addr;
 
     std::string ip = address.toString();
-    std::string fullMessage = "SUCC," + ip;
+    std::string fullMessage = "JOIN," + ip;
     std::strncpy(data.data(), fullMessage.c_str(), data.size());
     Message ans(data);
 
     if (connections.find(peer_hash) != connections.end()) {
-        connections[peer_hash]->ioInterface.queueOutgoingMessage(ans);
+        connections.at(peer_hash)->ioInterface.queueOutgoingMessage(ans);
     } else {
-        connectors[peer_hash] = std::make_unique<MySocketConnector>(peer_addr, reactor,
-                                                                    connections,
-                                                                    connectionsMutex);
+        connectors.insert(std::make_pair(peer_hash, std::make_unique<MySocketConnector>(peer_addr, reactor,
+                                                                                           connections,
+                                                                                           connectionsMutex)));
         outgoingMessages[peer_hash].push_back(ans);
     }
 }
@@ -344,11 +344,11 @@ void Peer::process_fingack_message(Message message) {
         Message ans(data);
 
         if (connections.find(fing_hash) != connections.end()) {
-            connections[fing_hash]->ioInterface.queueOutgoingMessage(ans);
+            connections.at(fing_hash)->ioInterface.queueOutgoingMessage(ans);
         } else {
-            connectors[fing_hash] = std::make_unique<MySocketConnector>(fing_addr, reactor,
-                                                                        connections,
-                                                                        connectionsMutex);
+            connectors.insert(std::make_pair(fing_hash, std::make_unique<MySocketConnector>(fing_addr, reactor,
+                                                                                            connections,
+                                                                                            connectionsMutex)));
             outgoingMessages[fing_hash].push_back(ans);
         }
     }
@@ -367,12 +367,13 @@ void Peer::processMessage(Message message, std::pair<const Hash, MyConnectionHan
 
     std::strncpy(message.data.data(), data_without_type.c_str(), message.data.size());
 
+    /*
     pos = data_without_type.find(',');
 
     if (pos == std::string::npos) {
         std::cout << "No ',' in message without type" << std::endl;
         return;
-    }
+    }*/
 
     if (message_type.substr(0, pos) == "GET") {
         message.type = Message::MessageType::GET;
