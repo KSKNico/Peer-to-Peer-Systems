@@ -108,8 +108,7 @@ void Peer::process_get_message(Message message, std::pair<const Hash, MyConnecti
 
         std::cout << "sending getack message" << std::endl;
     }
-    std::strncpy(data.data(), all.c_str(), data.size());
-    Message return_message(data);
+    Message return_message(all);
     connection.second->ioInterface.queueOutgoingMessage(return_message);
 
 
@@ -117,7 +116,6 @@ void Peer::process_get_message(Message message, std::pair<const Hash, MyConnecti
 
 void Peer::process_getack_message(Message message) {
     Message::getack_message msg = message.decode_getack_message();
-    Message::MessageData data{};
 
     auto routing_addr = Poco::Net::SocketAddress(msg.RoutingIP);
     Hash routing_hash = Hash::hashSocketAddress(routing_addr);
@@ -126,8 +124,7 @@ void Peer::process_getack_message(Message message) {
     std::string interval = std::to_string(msg.start_of_interval);
     std::string all = "GET," + ip + "," + interval;
 
-    std::strncpy(data.data(), all.c_str(), data.size());
-    Message ans(data);
+    Message ans(all);
 
     if (connections.find(routing_hash) != connections.end()) {
         connections.at(routing_hash)->ioInterface.queueOutgoingMessage(ans);
@@ -170,7 +167,6 @@ void Peer::process_put_message(Message message) {
 
 void Peer::process_join_message(Message message, std::pair<const Hash, MyConnectionHandler *> connection) {
     Message::join_message msg = message.decode_join_message();
-    Message::MessageData data{};
 
     auto peerIP = Poco::Net::SocketAddress(msg.IP_address);
     Hash peerPosition = Hash::hashSocketAddress(peerIP);
@@ -178,26 +174,36 @@ void Peer::process_join_message(Message message, std::pair<const Hash, MyConnect
     std::string closestIP = findClosestPeer(peerPosition);
 
     std::string ip = address.toString();
+
+    if (closestIP == ip) {
+        // im the closest one before peer -> set closestIP to successor and set successor to newly joined peer
+        closestIP = successor.toString();
+        successor = peerIP;
+    }
     std::string fullMessage = "JOINACK," + ip + "," + closestIP;
 
-    std::strncpy(data.data(), fullMessage.c_str(), data.size());
-    Message ans(data);
+    Message ans(fullMessage);
     connection.second->ioInterface.queueOutgoingMessage(ans);
 }
 
 void Peer::process_joinack_message(Message message) {
     Message::joinack_message msg = message.decode_joinack_message();
-    Message::MessageData data{};
 
+    auto sender_addr = Poco::Net::SocketAddress(msg.IP_address);
     auto peer_addr = Poco::Net::SocketAddress(msg.ClosestKnownIP);
     Hash peer_hash = Hash::hashSocketAddress(peer_addr);
 
-    predecessor = peer_addr;
+    //predecessor = peer_addr;
+    if (!peer_hash.isBefore(Hash::hashSocketAddress(address))) {
+        // if peer position is not before me in the circle my successor was returned and I can stop searching
+        successor = peer_addr;
+        predecessor = sender_addr;
+        return;
+    }
 
     std::string ip = address.toString();
     std::string fullMessage = "JOIN," + ip;
-    std::strncpy(data.data(), fullMessage.c_str(), data.size());
-    Message ans(data);
+    Message ans(fullMessage);
 
     if (connections.find(peer_hash) != connections.end()) {
         connections.at(peer_hash)->ioInterface.queueOutgoingMessage(ans);
@@ -223,7 +229,6 @@ std::string Peer::findClosestPeer(Hash& position) {
 
 void Peer::process_succ_message(Message message, std::pair<const Hash, MyConnectionHandler *> connection) {
     Message::succ_message msg = message.decode_succ_message();
-    Message::MessageData data{};
 
     Hash myPosition = Hash::hashSocketAddress(address);
     auto peerIP = Poco::Net::SocketAddress(msg.IP_address);
@@ -240,15 +245,13 @@ void Peer::process_succ_message(Message message, std::pair<const Hash, MyConnect
 
     std::string fullMessage = "SUCCACK," + ip + "," + succ;
 
-    std::strncpy(data.data(), fullMessage.c_str(), data.size());
-    Message ans(data);
+    Message ans(fullMessage);
 
     connection.second->ioInterface.queueOutgoingMessage(ans);
 }
 
 void Peer::process_succack_message(Message message) {
     Message::succack_message msg = message.decode_succack_message();
-    Message::MessageData data{};
 
     Hash myPosition = Hash::hashSocketAddress(address);
     auto peerIP = Poco::Net::SocketAddress(msg.IP_address);
@@ -266,7 +269,6 @@ void Peer::process_succack_message(Message message) {
 
 void Peer::process_pred_message(Message message, std::pair<const Hash, MyConnectionHandler *> connection) {
     Message::pred_message msg = message.decode_pred_message();
-    Message::MessageData data{};
 
     auto peerIP = Poco::Net::SocketAddress(msg.IP_address);
     Hash peerPosition = Hash::hashSocketAddress(peerIP);
@@ -282,15 +284,13 @@ void Peer::process_pred_message(Message message, std::pair<const Hash, MyConnect
 
     std::string fullMessage = "PREDACK," + ip + "," + pred;
 
-    std::strncpy(data.data(), fullMessage.c_str(), data.size());
-    Message ans(data);
+    Message ans(fullMessage);
 
     connection.second->ioInterface.queueOutgoingMessage(ans);
 }
 
 void Peer::process_predack_message(Message message) {
     Message::predack_message msg = message.decode_predack_message();
-    Message::MessageData data{};
 
     Hash myPosition = Hash::hashSocketAddress(address);
     auto peerIP = Poco::Net::SocketAddress(msg.IP_address);
@@ -312,20 +312,17 @@ void Peer::process_predack_message(Message message) {
 
 void Peer::process_fing_message(Message message, std::pair<const Hash, MyConnectionHandler *> connection) {
     Message::fing_message msg = message.decode_fing_message();
-    Message::MessageData data{};
 
     std::string ip = address.toString();
     std::string succ = successor.toString();
     std::string fullMessage = "FINGACK," + ip + "," + succ;
-    std::strncpy(data.data(), fullMessage.c_str(), data.size());
-    Message ans(data);
+    Message ans(fullMessage);
 
     connection.second->ioInterface.queueOutgoingMessage(ans);
 }
 
 void Peer::process_fingack_message(Message message) {
     Message::fingack_message msg = message.decode_fingack_message();
-    Message::MessageData data{};
 
     auto fing_addr = Poco::Net::SocketAddress(msg.SuccessorIP);
     Hash fing_hash = Hash::hashSocketAddress(fing_addr);
@@ -340,8 +337,7 @@ void Peer::process_fingack_message(Message message) {
 
         std::string ip = address.toString();
         std::string fullMessage = "FING," + ip;
-        std::strncpy(data.data(), fullMessage.c_str(), data.size());
-        Message ans(data);
+        Message ans(fullMessage);
 
         if (connections.find(fing_hash) != connections.end()) {
             connections.at(fing_hash)->ioInterface.queueOutgoingMessage(ans);
