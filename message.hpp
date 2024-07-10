@@ -105,6 +105,7 @@ public:
     using MessageData = std::array<char, FIXED_MESSAGE_SIZE>;
 
     Message(MessageData data);
+    Message(std::string str);
     MessageType type;
     MessageData data;
 

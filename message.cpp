@@ -2,8 +2,14 @@
 #include <iostream>
 #include <vector>
 #include <sstream>
+#include <cassert>
 
 Message::Message(MessageData data) : data(data) {}
+
+Message::Message(std::string str) {
+    assert (str.size() <= FIXED_MESSAGE_SIZE);
+    std::copy(str.begin(), str.end(), data.begin());
+}
 
 Message Message::fromBuffer(const Poco::Buffer<char> &buffer) {
     MessageData data;
