@@ -100,7 +100,7 @@ public:
     constexpr static int FIXED_MESSAGE_SIZE = 1024;
 
     // used inside of a message to separate parts
-    constexpr static char PART_DELIMITER = ' ';
+    constexpr static char PART_DELIMITER = ',';
 
     using MessageData = std::array<char, FIXED_MESSAGE_SIZE>;
 
@@ -111,10 +111,6 @@ public:
 
     bool isEmpty() const;
 
-    MessageData serialize();
-    static Message deserialize(MessageData data);
-
-    static Message fromBuffer(const Poco::Buffer<char> &buffer);
     static Message fromBuffer(Poco::BasicFIFOBuffer<char> &buffer);
     static Poco::Buffer<char> toBuffer(const Message &message);
 

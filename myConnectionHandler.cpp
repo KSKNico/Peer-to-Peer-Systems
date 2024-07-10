@@ -33,6 +33,6 @@ void MyConnectionHandler::onWritable(Poco::Net::WritableNotification* pNf) {
     if (ioInterface.getOutgoingMessageCount() > 0){
         auto msg = ioInterface.dequeueOutgoingMessage();
         auto _buffer = Message::toBuffer(msg);
-        _socket.sendBytes(_buffer.begin(), _buffer.sizeBytes());
+        _socket.sendBytes(_buffer.begin(), _buffer.size());
     }
 }

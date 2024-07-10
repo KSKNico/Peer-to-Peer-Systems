@@ -11,12 +11,6 @@ Message::Message(std::string str) {
     std::copy(str.begin(), str.end(), data.begin());
 }
 
-Message Message::fromBuffer(const Poco::Buffer<char> &buffer) {
-    MessageData data;
-    std::copy(buffer.begin(), buffer.end(), data.begin());
-    return Message(data);
-}
-
 Message Message::fromBuffer(Poco::BasicFIFOBuffer<char> &buffer) {
     MessageData data;
     buffer.read(data.data(), buffer.used());
