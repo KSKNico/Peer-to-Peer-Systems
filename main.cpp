@@ -30,5 +30,7 @@ int main() {
     std::future<void> future_3 = std::async(std::launch::async, &Peer::run, &peer_3);
     std::future<void> future_4 = std::async(std::launch::async, &Peer::run, &peer_4);
     
-    while(1) {}
+    while(1) {
+        peer_1.printConnections();
+    }
 }
