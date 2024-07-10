@@ -15,10 +15,9 @@ MyConnectionHandler* MySocketConnector::createServiceHandler() {
     auto connectionHandler = new MyConnectionHandler(Poco::Net::SocketConnector<MyConnectionHandler>::socket(), 
                                     *Poco::Net::SocketConnector<MyConnectionHandler>::reactor());
     this->finished = true;
+    auto hash = Hash::hashSocketAddress(Poco::Net::SocketConnector<MyConnectionHandler>::socket().peerAddress());
     std::unique_lock<std::mutex>(connectionsMutex);
-    connections[
-        Hash::hashSocketAddress(Poco::Net::SocketConnector<MyConnectionHandler>::socket().peerAddress())
-        ] = connectionHandler;
+    connections.insert(std::make_pair(hash, connectionHandler));
     return connectionHandler;
 }
 

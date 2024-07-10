@@ -13,6 +13,6 @@ MyConnectionHandler* MySocketAcceptor::createServiceHandler(Poco::Net::StreamSoc
     MyConnectionHandler *connectionHandler = new MyConnectionHandler(socket, *reactor());
     // add the connection to the connections map
     std::unique_lock<std::mutex> lock(connectionsMutex);
-    connections[hash] = connectionHandler;
+    connections.insert(std::make_pair(hash, connectionHandler));
     return connectionHandler;
 }
