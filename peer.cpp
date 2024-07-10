@@ -316,7 +316,7 @@ void Peer::process_fing_message(Message message, std::pair<const Hash, MyConnect
 
     std::string ip = address.toString();
     std::string succ = successor.toString();
-    std::string fullMessage = "FINGACC," + ip + "," + succ;
+    std::string fullMessage = "FINGACK," + ip + "," + succ;
     std::strncpy(data.data(), fullMessage.c_str(), data.size());
     Message ans(data);
 
