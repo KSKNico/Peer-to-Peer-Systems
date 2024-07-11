@@ -152,6 +152,12 @@ void Peer::process_put_message(Message message) {
 
     unordered_map<unsigned long long, vector<unsigned long long>> localResults = sectorHandler::getAllResults();
     for (auto & localResult : localResults) {
+        std::cout << "first: " << localResult.first << std::endl;
+        std::cout << "second: " << std::endl;
+        for(auto value : localResult.second){
+            std::cout << value << ",";
+        }
+        std::cout << std::endl;
         unsigned long long key = localResult.first;
         vector<unsigned long long > value = localResult.second;
         prime_intervals.operator[](key) = value;
