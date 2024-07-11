@@ -1,4 +1,6 @@
 #include "iointerface.hpp"
+#include <iostream>
+#include <iterator>
 
 Message IOInterface::dequeueIncomingMessage() {
     std::unique_lock<std::mutex> lock(incomingMutex);

@@ -143,6 +143,13 @@ void Peer::process_put_message(Message message) {
         std::cout << "empty prime vector, nothing to store in map" << std::endl;
         return;
     }
+
+    std::cout << "primes: ";
+    for(auto prime : message_info.primes){
+        std::cout << prime << ",";
+    }
+    std::cout << std::endl;
+
     unordered_map<unsigned long long, vector<unsigned long long>> localResults = sectorHandler::getAllResults();
     for (auto & localResult : localResults) {
         unsigned long long key = localResult.first;

@@ -29,8 +29,15 @@ int main() {
     std::future<void> future_2 = std::async(std::launch::async, &Peer::run, &peer_2);
     std::future<void> future_3 = std::async(std::launch::async, &Peer::run, &peer_3);
     std::future<void> future_4 = std::async(std::launch::async, &Peer::run, &peer_4);
+
+    Message m = Message("PUT,127.0.0.1:5002,1,2,3,5");
+    peer_2.connections[Hash::hashSocketAddress(peer_addr_1)]->ioInterface.queueOutgoingMessage(m);
+    Message m2 = Message("PUT,127.0.0.1:5003,1,2,3,5");
+    peer_3.connections[Hash::hashSocketAddress(peer_addr_1)]->ioInterface.queueOutgoingMessage(m2);
+    Message m3 = Message("PUT,127.0.0.1:5004,1,2,3,5");
+    peer_4.connections[Hash::hashSocketAddress(peer_addr_1)]->ioInterface.queueOutgoingMessage(m3);
     
     while(1) {
-        peer_1.printConnections();
+//        peer_1.printConnections();
     }
 }
