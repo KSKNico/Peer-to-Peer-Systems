@@ -382,15 +382,15 @@ void Peer::process_find_interval_message(Message message, std::pair<const Hash, 
 
 void Peer::process_find_interval_ack_message(Message message) {
     Message::find_interval_ack_message msg = message.decode_find_interval_ack_message();
-    if (new_interval_start < msg.highest_known_interval) {
+    auto highestInterval = resultHandler.getHighest();
+    if (highestInterval < msg.highest_known_interval) {
         Hash interval_hash = Hash::hashInterval(msg.highest_known_interval);
         std::string closestIP = findClosestPeer(interval_hash);
         std::string full_msg = "FIND_INTERVAL," + address.toString() + "," + std::to_string(msg.highest_known_interval);
         Message ans(full_msg);
         connections[Hash::hashSocketAddress(Poco::Net::SocketAddress(closestIP))]->ioInterface.queueOutgoingMessage(ans);
-    } else{
-        new_interval_start = msg.highest_known_interval + 1000;
-        resultHandler.submitCalculation(new_interval_start);
+    } else {
+        resultHandler.submitCalculation(highestInterval + INTERVAL_SIZE);
     }
 }
 
@@ -500,11 +500,39 @@ void Peer::initFingerTable(MyConnectionHandler *successorConnection) {
     successorConnection->ioInterface.queueOutgoingMessage(message);
 }
 
+void Peer::doIntervalRoutine() {
+    // this is the highest interval we know, therefore highestInterval + INTERVAL_SIZE 
+    // is the next interval to calculate
+    ull highestInterval = resultHandler.getHighest();
+    ull nextInterval = highestInterval + INTERVAL_SIZE;
+
+    if (resultHandler.isActivelyCalculated(nextInterval)) {
+        // we need more time, just return
+        return;
+    }
+
+    // if the specified delta has passed, we have to send a FIND_INTERVAL message (perhaps again)
+    if (timing.intervalMessageTimePassed()) {
+        auto msg_str = "FIND_INTERVAL," + address.toString() + "," + std::to_string(highestInterval);
+
+        auto intervalHash = Hash::hashInterval(highestInterval);
+        auto ip_str = findClosestPeer(intervalHash);
+
+        timing.updateIntervalMessageTime();
+        connections[Hash::hashSocketAddress(Poco::Net::SocketAddress(ip_str))]->ioInterface.queueOutgoingMessage(Message(msg_str));
+    }
+}
+
 void Peer::run() {
+    // to get the thing going we calculate the first interval
+    resultHandler.submitCalculation(0);
     // initFingerTable(connections[Hash::hashSocketAddress(successor)]);
     while (true) {
 
         std::unique_lock<std::mutex> connectionsLock(connectionsMutex);
+
+        doIntervalRoutine();
+
         for (auto &connection: connections) {
             Message message = connection.second->ioInterface.dequeueIncomingMessage();
             if (!message.isEmpty()) processMessage(message, connection);

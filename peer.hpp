@@ -15,6 +15,7 @@
 #include "mySocketConnector.hpp"
 #include "mySocketAcceptor.hpp"
 #include "resultHandler.hpp"
+#include "timing.hpp"
 
 class Peer {
     public:
@@ -39,7 +40,7 @@ class Peer {
     // mutex for the connections unordered_map
     std::mutex connectionsMutex;
 
-    unsigned long long new_interval_start = 0;
+    Timing timing;
 
     Hash getHash() const;
     void run();
@@ -60,6 +61,8 @@ class Peer {
     void process_find_interval_message(Message message, std::pair<const Hash, MyConnectionHandler *> connection);
     void process_find_interval_ack_message(Message message);
     void initFingerTable(MyConnectionHandler * successorConnection);
+
+    void doIntervalRoutine();
 
     std::string findClosestPeer(Hash& position);
 
