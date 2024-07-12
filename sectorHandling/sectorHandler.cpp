@@ -13,6 +13,9 @@
 #include "../peer.hpp"
 using namespace std;
 
+sectorHandler::sectorHandler(const Poco::Net::SocketAddress& ownAddress){
+    sectorHandler::initialize(ownAddress);
+}
 // initializes each Peer with some starting results
 void sectorHandler::initialize(const Poco::Net::SocketAddress& ownAddress){
     //initialize map with confirmed results and unconfirmed results
@@ -225,6 +228,8 @@ void sectorHandler::testAll(){
     cout<<"\n";
 
 }
+
+
 
 
 

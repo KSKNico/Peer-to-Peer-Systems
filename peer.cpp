@@ -47,7 +47,7 @@ Peer::Peer(Poco::Net::SocketAddress ownAddress, Poco::Net::SocketAddress remoteA
         std::this_thread::sleep_for(std::chrono::milliseconds(100));
     }
 
-    sectorHandler::initialize(Peer::address);
+    Peer::sectorHandler.initialize(Peer::address);
 
     auto data = Message::MessageData{};
     std::string str = "JOIN," + address.toString();
@@ -62,7 +62,7 @@ Peer::Peer(Poco::Net::SocketAddress ownAddress) :
     address = serverSocket.address();
     id = Hash::hashSocketAddress(address);
 
-    sectorHandler::initialize(Peer::address);
+    Peer::sectorHandler.initialize(Peer::address);
 
     std::cout << "Peer has address: " << address.toString() << std::endl;
     std::cout << "Peer has hash: " << id.toString() << std::endl;
@@ -155,7 +155,7 @@ void Peer::process_put_message(Message message) {
     }
     std::cout << std::endl;
 
-    unordered_map<unsigned long long, vector<unsigned long long>> localResults = sectorHandler::getAllResults();
+    unordered_map<unsigned long long, vector<unsigned long long>> localResults = Peer::SectorHandler.getAllResults();
     for (auto &localResult: localResults) {
         std::cout << "first: " << localResult.first << std::endl;
         std::cout << "second: " << std::endl;
@@ -178,7 +178,7 @@ void Peer::process_put_message(Message message) {
         }
     } else {
         prime_intervals[message_info.start_of_interval] = message_info.primes;
-        sectorHandler::handleSectorResultFromPeer(message);
+        Peer::SectorHandler.handleSectorResultFromPeer(message);
         std::cout << "updated map with results" << std::endl;
     }
 }

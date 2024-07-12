@@ -10,6 +10,8 @@ using namespace std;
 
 class sectorHandler {
 public:
+    sectorHandler(const Poco::Net::SocketAddress& ownAddress);
+public:
     static unordered_map<unsigned long long, vector<unsigned long long>> getAllResults();
 
     static void handleSectorResultFromPeer(Message message);
