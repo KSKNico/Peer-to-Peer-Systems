@@ -355,25 +355,20 @@ void Peer::process_fingack_message(Message message) {
     fingerTable[fing_hash] = fing_addr;
 
     Hash me_hash = Hash(Hash::hashSocketAddress(address));
-    std::string half = "7fffffffffffffff";
-    Hash half_hash = Hash::fromString(half);
+    
+    std::string ip = address.toString();
+    std::string fullMessage = "FING," + ip;
+    Message ans(fullMessage);
 
-    // if the finger is less than half a circle away, request his successor
-    if ((fing_hash - me_hash) < half_hash) {
-
-        std::string ip = address.toString();
-        std::string fullMessage = "FING," + ip;
-        Message ans(fullMessage);
-
-        if (connections.find(fing_hash) != connections.end()) {
-            connections.at(fing_hash)->ioInterface.queueOutgoingMessage(ans);
-        } else {
-            connectors.insert(std::make_pair(fing_hash, std::make_unique<MySocketConnector>(fing_addr, reactor,
-                                                                                            connections,
-                                                                                            connectionsMutex)));
-            outgoingMessages[fing_hash].push_back(ans);
-        }
+    if (connections.find(fing_hash) != connections.end()) {
+        connections.at(fing_hash)->ioInterface.queueOutgoingMessage(ans);
+    } else {
+        connectors.insert(std::make_pair(fing_hash, std::make_unique<MySocketConnector>(fing_addr, reactor,
+                                                                                        connections,
+                                                                                        connectionsMutex)));
+        outgoingMessages[fing_hash].push_back(ans);
     }
+    
 }
 
 void Peer::process_find_interval_message(Message message, std::pair<const Hash, MyConnectionHandler *> connection) {
