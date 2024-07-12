@@ -50,8 +50,6 @@ TEST(ResultTests, PrimeCalculation) {
     // sleep a while
     std::this_thread::sleep_for(std::chrono::seconds(1));
 
-    resultHandler.updateResultsWithFutures();
-
     ASSERT_TRUE(resultHandler.hasResults(0));
     ASSERT_TRUE(resultHandler.hasResults(1000));
     ASSERT_TRUE(resultHandler.hasResults(2000));

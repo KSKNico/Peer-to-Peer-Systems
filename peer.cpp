@@ -2,7 +2,7 @@
 #include <iostream>
 
 #include "Poco/Net/SocketReactor.h"
-#include "sectorHandling/sectorHandler.hpp"
+#include "resultHandler.hpp"
 
 /* Peer::Peer(Poco::Net::SocketAddress ownAddress, std::vector<Poco::Net::SocketAddress> remoteAddresses) :
         reactor(), serverSocket(ownAddress), acceptor(serverSocket, reactor, connections, connectionsMutex),
@@ -47,7 +47,7 @@ Peer::Peer(Poco::Net::SocketAddress ownAddress, Poco::Net::SocketAddress remoteA
         std::this_thread::sleep_for(std::chrono::milliseconds(100));
     }
 
-    Peer::sectorHandler.initialize(Peer::address);
+    // Peer::sectorHandler.initialize(Peer::address);
 
     auto data = Message::MessageData{};
     std::string str = "JOIN," + address.toString();
@@ -62,7 +62,7 @@ Peer::Peer(Poco::Net::SocketAddress ownAddress) :
     address = serverSocket.address();
     id = Hash::hashSocketAddress(address);
 
-    Peer::sectorHandler.initialize(Peer::address);
+    // Peer::sectorHandler.initialize(Peer::address);
 
     std::cout << "Peer has address: " << address.toString() << std::endl;
     std::cout << "Peer has hash: " << id.toString() << std::endl;
@@ -83,6 +83,7 @@ void Peer::process_get_message(Message message, std::pair<const Hash, MyConnecti
     std::string all = "PUT," + ip + "," + interval;
 
     //updating results for safety reasons
+    /*
     unordered_map<unsigned long long, vector<unsigned long long>> localResults = sectorHandler::getAllResults();
     for (auto &localResult: localResults) {
         unsigned long long key = localResult.first;
@@ -90,13 +91,13 @@ void Peer::process_get_message(Message message, std::pair<const Hash, MyConnecti
         prime_intervals.operator[](key) = value;
         //cout << (prime_intervals.at(key)[0]);
     }
+    */
 
-    if (prime_intervals.contains(message_info.start_of_interval)) {
+    if (resultHandler.hasResults(message_info.start_of_interval)) {
         // if peer stores the primes of the requested interval
         //std::vector<unsigned long long> result = prime_intervals[message_info.start_of_interval];
 
-        std::vector<unsigned long long> result = get<0>(
-                sectorHandler::findResultLocally(message_info.start_of_interval));
+        std::vector<unsigned long long> result = resultHandler.getResults(message_info.start_of_interval).value();
         for (auto prime: result) {
             std::string str = std::to_string(prime);
             all += "," + str;
@@ -155,6 +156,7 @@ void Peer::process_put_message(Message message) {
     }
     std::cout << std::endl;
 
+    /*
     unordered_map<unsigned long long, vector<unsigned long long>> localResults = Peer::SectorHandler.getAllResults();
     for (auto &localResult: localResults) {
         std::cout << "first: " << localResult.first << std::endl;
@@ -168,17 +170,18 @@ void Peer::process_put_message(Message message) {
         prime_intervals.operator[](key) = value;
         //cout << (prime_intervals.at(key)[0]);
     }
+    */
 
     // if peer already has results for this interval
-    if (prime_intervals.contains(message_info.start_of_interval)) {
-        std::vector<unsigned long long> result = prime_intervals[message_info.start_of_interval];
+    if (resultHandler.hasResults(message_info.start_of_interval)) {
+        std::vector<unsigned long long> result = resultHandler.getResults(message_info.start_of_interval).value();
         if (!(message_info.primes.size() == result.size() &&
               std::equal(message_info.primes.begin(), message_info.primes.end(), result.begin()))) {
             std::cout << "different results for same interval" << std::endl;
         }
     } else {
-        prime_intervals[message_info.start_of_interval] = message_info.primes;
-        Peer::SectorHandler.handleSectorResultFromPeer(message);
+        resultHandler.addResults(message_info.start_of_interval, message_info.primes);
+        // Peer::SectorHandler.handleSectorResultFromPeer(message);
         std::cout << "updated map with results" << std::endl;
     }
 }
@@ -375,12 +378,9 @@ void Peer::process_fingack_message(Message message) {
 
 void Peer::process_find_interval_message(Message message, std::pair<const Hash, MyConnectionHandler *> connection) {
     Message::find_interval_message msg = message.decode_find_interval_message();
-    unsigned long long highest_interval = msg.highest_known_interval;
-    for (auto &pair: prime_intervals) {
-        if (pair.first > highest_interval) highest_interval = pair.first;
-    }
+    unsigned long long highest_interval = resultHandler.getHighest();
 
-    std::string full_msg = "FIND_INTERVAL_ACK," + address.toString() + "," + to_string(highest_interval);
+    std::string full_msg = "FIND_INTERVAL_ACK," + address.toString() + "," + std::to_string(highest_interval);
     Message ans(full_msg);
     connection.second->ioInterface.queueOutgoingMessage(ans);
 }
@@ -390,12 +390,12 @@ void Peer::process_find_interval_ack_message(Message message) {
     if (new_interval_start < msg.highest_known_interval) {
         Hash interval_hash = Hash::hashInterval(msg.highest_known_interval);
         std::string closestIP = findClosestPeer(interval_hash);
-        std::string full_msg = "FIND_INTERVAL," + address.toString() + "," + to_string(msg.highest_known_interval);
+        std::string full_msg = "FIND_INTERVAL," + address.toString() + "," + std::to_string(msg.highest_known_interval);
         Message ans(full_msg);
         connections[Hash::hashSocketAddress(Poco::Net::SocketAddress(closestIP))]->ioInterface.queueOutgoingMessage(ans);
     } else{
         new_interval_start = msg.highest_known_interval + 1000;
-        sectorHandler::calculateNewSector(new_interval_start,Peer::address);
+        resultHandler.submitCalculation(new_interval_start);
     }
 }
 

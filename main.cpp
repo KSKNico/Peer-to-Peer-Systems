@@ -3,8 +3,6 @@
 #include "peerConfig.hpp"
 #include "peer.hpp"
 #include "Poco/Net/SocketAddress.h"
-#include "sectorHandling/sectorHandler.hpp"
-#include "sectorHandling/primeCalculation.hpp"
 
 
 

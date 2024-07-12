@@ -1,6 +1,18 @@
 #include "resultHandler.hpp"
 
-#include "sectorHandling/primeCalculation.hpp"
+void ResultHandler::updateResultWithSingleFuture(ull lowerBound) {
+    std::unique_lock<std::mutex> lock(futuresMutex);
+    auto it = futures.find(lowerBound);
+    if (it == futures.end()) {
+        return;
+    }
+    std::future_status status = it->second.wait_for(std::chrono::seconds(0));
+    if (status == std::future_status::ready) {
+        std::vector<ull> results = it->second.get();
+        addResults(lowerBound, results);
+        futures.erase(it);
+    }
+}
 
 void ResultHandler::updateResultsWithFutures() {
     std::unique_lock<std::mutex> lock(futuresMutex);
@@ -30,6 +42,7 @@ bool ResultHandler::isActivelyCalculated(ull lowerBound) {
 }
 
 ull ResultHandler::getHighest() {
+    updateResultsWithFutures();
     std::unique_lock<std::mutex> lock(resultsMutex);
     if (results.empty()) {
         return 0;
@@ -38,6 +51,7 @@ ull ResultHandler::getHighest() {
 }
 
 bool ResultHandler::hasResults(ull lowerBound) {
+    updateResultWithSingleFuture(lowerBound);
     std::unique_lock<std::mutex> lock(resultsMutex);
     return results.find(lowerBound) != results.end();
 }
@@ -48,12 +62,15 @@ void ResultHandler::addResults(ull lowerBound, std::vector<ull> primeNumbers) {
 }
 
 std::optional<std::vector<ull>> ResultHandler::getResults(ull lowerBound) {
+    updateResultWithSingleFuture(lowerBound);
     std::unique_lock<std::mutex> lock(resultsMutex);
     auto it = results.find(lowerBound);
     if (it == results.end()) {
-        return std::nullopt;
+        return std::nullopt; 
+    } else {
+        return std::make_optional(it->second); 
     }
-    return std::make_optional(it->second);   
+
 }
 
 void ResultHandler::submitCalculation(ull lowerBound) {
@@ -65,7 +82,7 @@ void ResultHandler::submitCalculation(ull lowerBound) {
 }
 
 std::vector<ull> ResultHandler::calculatePrimes(ull lowerBound) {
-        vector<ull> primes;
+        std::vector<ull> primes;
         ull upperBound = lowerBound + INTERVAL_SIZE;
         for(ull i=lowerBound; i <= upperBound; i++)
         {

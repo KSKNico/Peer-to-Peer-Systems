@@ -14,16 +14,7 @@ file(GLOB SOURCES "*.cpp")
 
 find_package(Poco REQUIRED COMPONENTS Foundation Util Net)
 
-add_executable(${PROJECT_NAME} ${SOURCES}
-        mySocketConnector.cpp
-        mySocketAcceptor.cpp
-        sectorHandling/primeCalculation.cpp
-        sectorHandling/primeCalculation.hpp
-        sectorHandling/sectorHandler.cpp
-        sectorHandling/sectorHandler.hpp
-        sectorHandling/resultHandler.cpp
-        sectorHandling/resultHandler.hpp
-)
+add_executable(${PROJECT_NAME} ${SOURCES})
 
 target_link_libraries(${PROJECT_NAME} Poco::Foundation Poco::Util Poco::Net)
 

@@ -30,8 +30,7 @@ class ResultHandler {
     // returns true if the given lowerBound has results
     bool hasResults(ull lowerBound);
 
-    // updates the results with the the completed futures and removes them from the futures map
-    void updateResultsWithFutures();
+
 
     // returns true if the given lowerBound is actively calculated
     bool isActivelyCalculated(ull lowerBound);
@@ -40,6 +39,12 @@ class ResultHandler {
     // calculates the prime numbers between the given lowerBound and lowerBound + INTERVAL_SIZE
     // should not be called directly, use submitCalculation instead
     static std::vector<ull> calculatePrimes(ull lowerBound);
+
+    // updates the results with the completed futures and removes them from the futures map
+    void updateResultsWithFutures();
+
+    // updates the results with a single future if it is completed
+    void updateResultWithSingleFuture(ull lowerBound);
 
     std::map<ull, ResultFuture> futures;
     std::mutex resultsMutex;
