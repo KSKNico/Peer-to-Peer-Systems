@@ -22,9 +22,9 @@ set_target_properties(${PROJECT_NAME} PROPERTIES RUNTIME_OUTPUT_DIRECTORY ${CMAK
 
 # only if testing options is enabled
 
-option(BUILD_TESTS "Build the tests" OFF)
+option(TESTS "Build the tests" ON)
 
-if(BUILD_TESTS)
+if(TESTS)
     enable_testing()
     add_subdirectory(tests)
 endif()
