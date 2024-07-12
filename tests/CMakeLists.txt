@@ -20,7 +20,7 @@ include_directories(${CMAKE_CURRENT_SOURCE_DIR}/..)
 # Gather all test files
 file(GLOB TEST_SOURCES "*.cpp")
 
-file(GLOB PROJECT_SOURCES "../message.cpp")
+file(GLOB PROJECT_SOURCES "../message.cpp" "../resultHandler.cpp")
 
 # Create the test executable
 add_executable(runTests ${TEST_SOURCES} ${PROJECT_SOURCES})
