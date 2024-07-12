@@ -168,7 +168,7 @@ void sectorHandler::findResultPeer(const string& ipAddress,unsigned long long se
 
 void sectorHandler::testAll(){
 
-    future<bool> sectorCalculated = async(launch::async,sectorHandler::calculateNewSector);
+    future<bool> sectorCalculated = async(launch::async,sectorHandler::calculateNewSector, 0);
     cout << "\n";
     future<void> test = async(launch::async,sectorHandler::getHighestPeerSector, "127.0.0.1:5001");
     cout << "\n";
