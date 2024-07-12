@@ -14,6 +14,7 @@
 #include "myConnectionHandler.hpp"
 #include "mySocketConnector.hpp"
 #include "mySocketAcceptor.hpp"
+#include "sectorHandling/sectorHandler.hpp"
 
 class Peer {
     public:
@@ -38,6 +39,8 @@ class Peer {
     // mutex for the connections unordered_map
     std::mutex connectionsMutex;
 
+    unsigned long long new_interval_start = 0;
+
     Hash getHash() const;
     void run();
 
@@ -56,9 +59,13 @@ class Peer {
     void process_predack_message(Message message);
     void process_fing_message(Message message, std::pair<const Hash, MyConnectionHandler *> connection);
     void process_fingack_message(Message message);
+    void process_find_interval_message(Message message, std::pair<const Hash, MyConnectionHandler *> connection);
+    void process_find_interval_ack_message(Message message);
     void initFingerTable(MyConnectionHandler * successorConnection);
 
     std::string findClosestPeer(Hash& position);
+
+    sectorHandler sectorHandler;
 
     std::unordered_map<Hash, Poco::Net::SocketAddress, Hash::Hasher> fingerTable;
     Poco::Net::SocketAddress successor = address;   // initially you are your successor

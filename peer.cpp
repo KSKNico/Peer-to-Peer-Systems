@@ -43,9 +43,11 @@ Peer::Peer(Poco::Net::SocketAddress ownAddress, Poco::Net::SocketAddress remoteA
 
     thread.start(reactor);
 
-    while(connections.empty()){
+    while (connections.empty()) {
         std::this_thread::sleep_for(std::chrono::milliseconds(100));
     }
+
+    sectorHandler.initialize();
 
     auto data = Message::MessageData{};
     std::string str = "JOIN," + address.toString();
@@ -59,6 +61,8 @@ Peer::Peer(Poco::Net::SocketAddress ownAddress) :
         id(Hash::hashSocketAddress(ownAddress)) {
     address = serverSocket.address();
     id = Hash::hashSocketAddress(address);
+
+    sectorHandler.initialize();
 
     std::cout << "Peer has address: " << address.toString() << std::endl;
     std::cout << "Peer has hash: " << id.toString() << std::endl;
@@ -79,10 +83,10 @@ void Peer::process_get_message(Message message, std::pair<const Hash, MyConnecti
     std::string all = "PUT," + ip + "," + interval;
 
     //updating results for safety reasons
-    unordered_map<unsigned long long, vector<unsigned long long>> localResults = sectorHandler::getAllResults();
-    for (auto & localResult : localResults) {
+    unordered_map<unsigned long long, vector<unsigned long long>> localResults = sectorHandler.getAllResults();
+    for (auto &localResult: localResults) {
         unsigned long long key = localResult.first;
-        vector<unsigned long long > value = localResult.second;
+        vector<unsigned long long> value = localResult.second;
         prime_intervals.operator[](key) = value;
         //cout << (prime_intervals.at(key)[0]);
     }
@@ -91,7 +95,8 @@ void Peer::process_get_message(Message message, std::pair<const Hash, MyConnecti
         // if peer stores the primes of the requested interval
         //std::vector<unsigned long long> result = prime_intervals[message_info.start_of_interval];
 
-        std::vector<unsigned long long> result = get<0>(sectorHandler::findResultLocally(message_info.start_of_interval));
+        std::vector<unsigned long long> result = get<0>(
+                sectorHandler.findResultLocally(message_info.start_of_interval));
         for (auto prime: result) {
             std::string str = std::to_string(prime);
             all += "," + str;
@@ -145,21 +150,21 @@ void Peer::process_put_message(Message message) {
     }
 
     std::cout << "primes: ";
-    for(auto prime : message_info.primes){
+    for (auto prime: message_info.primes) {
         std::cout << prime << ",";
     }
     std::cout << std::endl;
 
-    unordered_map<unsigned long long, vector<unsigned long long>> localResults = sectorHandler::getAllResults();
-    for (auto & localResult : localResults) {
+    unordered_map<unsigned long long, vector<unsigned long long>> localResults = sectorHandler.getAllResults();
+    for (auto &localResult: localResults) {
         std::cout << "first: " << localResult.first << std::endl;
         std::cout << "second: " << std::endl;
-        for(auto value : localResult.second){
+        for (auto value: localResult.second) {
             std::cout << value << ",";
         }
         std::cout << std::endl;
         unsigned long long key = localResult.first;
-        vector<unsigned long long > value = localResult.second;
+        vector<unsigned long long> value = localResult.second;
         prime_intervals.operator[](key) = value;
         //cout << (prime_intervals.at(key)[0]);
     }
@@ -173,7 +178,7 @@ void Peer::process_put_message(Message message) {
         }
     } else {
         prime_intervals[message_info.start_of_interval] = message_info.primes;
-        sectorHandler::handleSectorResultFromPeer(message);
+        sectorHandler.handleSectorResultFromPeer(message);
         std::cout << "updated map with results" << std::endl;
     }
 }
@@ -222,16 +227,16 @@ void Peer::process_joinack_message(Message message) {
         connections.at(peer_hash)->ioInterface.queueOutgoingMessage(ans);
     } else {
         connectors.insert(std::make_pair(peer_hash, std::make_unique<MySocketConnector>(peer_addr, reactor,
-                                                                                           connections,
-                                                                                           connectionsMutex)));
+                                                                                        connections,
+                                                                                        connectionsMutex)));
         outgoingMessages[peer_hash].push_back(ans);
     }
 }
 
-std::string Peer::findClosestPeer(Hash& position) {
+std::string Peer::findClosestPeer(Hash &position) {
     Hash closestPeer = Hash::hashSocketAddress(address);
 
-    for (const auto& entry: fingerTable) {
+    for (const auto &entry: fingerTable) {
         if ((entry.first.isBefore(position)) && (!entry.first.isBefore(closestPeer))) {
             closestPeer = entry.first;
         }
@@ -250,11 +255,13 @@ void Peer::process_succ_message(Message message, std::pair<const Hash, MyConnect
     std::string succ = successor.toString();  // send IP of old successor even if it changes
     std::string ip = address.toString();
 
-    if(successor == address || myPosition.isBefore(peerPosition) && peerPosition.isBefore(Hash::hashSocketAddress(successor))){
+    if (successor == address ||
+        myPosition.isBefore(peerPosition) && peerPosition.isBefore(Hash::hashSocketAddress(successor))) {
         // I have no succ or this peer is between my succ and me -> this peer will be my new succ
         successor = peerIP;
     }
-    if(predecessor == address) predecessor = peerIP;    // if I'm the only peer, I was my pred -> new peer is not only my succ but also my pred
+    if (predecessor == address)
+        predecessor = peerIP;    // if I'm the only peer, I was my pred -> new peer is not only my succ but also my pred
 
     std::string fullMessage = "SUCCACK," + ip + "," + succ;
 
@@ -276,8 +283,9 @@ void Peer::process_succack_message(Message message) {
         // if I'm between peers successor and peer -> peers succ will be my succ and peer will be my pred
         successor = closestIP;
         predecessor = peerIP;
-    } else if(closestIP == address) return; // if I'm the successor, nothing to do
-    else if(peerIP == closestIP) predecessor = successor = peerIP;  // peer has itself as successor -> we are the only 2 peers in the system -> we are pred and succ for each other
+    } else if (closestIP == address) return; // if I'm the successor, nothing to do
+    else if (peerIP == closestIP)
+        predecessor = successor = peerIP;  // peer has itself as successor -> we are the only 2 peers in the system -> we are pred and succ for each other
 }
 
 void Peer::process_pred_message(Message message, std::pair<const Hash, MyConnectionHandler *> connection) {
@@ -289,11 +297,13 @@ void Peer::process_pred_message(Message message, std::pair<const Hash, MyConnect
     std::string pred = predecessor.toString();  // send IP of old predecessor even if it changes
     std::string ip = address.toString();
 
-    if(predecessor == address || peerPosition.isBefore(Hash::hashSocketAddress(address)) && Hash::hashSocketAddress(predecessor).isBefore(peerPosition)){
+    if (predecessor == address || peerPosition.isBefore(Hash::hashSocketAddress(address)) &&
+                                  Hash::hashSocketAddress(predecessor).isBefore(peerPosition)) {
         // I have no pred or this peer is between my pred and me -> this peer will be my new pred
         predecessor = peerIP;
     }
-    if(successor == address) successor = peerIP;    // if I'm the only peer, I was my succ -> new peer is not only my pred but also my succ
+    if (successor == address)
+        successor = peerIP;    // if I'm the only peer, I was my succ -> new peer is not only my pred but also my succ
 
     std::string fullMessage = "PREDACK," + ip + "," + pred;
 
@@ -311,12 +321,12 @@ void Peer::process_predack_message(Message message) {
     auto currentPred = Poco::Net::SocketAddress(msg.currentPred);
     Hash currentPredPosition = Hash::hashSocketAddress(currentPred);
 
-    if(currentPred.toString() == msg.IP_address){
+    if (currentPred.toString() == msg.IP_address) {
         // peer was the only one -> we are just 2 peers in this network -> we are pred and succ for us
         successor = predecessor = peerIP;
-    } else if(currentPred == address){
+    } else if (currentPred == address) {
         return; // if I'm already the predecessor, there is nothing to do
-    } else if(currentPredPosition.isBefore(myPosition) && myPosition.isBefore(peerPosition)){
+    } else if (currentPredPosition.isBefore(myPosition) && myPosition.isBefore(peerPosition)) {
         // I'm between the pred of the peer and the peer -> this peer will be my succ and its pred will be my pred
         successor = peerIP;
         predecessor = currentPred;
@@ -360,6 +370,32 @@ void Peer::process_fingack_message(Message message) {
                                                                                             connectionsMutex)));
             outgoingMessages[fing_hash].push_back(ans);
         }
+    }
+}
+
+void Peer::process_find_interval_message(Message message, std::pair<const Hash, MyConnectionHandler *> connection) {
+    Message::find_interval_message msg = message.decode_find_interval_message();
+    unsigned long long highest_interval = msg.highest_known_interval;
+    for (auto &pair: prime_intervals) {
+        if (pair.first > highest_interval) highest_interval = pair.first;
+    }
+
+    std::string full_msg = "FIND_INTERVAL_ACK," + address.toString() + "," + to_string(highest_interval);
+    Message ans(full_msg);
+    connection.second->ioInterface.queueOutgoingMessage(ans);
+}
+
+void Peer::process_find_interval_ack_message(Message message) {
+    Message::find_interval_ack_message msg = message.decode_find_interval_ack_message();
+    if (new_interval_start < msg.highest_known_interval) {
+        Hash interval_hash = Hash::hashInterval(msg.highest_known_interval);
+        std::string closestIP = findClosestPeer(interval_hash);
+        std::string full_msg = "FIND_INTERVAL," + address.toString() + "," + to_string(msg.highest_known_interval);
+        Message ans(full_msg);
+        connections[Hash::hashSocketAddress(Poco::Net::SocketAddress(closestIP))]->ioInterface.queueOutgoingMessage(ans);
+    } else{
+        new_interval_start = msg.highest_known_interval + 1000;
+        sectorHandler.calculateNewSector(new_interval_start);
     }
 }
 
@@ -432,7 +468,7 @@ void Peer::stabilize() {
 
     MyConnectionHandler *handler = connections[Hash::hashSocketAddress(successor)];
 
-    if(handler == nullptr){
+    if (handler == nullptr) {
         std::cout << "successor address not found" << std::endl;
         return;
     }
@@ -451,13 +487,13 @@ void Peer::stabilize() {
 
 void Peer::printConnections() {
     std::unique_lock<std::mutex> connectionsLock(connectionsMutex);
-    for (const auto& connection : connections) {
+    for (const auto &connection: connections) {
         std::cout << connection.first.toString() << std::endl;
     }
 }
 
 
-void Peer::initFingerTable(MyConnectionHandler * successorConnection) {
+void Peer::initFingerTable(MyConnectionHandler *successorConnection) {
     // sends the initial FING message to the successor
     std::string ip = address.toString();
     std::string fullMessage = "FING," + ip;
@@ -480,7 +516,7 @@ void Peer::run() {
 
             auto it = outgoingMessages.find(connection.first);
             if (it != outgoingMessages.end() && !it->second.empty()) {
-                for (const auto& msg : it->second) {
+                for (const auto &msg: it->second) {
                     connection.second->ioInterface.queueOutgoingMessage(msg);
                 }
                 outgoingMessages.erase(it);
@@ -488,7 +524,7 @@ void Peer::run() {
         }
         connectionsLock.unlock();
 
-        for (auto& connector : connectors) {
+        for (auto &connector: connectors) {
             if (!connector.second->isFinished()) {
                 // remove it from the map
                 // this also removes the mySocketConnector object as it is a unique_ptr

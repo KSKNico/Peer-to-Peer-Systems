@@ -9,8 +9,8 @@
 
 
 int main() {
-
-    sectorHandler::initialize();
+    // now every peer has a sector handler -> do this in peer constructor
+//    sectorHandler::initialize();
 
     auto peer_addr_1 = Poco::Net::SocketAddress("127.0.0.1:5001");
     auto peer_addr_2 = Poco::Net::SocketAddress("127.0.0.1:5002");

@@ -37,18 +37,19 @@ void sectorHandler::initialize(){
     //cout << "\n\n";
     //*/
 }
-bool sectorHandler::calculateNewSector(){
-    unsigned long long lowerBound = primeCalculation::getLowerBound();
-    unsigned long long upperBound = primeCalculation::getUpperBound();
+bool sectorHandler::calculateNewSector(int lower_bound){
+    /*unsigned long long lowerBound = primeCalculation::getLowerBound();
+    unsigned long long upperBound = primeCalculation::getUpperBound();*/
+    int upper_bound = lower_bound + 1000;
 
-    vector<unsigned long long> newCalc = primeCalculation::calculatePrimes(lowerBound,upperBound);
-    sectorHandler::handleSectorResultCalculated(newCalc,lowerBound,upperBound,"-1");
-    if (get<0>(resultHandler::findConfirmedResultLocally(lowerBound)).at(0) != 0){
+    vector<unsigned long long> newCalc = primeCalculation::calculatePrimes(lower_bound,upper_bound);
+    sectorHandler::handleSectorResultCalculated(newCalc,lower_bound,upper_bound,"-1");
+    if (get<0>(resultHandler::findConfirmedResultLocally(lower_bound)).at(0) != 0){
         //pair<unsigned long long, vector<unsigned long long >> newCalcPair (lowerBound,newCalc);
         //Peer::prime_intervals.insert(newCalcPair);
         cout << "New Sector calculated\n";
         return true;
-    }else if (get<0>(resultHandler::findUnconfirmedResultLocally(lowerBound)).at(0) != 0){
+    }else if (get<0>(resultHandler::findUnconfirmedResultLocally(lower_bound)).at(0) != 0){
         cout << "New Sector calculated\n";
         return true;
     }

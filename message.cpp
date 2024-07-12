@@ -205,3 +205,37 @@ Message::getack_message Message::decode_getack_message() {
 
     return msg;
 }
+
+Message::find_interval_message Message::decode_find_interval_message() {
+    find_interval_message msg;
+    std::string str(data.data(), data.size());
+
+    size_t pos = str.find(',');
+
+    if(pos == std::string::npos){
+        std::cout << "No ',' in FIND_INTERVAL message" << std::endl;
+        return msg;
+    }
+
+    msg.IP_address = str.substr(0, pos);
+    msg.highest_known_interval = std::stoull(str.substr(pos+1));
+
+    return msg;
+}
+
+Message::find_interval_ack_message Message::decode_find_interval_ack_message() {
+    find_interval_ack_message msg;
+    std::string str(data.data(), data.size());
+
+    size_t pos = str.find(',');
+
+    if(pos == std::string::npos){
+        std::cout << "No ',' in FIND_INTERVAL_ACK message" << std::endl;
+        return msg;
+    }
+
+    msg.IP_address = str.substr(0, pos);
+    msg.highest_known_interval = std::stoull(str.substr(pos+1));
+
+    return msg;
+}

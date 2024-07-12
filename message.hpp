@@ -41,6 +41,10 @@ public:
      * structure of FING: "<type>, <IP address from sender>"
      *
      * structure of FINGACK: "<type>, <IP address from sender>, <IP address of successor of sender>"
+     *
+     * structure of FIND_INTERVAL: "<type>, <IP address from sender>, <highest known interval>"
+     *
+     * structure of FIND_INTERVAL_ACK: "<type>, <IP address from sender>, <highest known interval>"
      */
     enum class MessageType {
         GET,
@@ -54,6 +58,8 @@ public:
         PREDACK,
         FING,
         FINGACK,
+        FIND_INTERVAL,
+        FIND_INTERVAL_ACK,
     };
     struct get_message{
         std::string IP_address;
@@ -97,6 +103,14 @@ public:
         std::string IP_address;
         std::string SuccessorIP;
     };
+    struct find_interval_message{
+        std::string IP_address;
+        unsigned long long highest_known_interval;
+    };
+    struct find_interval_ack_message{
+        std::string IP_address;
+        unsigned long long highest_known_interval;
+    };
     constexpr static int FIXED_MESSAGE_SIZE = 1024;
 
     // used inside of a message to separate parts
@@ -126,4 +140,6 @@ public:
     predack_message decode_predack_message();
     fing_message decode_fing_message();
     fingack_message decode_fingack_message();
+    find_interval_message decode_find_interval_message();
+    find_interval_ack_message decode_find_interval_ack_message();
 };
