@@ -13,26 +13,21 @@ class resultHandler {
 public:
     static void initialize();
 
-public:
     static map<unsigned long long , tuple<vector<unsigned long long>,unsigned long long, unsigned long long >>
     getAllConfirmedResults();
 
-public:
     static void saveResultLocally(const vector<unsigned long long int> &uncheckedVector,
                                   unsigned long long lowerBound,
                                   unsigned long long upperBound);
 
-public:
     static bool checkResult(
             vector<unsigned long long int> sectorResult,
             unsigned long long int lowerBound,
             unsigned long long int upperBound
     );
 
-public:
     static tuple<vector<unsigned long long int>,unsigned long long, unsigned long long > findConfirmedResultLocally (unsigned long long sectorId);
 
-public:
     static tuple<
             vector<unsigned long long int>,
             unsigned long long int,

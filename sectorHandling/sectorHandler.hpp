@@ -12,11 +12,8 @@ class sectorHandler {
 public:
     static unordered_map<unsigned long long, vector<unsigned long long>> getAllResults();
 
-
-        public:
     static void handleSectorResultFromPeer(Message message);
 
-public:
     static optional<Message> handleSectorResultCalculated(
             vector<unsigned long long int> sectorResult,
             unsigned long long int lowerBound,
@@ -25,7 +22,6 @@ public:
             const Poco::Net::SocketAddress& ownAddress
             );
 
-public:
     static tuple<vector<unsigned long long int>,
             unsigned long long,
             unsigned long long >
