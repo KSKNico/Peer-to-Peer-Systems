@@ -4,6 +4,7 @@
 
 #include <unordered_map>
 #include "../message.hpp"
+#include "Poco/Net/SocketAddress.h"
 
 using namespace std;
 
@@ -11,28 +12,35 @@ class sectorHandler {
 public:
     static unordered_map<unsigned long long, vector<unsigned long long>> getAllResults();
 
+
+        public:
     static void handleSectorResultFromPeer(Message message);
 
-    static void handleSectorResultCalculated(
+public:
+    static optional<Message> handleSectorResultCalculated(
             vector<unsigned long long int> sectorResult,
             unsigned long long int lowerBound,
             unsigned long long int upperBound,
-            string ipAddress
-    );
+            const Poco::Net::SocketAddress& ipAddress,
+            const Poco::Net::SocketAddress& ownAddress
+            );
 
-    static tuple<vector<unsigned long long int>, unsigned long long, unsigned long long>
-    findResultLocally(unsigned long long int sectorId);
+public:
+    static tuple<vector<unsigned long long int>,
+            unsigned long long,
+            unsigned long long >
+            findResultLocally(unsigned long long int sectorId);
 
-    static tuple<vector<unsigned long long>, unsigned long, unsigned long> getHighestLocalSector();
+    static tuple<vector<unsigned long long>,unsigned long, unsigned long > getHighestLocalSector();
 
     //static tuple<vector<unsigned long long>,unsigned long, unsigned long >
-    static void getHighestPeerSector(string ipAddress);
+    static Message getHighestPeerSector(string ipAddress);
 
-    static void initialize();
+    static void initialize(const Poco::Net::SocketAddress& ownAddress);
 
-    static bool calculateNewSector(int lower_bound);
+    static bool calculateNewSector(unsigned long long lowerBound, const Poco::Net::SocketAddress& ownAddress);
 
-    static void findResultPeer(const string &ipAddress, unsigned long long int sectorId);
+    static Message findResultOtherPeer(const string& ipAddress, unsigned long long int sectorId);
 
     static void testAll();
 };

@@ -47,7 +47,7 @@ Peer::Peer(Poco::Net::SocketAddress ownAddress, Poco::Net::SocketAddress remoteA
         std::this_thread::sleep_for(std::chrono::milliseconds(100));
     }
 
-    sectorHandler.initialize();
+    sectorHandler::initialize(Peer::address);
 
     auto data = Message::MessageData{};
     std::string str = "JOIN," + address.toString();
@@ -62,7 +62,7 @@ Peer::Peer(Poco::Net::SocketAddress ownAddress) :
     address = serverSocket.address();
     id = Hash::hashSocketAddress(address);
 
-    sectorHandler.initialize();
+    sectorHandler::initialize(Peer::address);
 
     std::cout << "Peer has address: " << address.toString() << std::endl;
     std::cout << "Peer has hash: " << id.toString() << std::endl;
@@ -83,7 +83,7 @@ void Peer::process_get_message(Message message, std::pair<const Hash, MyConnecti
     std::string all = "PUT," + ip + "," + interval;
 
     //updating results for safety reasons
-    unordered_map<unsigned long long, vector<unsigned long long>> localResults = sectorHandler.getAllResults();
+    unordered_map<unsigned long long, vector<unsigned long long>> localResults = sectorHandler::getAllResults();
     for (auto &localResult: localResults) {
         unsigned long long key = localResult.first;
         vector<unsigned long long> value = localResult.second;
@@ -96,7 +96,7 @@ void Peer::process_get_message(Message message, std::pair<const Hash, MyConnecti
         //std::vector<unsigned long long> result = prime_intervals[message_info.start_of_interval];
 
         std::vector<unsigned long long> result = get<0>(
-                sectorHandler.findResultLocally(message_info.start_of_interval));
+                sectorHandler::findResultLocally(message_info.start_of_interval));
         for (auto prime: result) {
             std::string str = std::to_string(prime);
             all += "," + str;
@@ -155,7 +155,7 @@ void Peer::process_put_message(Message message) {
     }
     std::cout << std::endl;
 
-    unordered_map<unsigned long long, vector<unsigned long long>> localResults = sectorHandler.getAllResults();
+    unordered_map<unsigned long long, vector<unsigned long long>> localResults = sectorHandler::getAllResults();
     for (auto &localResult: localResults) {
         std::cout << "first: " << localResult.first << std::endl;
         std::cout << "second: " << std::endl;
@@ -178,7 +178,7 @@ void Peer::process_put_message(Message message) {
         }
     } else {
         prime_intervals[message_info.start_of_interval] = message_info.primes;
-        sectorHandler.handleSectorResultFromPeer(message);
+        sectorHandler::handleSectorResultFromPeer(message);
         std::cout << "updated map with results" << std::endl;
     }
 }
@@ -395,7 +395,7 @@ void Peer::process_find_interval_ack_message(Message message) {
         connections[Hash::hashSocketAddress(Poco::Net::SocketAddress(closestIP))]->ioInterface.queueOutgoingMessage(ans);
     } else{
         new_interval_start = msg.highest_known_interval + 1000;
-        sectorHandler.calculateNewSector(new_interval_start);
+        sectorHandler::calculateNewSector(new_interval_start,Peer::address);
     }
 }
 

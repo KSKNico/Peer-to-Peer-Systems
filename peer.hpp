@@ -65,7 +65,7 @@ class Peer {
 
     std::string findClosestPeer(Hash& position);
 
-    sectorHandler sectorHandler;
+    //sectorHandler sectorHandler;
 
     std::unordered_map<Hash, Poco::Net::SocketAddress, Hash::Hasher> fingerTable;
     Poco::Net::SocketAddress successor = address;   // initially you are your successor
