@@ -239,3 +239,30 @@ Message::find_interval_ack_message Message::decode_find_interval_ack_message() {
 
     return msg;
 }
+
+Message::stab_message Message::decode_stab_message() {
+    stab_message msg;
+    std::string str(data.data(), data.size());
+
+    msg.IP_address = str;
+
+    return msg;
+}
+
+Message::staback_message Message::decode_staback_message() {
+    staback_message msg;
+    std::string str(data.data(), data.size());
+
+    size_t pos = str.find(',');
+
+    if(pos == std::string::npos){
+        std::cout << "No ',' in FINGACK message" << std::endl;
+        return msg;
+    }
+
+    msg.IP_address = str.substr(0, pos);
+    msg.senderPred = str.substr(pos+1);
+    msg.senderSucc = str.substr(pos+2);
+
+    return msg;
+}

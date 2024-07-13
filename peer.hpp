@@ -45,6 +45,7 @@ class Peer {
     Hash getHash() const;
     void run();
 
+    //TODO add some descriptions
     void printConnections();
     void processMessage(Message message, std::pair<const Hash, MyConnectionHandler *> connection);
     void process_put_message(Message message);
@@ -60,7 +61,15 @@ class Peer {
     void process_fingack_message(Message message);
     void process_find_interval_message(Message message, std::pair<const Hash, MyConnectionHandler *> connection);
     void process_find_interval_ack_message(Message message);
-    void initFingerTable(MyConnectionHandler * successorConnection);
+    
+    //send stabilize message to pred and succ
+    void stabilize();
+    //return STABACK Message to sender, send out a PRED and SUCC message
+    void process_stabilize_message(Message message);
+    //updates current pred or succ if necessary
+    void process_stabilizeack_message(Message message, std::pair<const Hash, MyConnectionHandler *> connection);
+    //starts iterating through the ring and fills fingertable
+    void findFingers();
 
     void doIntervalRoutine();
 
@@ -77,5 +86,4 @@ class Peer {
     Hash id;
     Poco::Thread thread;
 
-    void stabilize();
 };

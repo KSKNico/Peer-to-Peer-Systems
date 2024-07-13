@@ -205,6 +205,13 @@ void Peer::process_join_message(Message message, std::pair<const Hash, MyConnect
 
     Message ans(fullMessage);
     connection.second->ioInterface.queueOutgoingMessage(ans);
+
+    // for good measure inform closest peer to look for new neighbours
+    if (closestIP != ip){
+        std::string stabilize_message = "STABILIZE" + ',' + address.toString();
+        Message stab(stabilize_message);
+        connections[Hash::hashSocketAddress(Poco::Net::SocketAddress(closestIP))]->ioInterface.queueOutgoingMessage(stab);
+    }
 }
 
 void Peer::process_joinack_message(Message message) {
@@ -214,15 +221,21 @@ void Peer::process_joinack_message(Message message) {
     auto peer_addr = Poco::Net::SocketAddress(msg.ClosestKnownIP);
     Hash peer_hash = Hash::hashSocketAddress(peer_addr);
 
+    //TODO check if this condition check is still needed
     //predecessor = peer_addr;
     if (!peer_hash.isBefore(Hash::hashSocketAddress(address))) {
         // if peer position is not before me in the circle my successor was returned and I can stop searching
         successor = peer_addr;
         predecessor = sender_addr;
+
+        Peer::stabilize();
+        Peer::findFingers();
+
         return;
     }
 
-    std::string ip = address.toString();
+    // do we need this resend-block?
+    /*std::string ip = address.toString();
     std::string fullMessage = "JOIN," + ip;
     Message ans(fullMessage);
 
@@ -234,6 +247,7 @@ void Peer::process_joinack_message(Message message) {
                                                                                         connectionsMutex)));
         outgoingMessages[peer_hash].push_back(ans);
     }
+    */
 }
 
 std::string Peer::findClosestPeer(Hash &position) {
@@ -347,6 +361,7 @@ void Peer::process_fing_message(Message message, std::pair<const Hash, MyConnect
     connection.second->ioInterface.queueOutgoingMessage(ans);
 }
 
+//this currently iterates over the entire ring (unless messages get lost), so full network
 void Peer::process_fingack_message(Message message) {
     Message::fingack_message msg = message.decode_fingack_message();
 
@@ -454,30 +469,62 @@ void Peer::processMessage(Message message, std::pair<const Hash, MyConnectionHan
 }
 
 void Peer::stabilize() {
-    Message::MessageData data{};
-    std::string str = "PRED," + address.toString();
+    std::string stabilize_message = "STABILIZE" + ',' + address.toString();
+    Message ans(stabilize_message);
 
-    std::strncpy(data.data(), str.c_str(), data.size());
+    connections[Hash::hashSocketAddress(Poco::Net::SocketAddress(predecessor))]->ioInterface.queueOutgoingMessage(ans);
+    connections[Hash::hashSocketAddress(Poco::Net::SocketAddress(successor))]->ioInterface.queueOutgoingMessage(ans);
+}
 
-    Message message(data);
+void Peer::process_stabilize_message(Message message){
+    //
+    Message::stab_message msg = message.decode_stab_message();
+    auto remoteIP = Poco::Net::SocketAddress(msg.IP_address);
 
-    MyConnectionHandler *handler = connections[Hash::hashSocketAddress(successor)];
+    std::string stabilize_message = "STABILIZEACK" + ',' + address.toString() + ',' + predecessor.toString() + ',' + successor.toString();
+    Message stab(stabilize_message);
+    connections[Hash::hashSocketAddress(Poco::Net::SocketAddress(remoteIP))]->ioInterface.queueOutgoingMessage(stab);
 
-    if (handler == nullptr) {
-        std::cout << "successor address not found" << std::endl;
-        return;
+    std::string pred_message = "PRED" + ',' + address.toString();
+    Message pred(pred_message);
+    connections[Hash::hashSocketAddress(Poco::Net::SocketAddress(predecessor))]->ioInterface.queueOutgoingMessage(pred);
+
+    std::string succ_message = "SUCC" + ',' + address.toString();
+    Message succ(pred_message);
+    connections[Hash::hashSocketAddress(Poco::Net::SocketAddress(successor))]->ioInterface.queueOutgoingMessage(succ);
+}
+
+void Peer::process_stabilizeack_message(Message message, std::pair<const Hash, MyConnectionHandler *> connection) {
+    Message::staback_message msg = message.decode_staback_message();
+    Hash myPosition = Hash::hashSocketAddress(address);
+    auto possiblePred = Poco::Net::SocketAddress(msg.senderPred);
+    Hash remotePred = Hash::hashSocketAddress(possiblePred);
+    auto possibleSucc = Poco::Net::SocketAddress(msg.senderSucc);
+    Hash remoteSucc = Hash::hashSocketAddress(possibleSucc);
+
+    //check if the returned values are between me and current pred/succ
+    if (!myPosition.isBefore(remotePred) && Hash::hashSocketAddress(predecessor).isBefore(remotePred)) {
+        predecessor = possiblePred;
     }
 
-    handler->ioInterface.queueOutgoingMessage(message);
-    /*
-     * send message to successor -> "who is your predecessor"
-     *
-     * if (predecessor not me)
-     *  updateSuccessor(predecessor)
-     *  send message to successor -> "im now your predecessor"
-     *  await response -> "no my predecessor is closer" | "ok"
-     *
-     */
+    if (myPosition.isBefore(remotePred) && !Hash::hashSocketAddress(successor).isBefore(remotePred)) {
+        successor = possiblePred;
+    }
+
+    if (!remoteSucc.isBefore(myPosition) && remoteSucc.isBefore(Hash::hashSocketAddress(successor))) {
+        successor = possibleSucc;
+    }
+
+    if (remoteSucc.isBefore(myPosition) && !remoteSucc.isBefore(Hash::hashSocketAddress(predecessor))) {
+        predecessor = possibleSucc;
+    }
+
+}
+
+void Peer::findFingers(){
+    std::string fullMessage = "FING," + address.toString();
+    Message ans(fullMessage);
+    connections[Hash::hashSocketAddress(Poco::Net::SocketAddress(successor))]->ioInterface.queueOutgoingMessage(ans);
 }
 
 void Peer::printConnections() {
@@ -501,7 +548,7 @@ void Peer::initFingerTable(MyConnectionHandler *successorConnection) {
 }
 
 void Peer::doIntervalRoutine() {
-    // this is the highest interval we know, therefore highestInterval + INTERVAL_SIZE 
+    // this is the highest interval we know, therefore highestInterval + INTERVAL_SIZE
     // is the next interval to calculate
     ull highestInterval = resultHandler.getHighest();
     ull nextInterval = highestInterval + INTERVAL_SIZE;
@@ -526,6 +573,8 @@ void Peer::doIntervalRoutine() {
 void Peer::run() {
     // to get the thing going we calculate the first interval
     resultHandler.submitCalculation(0);
+    //TODO add calls for findFingers and Stabilize on a timer
+
     // initFingerTable(connections[Hash::hashSocketAddress(successor)]);
     while (true) {
 
