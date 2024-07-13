@@ -574,7 +574,11 @@ void Peer::doIntervalRoutine() {
         auto msg_str = "FIND_INTERVAL," + address.toString() + "," + std::to_string(highestInterval);
         auto intervalHash = Hash::hashInterval(highestInterval);
         auto ip_str = findClosestPeer(intervalHash);
-        connections.at(Hash::hashSocketAddress(Poco::Net::SocketAddress(ip_str)))->ioInterface.queueOutgoingMessage(Message(msg_str));
+        if (connections.contains(Hash::hashSocketAddress(Poco::Net::SocketAddress(ip_str)))) {
+            connections.at(Hash::hashSocketAddress(Poco::Net::SocketAddress(ip_str)))->ioInterface.queueOutgoingMessage(Message(msg_str));
+        } else {
+            std::cout << "No connection to peer" << std::endl;
+        }
         timing.updateIntervalMessageTime();
     }
 }
