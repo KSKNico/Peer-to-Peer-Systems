@@ -534,7 +534,7 @@ void Peer::printConnections() {
     }
 }
 
-
+/*
 void Peer::initFingerTable(MyConnectionHandler *successorConnection) {
     // sends the initial FING message to the successor
     std::string ip = address.toString();
@@ -546,6 +546,7 @@ void Peer::initFingerTable(MyConnectionHandler *successorConnection) {
 
     successorConnection->ioInterface.queueOutgoingMessage(message);
 }
+*/
 
 void Peer::doIntervalRoutine() {
     // this is the highest interval we know, therefore highestInterval + INTERVAL_SIZE
@@ -565,8 +566,22 @@ void Peer::doIntervalRoutine() {
         auto intervalHash = Hash::hashInterval(highestInterval);
         auto ip_str = findClosestPeer(intervalHash);
 
-        timing.updateIntervalMessageTime();
         connections[Hash::hashSocketAddress(Poco::Net::SocketAddress(ip_str))]->ioInterface.queueOutgoingMessage(Message(msg_str));
+        timing.updateIntervalMessageTime();
+    }
+}
+
+void Peer::doFindFingersRoutine() {
+    if (timing.findFingersMessageTimePassed()) {
+        findFingers();
+        timing.updateFindFingersMessageTime();
+    }
+}
+
+void Peer::doStabilizeRoutine() {
+    if (timing.stabilizeMessageTimePassed()) {
+        stabilize();
+        timing.updateStabilizeMessageTime();
     }
 }
 
@@ -581,6 +596,8 @@ void Peer::run() {
         std::unique_lock<std::mutex> connectionsLock(connectionsMutex);
 
         doIntervalRoutine();
+        doFindFingersRoutine();
+        doStabilizeRoutine();
 
         for (auto &connection: connections) {
             Message message = connection.second->ioInterface.dequeueIncomingMessage();

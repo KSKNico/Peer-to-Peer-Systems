@@ -2,6 +2,7 @@
 
 #include "../message.hpp"
 #include "../resultHandler.hpp"
+#include "../timing.hpp"
 
 #include "Poco/FIFOBuffer.h"
 #include "Poco/Buffer.h"
@@ -62,4 +63,16 @@ TEST(ResultTests, PrimeCalculation) {
     auto results3000 = resultHandler.getResults(3000).value();
 
     ASSERT_EQ(results0.size(), 168);
+    ASSERT_EQ(results1000.size(), 135);
+    ASSERT_EQ(results2000.size(), 127);
+    ASSERT_EQ(results3000.size(), 120);
 }
+
+TEST(TimingTests, IntervalTiming) {
+    Timing timing = Timing();
+    timing.updateIntervalMessageTime();
+    ASSERT_FALSE(timing.intervalMessageTimePassed());
+    std::this_thread::sleep_for(std::chrono::milliseconds(1000));
+    ASSERT_TRUE(timing.intervalMessageTimePassed());
+}
+

@@ -72,6 +72,8 @@ class Peer {
     void findFingers();
 
     void doIntervalRoutine();
+    void doStabilizeRoutine();
+    void doFindFingersRoutine();
 
     std::string findClosestPeer(Hash& position);
 
