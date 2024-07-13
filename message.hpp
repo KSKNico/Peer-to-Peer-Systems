@@ -60,6 +60,8 @@ public:
         FINGACK,
         FIND_INTERVAL,
         FIND_INTERVAL_ACK,
+        STAB,
+        STABACK,
     };
     struct get_message{
         std::string IP_address;
@@ -111,6 +113,17 @@ public:
         std::string IP_address;
         unsigned long long highest_known_interval;
     };
+    struct stab_message
+    {
+        std::string IP_address;
+    };
+    struct staback_message
+    {
+        std::string IP_address;
+        std::string senderPred;
+        std::string senderSucc;
+    };
+
     constexpr static int FIXED_MESSAGE_SIZE = 1024;
 
     // used inside of a message to separate parts
@@ -142,4 +155,6 @@ public:
     fingack_message decode_fingack_message();
     find_interval_message decode_find_interval_message();
     find_interval_ack_message decode_find_interval_ack_message();
+    stab_message decode_stab_message();
+    staback_message decode_staback_message();
 };
