@@ -25,7 +25,9 @@ class Peer {
     Poco::Net::ServerSocket serverSocket;
     // FingerTable fingerTable;
     Poco::Net::SocketAddress address;
+    Poco::Net::SocketAddress bootstrapAddress;
 
+    bool isBootstrap;
     Poco::Net::SocketReactor reactor;
 
     MySocketAcceptor acceptor;
