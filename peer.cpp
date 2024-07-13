@@ -251,11 +251,11 @@ void Peer::process_joinack_message(Message message) {
 }
 
 std::string Peer::findClosestPeer(Hash &position) {
-    Hash closestPeer = Hash::hashSocketAddress(address);
+    auto closestPeer = address;
 
     for (const auto &entry: fingerTable) {
-        if ((entry.first.isBefore(position)) && (!entry.first.isBefore(closestPeer))) {
-            closestPeer = entry.first;
+        if ((entry.first.isBefore(position)) && (!entry.first.isBefore(Hash::hashSocketAddress(closestPeer)))) {
+            closestPeer = entry.second;
         }
     }
 
@@ -577,7 +577,6 @@ void Peer::doIntervalRoutine() {
         // we need more time, just return
         return;
     }
-
     // if the specified delta has passed, we have to send a FIND_INTERVAL message (perhaps again)
     if (timing.intervalMessageTimePassed()) {
         auto msg_str = "FIND_INTERVAL," + address.toString() + "," + std::to_string(highestInterval);
@@ -585,7 +584,7 @@ void Peer::doIntervalRoutine() {
         auto intervalHash = Hash::hashInterval(highestInterval);
         auto ip_str = findClosestPeer(intervalHash);
 
-        connections[Hash::hashSocketAddress(Poco::Net::SocketAddress(ip_str))]->ioInterface.queueOutgoingMessage(Message(msg_str));
+        connections.at(Hash::hashSocketAddress(Poco::Net::SocketAddress(ip_str)))->ioInterface.queueOutgoingMessage(Message(msg_str));
         timing.updateIntervalMessageTime();
     }
 }
