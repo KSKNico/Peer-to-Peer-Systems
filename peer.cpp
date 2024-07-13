@@ -204,7 +204,9 @@ void Peer::process_join_message(Message message, std::pair<const Hash, MyConnect
 
     if (closestIP == ip) {
         // im the closest one before peer -> set closestIP to successor and set successor to newly joined peer
-        closestIP = successor.toString();
+        if (successor.toString() != "0.0.0.0:0") {
+            closestIP = successor.toString();
+        }
         successor = peerIP;
     }
     std::string fullMessage = "JOINACK," + ip + "," + closestIP;
