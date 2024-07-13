@@ -56,6 +56,8 @@ Peer::Peer(Poco::Net::SocketAddress ownAddress, Poco::Net::SocketAddress remoteA
     std::string str = "JOIN," + address.toString();
     std::strncpy(data.data(), str.c_str(), data.size());
     std::unique_lock<std::mutex>(connectionsMutex);
+
+    
     connections.at(Hash::hashSocketAddress(remoteAddress))->ioInterface.queueOutgoingMessage(Message(data));
 }
 
@@ -214,7 +216,14 @@ void Peer::process_join_message(Message message, std::pair<const Hash, MyConnect
     if (closestIP != ip){
         std::string stabilize_message = "STABILIZE" + ',' + address.toString();
         Message stab(stabilize_message);
-        connections.at(Hash::hashSocketAddress(Poco::Net::SocketAddress(closestIP)))->ioInterface.queueOutgoingMessage(stab);
+        if (connections.contains(Hash::hashSocketAddress(Poco::Net::SocketAddress(closestIP)))) {
+            connections.at(Hash::hashSocketAddress(Poco::Net::SocketAddress(closestIP)))->ioInterface.queueOutgoingMessage(stab);
+        } else {
+            connectors.insert(std::make_pair(Hash::hashSocketAddress(Poco::Net::SocketAddress(closestIP)), std::make_unique<MySocketConnector>(Poco::Net::SocketAddress(closestIP), reactor,
+                                                                                                  connections,
+                                                                                                  connectionsMutex)));
+            outgoingMessages[Hash::hashSocketAddress(Poco::Net::SocketAddress(closestIP))].push_back(stab);                                                                                     
+        }
     }
 }
 
@@ -382,7 +391,7 @@ void Peer::process_fingack_message(Message message) {
     std::string fullMessage = "FING," + ip;
     Message ans(fullMessage);
 
-    if (connections.find(fing_hash) != connections.end()) {
+    if (connections.contains(fing_hash)) {
         connections.at(fing_hash)->ioInterface.queueOutgoingMessage(ans);
     } else {
         connectors.insert(std::make_pair(fing_hash, std::make_unique<MySocketConnector>(fing_addr, reactor,
@@ -410,7 +419,14 @@ void Peer::process_find_interval_ack_message(Message message) {
         std::string closestIP = findClosestPeer(interval_hash);
         std::string full_msg = "FIND_INTERVAL," + address.toString() + "," + std::to_string(msg.highest_known_interval);
         Message ans(full_msg);
-        connections.at(Hash::hashSocketAddress(Poco::Net::SocketAddress(closestIP)))->ioInterface.queueOutgoingMessage(ans);
+        if (connections.contains(Hash::hashSocketAddress(Poco::Net::SocketAddress(closestIP)))) {
+            connections.at(Hash::hashSocketAddress(Poco::Net::SocketAddress(closestIP)))->ioInterface.queueOutgoingMessage(ans);
+        } else {
+            connectors.insert(std::make_pair(Hash::hashSocketAddress(Poco::Net::SocketAddress(closestIP)), std::make_unique<MySocketConnector>(Poco::Net::SocketAddress(closestIP), reactor,
+                                                                                                  connections,
+                                                                                                  connectionsMutex)));
+            outgoingMessages[Hash::hashSocketAddress(Poco::Net::SocketAddress(closestIP))].push_back(ans);
+        }
     } else {
         resultHandler.submitCalculation(highestInterval + INTERVAL_SIZE);
     }
@@ -480,10 +496,24 @@ void Peer::stabilize() {
     Message ans(stabilize_message);
 
     if (predecessor != address){
-        connections.at(Hash::hashSocketAddress(predecessor))->ioInterface.queueOutgoingMessage(ans);
+        if (connections.contains(Hash::hashSocketAddress(predecessor))) {
+            connections.at(Hash::hashSocketAddress(predecessor))->ioInterface.queueOutgoingMessage(ans);
+        } else {
+            connectors.insert(std::make_pair(Hash::hashSocketAddress(predecessor), std::make_unique<MySocketConnector>(predecessor, reactor,
+                                                                                                  connections,
+                                                                                                  connectionsMutex)));
+            outgoingMessages[Hash::hashSocketAddress(predecessor)].push_back(ans);
+        }
     }    
     if (successor != address){
-        connections.at(Hash::hashSocketAddress(successor))->ioInterface.queueOutgoingMessage(ans);
+        if (connections.contains(Hash::hashSocketAddress(successor))) {
+            connections.at(Hash::hashSocketAddress(successor))->ioInterface.queueOutgoingMessage(ans);
+        } else {
+            connectors.insert(std::make_pair(Hash::hashSocketAddress(successor), std::make_unique<MySocketConnector>(successor, reactor,
+                                                                                                  connections,
+                                                                                                  connectionsMutex)));
+            outgoingMessages[Hash::hashSocketAddress(successor)].push_back(ans);
+        }
     }
 }
 
@@ -494,15 +524,36 @@ void Peer::process_stabilize_message(Message message){
 
     std::string stabilize_message = "STABILIZEACK" + ',' + address.toString() + ',' + predecessor.toString() + ',' + successor.toString();
     Message stab(stabilize_message);
-    connections.at(Hash::hashSocketAddress(remoteIP))->ioInterface.queueOutgoingMessage(stab);
+    if (connections.contains(Hash::hashSocketAddress(remoteIP))) {
+        connections.at(Hash::hashSocketAddress(remoteIP))->ioInterface.queueOutgoingMessage(stab);
+    } else {
+        connectors.insert(std::make_pair(Hash::hashSocketAddress(remoteIP), std::make_unique<MySocketConnector>(remoteIP, reactor,
+                                                                                              connections,
+                                                                                              connectionsMutex)));
+        outgoingMessages[Hash::hashSocketAddress(remoteIP)].push_back(stab);
+    }
 
     std::string pred_message = "PRED" + ',' + address.toString();
     Message pred(pred_message);
-    connections.at(Hash::hashSocketAddress(predecessor))->ioInterface.queueOutgoingMessage(pred);
+    if (connections.contains(Hash::hashSocketAddress(predecessor))) {
+        connections.at(Hash::hashSocketAddress(predecessor))->ioInterface.queueOutgoingMessage(pred);
+    } else {
+        connectors.insert(std::make_pair(Hash::hashSocketAddress(predecessor), std::make_unique<MySocketConnector>(predecessor, reactor,
+                                                                                              connections,
+                                                                                              connectionsMutex)));
+        outgoingMessages[Hash::hashSocketAddress(predecessor)].push_back(pred);
+    }
 
     std::string succ_message = "SUCC" + ',' + address.toString();
     Message succ(pred_message);
-    connections.at(Hash::hashSocketAddress(successor))->ioInterface.queueOutgoingMessage(succ);
+    if (connections.contains(Hash::hashSocketAddress(successor))) {
+        connections.at(Hash::hashSocketAddress(successor))->ioInterface.queueOutgoingMessage(succ);
+    } else {
+        connectors.insert(std::make_pair(Hash::hashSocketAddress(successor), std::make_unique<MySocketConnector>(successor, reactor,
+                                                                                              connections,
+                                                                                              connectionsMutex)));
+        outgoingMessages[Hash::hashSocketAddress(successor)].push_back(succ);
+    }
 }
 
 void Peer::process_stabilizeack_message(Message message, std::pair<const Hash, MyConnectionHandler *> connection) {
@@ -609,8 +660,14 @@ void Peer::run() {
     {
     std::string join = "JOIN," + address.toString();
     Message join_message(join);
-    connections.at(Hash::hashSocketAddress(bootstrapAddress))->ioInterface.queueOutgoingMessage(join_message);
-        sleep(2000);
+    if (connections.contains(Hash::hashSocketAddress(bootstrapAddress))) {
+        connections.at(Hash::hashSocketAddress(bootstrapAddress))->ioInterface.queueOutgoingMessage(join_message);
+    } else {
+        connectors.insert(std::make_pair(Hash::hashSocketAddress(bootstrapAddress), std::make_unique<MySocketConnector>(bootstrapAddress, reactor,
+                                                                                        connections,
+                                                                                        connectionsMutex)));
+    }
+    sleep(1000);
     }
     
     // to get the thing going we calculate the first interval
@@ -641,12 +698,20 @@ void Peer::run() {
 
         connectionsLock.unlock();
 
+        /*
+        std::vector<Hash> toBeRemoved = {};
         for (auto &connector: connectors) {
-            if (!connector.second->isFinished()) {
+
+            if (connector.second->isFinished()) {
                 // remove it from the map
                 // this also removes the mySocketConnector object as it is a unique_ptr
-                connectors.erase(connector.first);
+                toBeRemoved.push_back(connector.first);
             }
         }
+        // remove all finished connectors
+        for (auto &hash: toBeRemoved) {
+            connectors.erase(hash);
+        }
+        */
     }
 }

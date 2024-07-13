@@ -8,16 +8,17 @@ MySocketConnector::MySocketConnector(const Poco::Net::SocketAddress& address,
 Poco::Net::SocketConnector<MyConnectionHandler>(address, reactor),
 connections(connections),
 connectionsMutex(connectionsMutex),
-finished(false)
+finished(false),
+remoteAddress(address)
  {}
 
 MyConnectionHandler* MySocketConnector::createServiceHandler() {
     auto connectionHandler = new MyConnectionHandler(Poco::Net::SocketConnector<MyConnectionHandler>::socket(), 
                                     *Poco::Net::SocketConnector<MyConnectionHandler>::reactor());
-    this->finished = true;
-    auto hash = Hash::hashSocketAddress(Poco::Net::SocketConnector<MyConnectionHandler>::socket().peerAddress());
+    auto hash = Hash::hashSocketAddress(remoteAddress);
     std::unique_lock<std::mutex>(connectionsMutex);
     connections.insert(std::make_pair(hash, connectionHandler));
+    this->finished = true;
     return connectionHandler;
 }
 

@@ -23,5 +23,6 @@ protected:
 private:
     std::unordered_map<Hash, MyConnectionHandler*, Hash::Hasher>& connections;
     std::mutex& connectionsMutex;
-    bool finished;  
+    bool finished;
+    Poco::Net::SocketAddress remoteAddress;
 };
