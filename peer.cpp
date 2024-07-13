@@ -38,9 +38,9 @@ Peer::Peer(Poco::Net::SocketAddress ownAddress, Poco::Net::SocketAddress remoteA
     std::cout << "Peer has hash: " << id.toString() << std::endl;
 
 
-    connectors[Hash::hashSocketAddress(remoteAddress)] = std::make_unique<MySocketConnector>(remoteAddress, reactor,
-                                                                                             connections,
-                                                                                             connectionsMutex);
+    connectors.insert(std::make_pair(Hash::hashSocketAddress(remoteAddress), std::make_unique<MySocketConnector>(remoteAddress, reactor,
+                                                                                                  connections,
+                                                                                                  connectionsMutex)));
 
     // different thread for the reactor
 
@@ -56,7 +56,7 @@ Peer::Peer(Poco::Net::SocketAddress ownAddress, Poco::Net::SocketAddress remoteA
     std::string str = "JOIN," + address.toString();
     std::strncpy(data.data(), str.c_str(), data.size());
     std::unique_lock<std::mutex>(connectionsMutex);
-    connections[Hash::hashSocketAddress(remoteAddress)]->ioInterface.queueOutgoingMessage(Message(data));
+    connections.at(Hash::hashSocketAddress(remoteAddress))->ioInterface.queueOutgoingMessage(Message(data));
 }
 
 Peer::Peer(Poco::Net::SocketAddress ownAddress) :
@@ -214,7 +214,7 @@ void Peer::process_join_message(Message message, std::pair<const Hash, MyConnect
     if (closestIP != ip){
         std::string stabilize_message = "STABILIZE" + ',' + address.toString();
         Message stab(stabilize_message);
-        connections[Hash::hashSocketAddress(Poco::Net::SocketAddress(closestIP))]->ioInterface.queueOutgoingMessage(stab);
+        connections.at(Hash::hashSocketAddress(Poco::Net::SocketAddress(closestIP)))->ioInterface.queueOutgoingMessage(stab);
     }
 }
 
@@ -410,7 +410,7 @@ void Peer::process_find_interval_ack_message(Message message) {
         std::string closestIP = findClosestPeer(interval_hash);
         std::string full_msg = "FIND_INTERVAL," + address.toString() + "," + std::to_string(msg.highest_known_interval);
         Message ans(full_msg);
-        connections[Hash::hashSocketAddress(Poco::Net::SocketAddress(closestIP))]->ioInterface.queueOutgoingMessage(ans);
+        connections.at(Hash::hashSocketAddress(Poco::Net::SocketAddress(closestIP)))->ioInterface.queueOutgoingMessage(ans);
     } else {
         resultHandler.submitCalculation(highestInterval + INTERVAL_SIZE);
     }
@@ -480,10 +480,10 @@ void Peer::stabilize() {
     Message ans(stabilize_message);
 
     if (predecessor != address){
-        connections[Hash::hashSocketAddress(predecessor)]->ioInterface.queueOutgoingMessage(ans);
+        connections.at(Hash::hashSocketAddress(predecessor))->ioInterface.queueOutgoingMessage(ans);
     }    
     if (successor != address){
-        connections[Hash::hashSocketAddress(successor)]->ioInterface.queueOutgoingMessage(ans);
+        connections.at(Hash::hashSocketAddress(successor))->ioInterface.queueOutgoingMessage(ans);
     }
 }
 
@@ -494,15 +494,15 @@ void Peer::process_stabilize_message(Message message){
 
     std::string stabilize_message = "STABILIZEACK" + ',' + address.toString() + ',' + predecessor.toString() + ',' + successor.toString();
     Message stab(stabilize_message);
-    connections[Hash::hashSocketAddress(remoteIP)]->ioInterface.queueOutgoingMessage(stab);
+    connections.at(Hash::hashSocketAddress(remoteIP))->ioInterface.queueOutgoingMessage(stab);
 
     std::string pred_message = "PRED" + ',' + address.toString();
     Message pred(pred_message);
-    connections[Hash::hashSocketAddress(predecessor)]->ioInterface.queueOutgoingMessage(pred);
+    connections.at(Hash::hashSocketAddress(predecessor))->ioInterface.queueOutgoingMessage(pred);
 
     std::string succ_message = "SUCC" + ',' + address.toString();
     Message succ(pred_message);
-    connections[Hash::hashSocketAddress(successor)]->ioInterface.queueOutgoingMessage(succ);
+    connections.at(Hash::hashSocketAddress(successor))->ioInterface.queueOutgoingMessage(succ);
 }
 
 void Peer::process_stabilizeack_message(Message message, std::pair<const Hash, MyConnectionHandler *> connection) {
@@ -535,7 +535,7 @@ void Peer::process_stabilizeack_message(Message message, std::pair<const Hash, M
 void Peer::findFingers(){
     std::string fullMessage = "FING," + address.toString();
     Message ans(fullMessage);
-    connections[Hash::hashSocketAddress(successor)]->ioInterface.queueOutgoingMessage(ans);
+    connections.at(Hash::hashSocketAddress(successor))->ioInterface.queueOutgoingMessage(ans);
 }
 
 void Peer::printConnections() {
@@ -572,10 +572,8 @@ void Peer::doIntervalRoutine() {
     // if the specified delta has passed, we have to send a FIND_INTERVAL message (perhaps again)
     if (timing.intervalMessageTimePassed()) {
         auto msg_str = "FIND_INTERVAL," + address.toString() + "," + std::to_string(highestInterval);
-
         auto intervalHash = Hash::hashInterval(highestInterval);
         auto ip_str = findClosestPeer(intervalHash);
-
         connections.at(Hash::hashSocketAddress(Poco::Net::SocketAddress(ip_str)))->ioInterface.queueOutgoingMessage(Message(msg_str));
         timing.updateIntervalMessageTime();
     }
@@ -600,9 +598,9 @@ void Peer::run() {
     //join every 2 seconds until you are part of the network - aka you got a joinack
     while (!isBootstrap && successor == address && predecessor == address)
     {
-    std::string join = "JOIN" + ',' + address.toString();
+    std::string join = "JOIN," + address.toString();
     Message join_message(join);
-    connections[Hash::hashSocketAddress(bootstrapAddress)]->ioInterface.queueOutgoingMessage(join_message);
+    connections.at(Hash::hashSocketAddress(bootstrapAddress))->ioInterface.queueOutgoingMessage(join_message);
         sleep(2000);
     }
     
@@ -614,10 +612,6 @@ void Peer::run() {
     while (true) {
 
         std::unique_lock<std::mutex> connectionsLock(connectionsMutex);
-
-        doIntervalRoutine();
-        doFindFingersRoutine();
-        doStabilizeRoutine();
 
         for (auto &connection: connections) {
             Message message = connection.second->ioInterface.dequeueIncomingMessage();
@@ -631,6 +625,11 @@ void Peer::run() {
                 outgoingMessages.erase(it);
             }
         }
+
+        doFindFingersRoutine();
+        doIntervalRoutine();
+        doStabilizeRoutine();
+
         connectionsLock.unlock();
 
         for (auto &connector: connectors) {
