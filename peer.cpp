@@ -535,7 +535,12 @@ void Peer::process_stabilizeack_message(Message message, std::pair<const Hash, M
 void Peer::findFingers(){
     std::string fullMessage = "FING," + address.toString();
     Message ans(fullMessage);
-    connections.at(Hash::hashSocketAddress(successor))->ioInterface.queueOutgoingMessage(ans);
+    if (connections.contains(Hash::hashSocketAddress(successor))) {
+        connections.at(Hash::hashSocketAddress(successor))->ioInterface.queueOutgoingMessage(ans);
+    } else {
+        std::cout << "No connection to successor" << std::endl;
+    }
+    // connections.at(Hash::hashSocketAddress(successor))->ioInterface.queueOutgoingMessage(ans);
 }
 
 void Peer::printConnections() {
