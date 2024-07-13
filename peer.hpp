@@ -82,8 +82,8 @@ class Peer {
     ResultHandler resultHandler;
 
     std::unordered_map<Hash, Poco::Net::SocketAddress, Hash::Hasher> fingerTable;
-    Poco::Net::SocketAddress successor = address;   // initially you are your successor
-    Poco::Net::SocketAddress predecessor = address; // ~ predecessor
+    Poco::Net::SocketAddress successor;
+    Poco::Net::SocketAddress predecessor;
 
     std::unordered_map<Hash, std::vector<Message>, Hash::Hasher> outgoingMessages;
 
