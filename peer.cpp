@@ -463,13 +463,25 @@ void Peer::processMessage(Message message, std::pair<const Hash, MyConnectionHan
     } else if ((message_type.substr(0, pos) == "GETACK")) {
         message.type = Message::MessageType::GETACK;
         process_getack_message(message);
+    }  else if ((message_type.substr(0, pos) == "FIND_INTERVAL")) {
+        message.type = Message::MessageType::FIND_INTERVAL;
+        process_find_interval_message(message, connection);
+    } else if ((message_type.substr(0, pos) == "FIND_INTERVAL_ACK")) {
+        message.type = Message::MessageType::FIND_INTERVAL_ACK;
+        process_find_interval_ack_message(message);
+    } else if ((message_type.substr(0, pos) == "STABILIZE")) {
+        message.type = Message::MessageType::STAB;
+        process_stabilize_message(message);
+    } else if ((message_type.substr(0, pos) == "STABILIZEACK")) {
+        message.type = Message::MessageType::STABACK;
+        process_stabilizeack_message(message, connection);
     } else {
         std::cout << "Message from an unknown type, ignore it.";
     }
 }
 
 void Peer::stabilize() {
-    std::string stabilize_message = "STABILIZE" + ',' + address.toString();
+    std::string stabilize_message = "STABILIZE ," + address.toString();
     Message ans(stabilize_message);
 
     connections[Hash::hashSocketAddress(Poco::Net::SocketAddress(predecessor))]->ioInterface.queueOutgoingMessage(ans);
@@ -481,15 +493,15 @@ void Peer::process_stabilize_message(Message message){
     Message::stab_message msg = message.decode_stab_message();
     auto remoteIP = Poco::Net::SocketAddress(msg.IP_address);
 
-    std::string stabilize_message = "STABILIZEACK" + ',' + address.toString() + ',' + predecessor.toString() + ',' + successor.toString();
+    std::string stabilize_message = "STABILIZEACK," + address.toString() + ',' + predecessor.toString() + ',' + successor.toString();
     Message stab(stabilize_message);
     connections[Hash::hashSocketAddress(Poco::Net::SocketAddress(remoteIP))]->ioInterface.queueOutgoingMessage(stab);
 
-    std::string pred_message = "PRED" + ',' + address.toString();
+    std::string pred_message = "PRED," + address.toString();
     Message pred(pred_message);
     connections[Hash::hashSocketAddress(Poco::Net::SocketAddress(predecessor))]->ioInterface.queueOutgoingMessage(pred);
 
-    std::string succ_message = "SUCC" + ',' + address.toString();
+    std::string succ_message = "SUCC," + address.toString();
     Message succ(pred_message);
     connections[Hash::hashSocketAddress(Poco::Net::SocketAddress(successor))]->ioInterface.queueOutgoingMessage(succ);
 }
