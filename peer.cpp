@@ -365,8 +365,11 @@ void Peer::process_fing_message(Message message, std::pair<const Hash, MyConnect
 void Peer::process_fingack_message(Message message) {
     Message::fingack_message msg = message.decode_fingack_message();
 
+    auto remote_addr = Poco::Net::SocketAddress(msg.IP_address);
     auto fing_addr = Poco::Net::SocketAddress(msg.SuccessorIP);
     Hash fing_hash = Hash::hashSocketAddress(fing_addr);
+    
+    if (address != remote_addr && address != fing_addr){
     fingerTable[fing_hash] = fing_addr;
 
     Hash me_hash = Hash(Hash::hashSocketAddress(address));
@@ -383,7 +386,7 @@ void Peer::process_fingack_message(Message message) {
                                                                                         connectionsMutex)));
         outgoingMessages[fing_hash].push_back(ans);
     }
-    
+    }
 }
 
 void Peer::process_find_interval_message(Message message, std::pair<const Hash, MyConnectionHandler *> connection) {
@@ -484,8 +487,12 @@ void Peer::stabilize() {
     std::string stabilize_message = "STABILIZE ," + address.toString();
     Message ans(stabilize_message);
 
-    connections[Hash::hashSocketAddress(Poco::Net::SocketAddress(predecessor))]->ioInterface.queueOutgoingMessage(ans);
-    connections[Hash::hashSocketAddress(Poco::Net::SocketAddress(successor))]->ioInterface.queueOutgoingMessage(ans);
+    if (predecessor != address){
+        connections[Hash::hashSocketAddress(predecessor)]->ioInterface.queueOutgoingMessage(ans);
+    }    
+    if (successor != address){
+        connections[Hash::hashSocketAddress(successor)]->ioInterface.queueOutgoingMessage(ans);
+    }
 }
 
 void Peer::process_stabilize_message(Message message){
@@ -495,15 +502,15 @@ void Peer::process_stabilize_message(Message message){
 
     std::string stabilize_message = "STABILIZEACK," + address.toString() + ',' + predecessor.toString() + ',' + successor.toString();
     Message stab(stabilize_message);
-    connections[Hash::hashSocketAddress(Poco::Net::SocketAddress(remoteIP))]->ioInterface.queueOutgoingMessage(stab);
+    connections[Hash::hashSocketAddress(remoteIP)]->ioInterface.queueOutgoingMessage(stab);
 
     std::string pred_message = "PRED," + address.toString();
     Message pred(pred_message);
-    connections[Hash::hashSocketAddress(Poco::Net::SocketAddress(predecessor))]->ioInterface.queueOutgoingMessage(pred);
+    connections[Hash::hashSocketAddress(predecessor)]->ioInterface.queueOutgoingMessage(pred);
 
     std::string succ_message = "SUCC," + address.toString();
     Message succ(pred_message);
-    connections[Hash::hashSocketAddress(Poco::Net::SocketAddress(successor))]->ioInterface.queueOutgoingMessage(succ);
+    connections[Hash::hashSocketAddress(successor)]->ioInterface.queueOutgoingMessage(succ);
 }
 
 void Peer::process_stabilizeack_message(Message message, std::pair<const Hash, MyConnectionHandler *> connection) {
@@ -536,7 +543,7 @@ void Peer::process_stabilizeack_message(Message message, std::pair<const Hash, M
 void Peer::findFingers(){
     std::string fullMessage = "FING," + address.toString();
     Message ans(fullMessage);
-    connections[Hash::hashSocketAddress(Poco::Net::SocketAddress(successor))]->ioInterface.queueOutgoingMessage(ans);
+    connections[Hash::hashSocketAddress(successor)]->ioInterface.queueOutgoingMessage(ans);
 }
 
 void Peer::printConnections() {
