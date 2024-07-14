@@ -1,0 +1,5 @@
+if(EXISTS "/home/leonie/Dokumente/Master/P2P/Peer-to-Peer-Systems/tests/runTests[1]_tests.cmake")
+  include("/home/leonie/Dokumente/Master/P2P/Peer-to-Peer-Systems/tests/runTests[1]_tests.cmake")
+else()
+  add_test(runTests_NOT_BUILT runTests_NOT_BUILT)
+endif()

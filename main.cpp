@@ -3,10 +3,34 @@
 #include "peerConfig.hpp"
 #include "peer.hpp"
 #include "Poco/Net/SocketAddress.h"
-
+#include "Poco/Net/NetworkInterface.h"
 
 
 int main() {
+
+    try {
+        // Get the list of network interfaces
+        Poco::Net::NetworkInterface::Map ifs = Poco::Net::NetworkInterface::map();
+
+        for (const auto& it : ifs) {
+            const Poco::Net::NetworkInterface& iface = it.second;
+
+            // Print interface name and addresses
+            std::cout << "Interface: " << iface.displayName() << std::endl;
+            for (const auto& addrTuple : iface.addressList()) {
+                const Poco::Net::IPAddress& addr = addrTuple.get<0>();
+                if (addr.family() == Poco::Net::IPAddress::IPv4) {
+                    std::cout << "IPv4 Address: " << addr.toString() << std::endl;
+                }
+            }
+        }
+    }
+    catch (Poco::Exception& ex) {
+        std::cerr << "Poco Exception: " << ex.displayText() << std::endl;
+    }
+    catch (std::exception& ex) {
+        std::cerr << "Standard Exception: " << ex.what() << std::endl;
+    }
 
     auto peer_addr_1 = Poco::Net::SocketAddress("127.0.0.1:5001");
     auto peer_addr_2 = Poco::Net::SocketAddress("127.0.0.1:5002");
