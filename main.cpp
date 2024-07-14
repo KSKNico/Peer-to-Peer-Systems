@@ -6,7 +6,30 @@
 #include "Poco/Net/NetworkInterface.h"
 
 
-int main() {
+constexpr int PORT = 5000;
+
+// pass command line arguments to the program with the current IP and potentially the remote IP plus port
+// first argument own IP
+// second argument remote IP (optional)
+
+int main(int argc, char* argv[]) {
+    std::string ownIPAddress_str;
+    std::string remoteIPAddress_str;
+    if (argc < 2) {
+        std::cerr << "Usage: " << argv[0] << " <own IP> [<remote IP>]" << std::endl;
+        return 1;
+    } else if (argc == 2) {
+         ownIPAddress_str = argv[1];
+    } else if (argc == 3) {
+        ownIPAddress_str = argv[1];
+        remoteIPAddress_str = argv[2];
+    } else {
+        std::cerr << "Usage: " << argv[0] << " <own IP> [<remote IP>]" << std::endl;
+        return 1;
+    }
+
+    Poco::Net::SocketAddress ownSocketAddress(Poco::Net::IPAddress(ownIPAddress_str), PORT);
+    Poco::Net::SocketAddress remoteSocketAddress(Poco::Net::IPAddress(remoteIPAddress_str), PORT);
 
     try {
         // Get the list of network interfaces
@@ -32,24 +55,18 @@ int main() {
         std::cerr << "Standard Exception: " << ex.what() << std::endl;
     }
 
-    auto peer_addr_1 = Poco::Net::SocketAddress("127.0.0.1:5001");
-    auto peer_addr_2 = Poco::Net::SocketAddress("127.0.0.1:5002");
-    auto peer_addr_3 = Poco::Net::SocketAddress("127.0.0.1:5003");
-    auto peer_addr_4 = Poco::Net::SocketAddress("127.0.0.1:5004");
 
-
-    Peer peer_1(peer_addr_1);
-    Peer peer_2(peer_addr_2, peer_addr_1);
-    Peer peer_3(peer_addr_3, peer_addr_1);
-    Peer peer_4(peer_addr_4, peer_addr_1);
+    Peer peer_1(ownSocketAddress);
+    peer_1.run();
 
     // start two threads that use the run method
     
-    std::future<void> future_1 = std::async(std::launch::async, &Peer::run, &peer_1);
+    // std::future<void> future_1 = std::async(std::launch::async, &Peer::run, &peer_1);
     // sleep for a bit to make sure the first peer has started
-    std::this_thread::sleep_for(std::chrono::milliseconds(1000));
+    // std::this_thread::sleep_for(std::chrono::milliseconds(1000));
 
 
+    /*
     std::future<void> future_2 = std::async(std::launch::async, &Peer::run, &peer_2);
     std::this_thread::sleep_for(std::chrono::milliseconds(1000));
 
@@ -57,7 +74,7 @@ int main() {
     std::this_thread::sleep_for(std::chrono::milliseconds(1000));
 
     std::future<void> future_4 = std::async(std::launch::async, &Peer::run, &peer_4);
-
+    */  
 
     /*
     std::unique_lock lock2(peer_2.connectionsMutex);
@@ -80,5 +97,5 @@ int main() {
     lock4.unlock();
     */
 
-    while(1) { /*peer_1.printConnections()*/;}
+    // while(1) { /*peer_1.printConnections()*/;}
 }
