@@ -8,8 +8,9 @@ MySocketAcceptor::MySocketAcceptor(Poco::Net::ServerSocket& serverSocket,
         connectionsMutex(connectionsMutex) {}
 
 MyConnectionHandler* MySocketAcceptor::createServiceHandler(Poco::Net::StreamSocket& socket) {
-
-    Hash hash = Hash::hashSocketAddress(socket.peerAddress());
+    // change port to static port of 5000
+    Poco::Net::SocketAddress address(socket.address().host().toString(), 5000);
+    auto hash = Hash::hashSocketAddress(address);
     MyConnectionHandler *connectionHandler = new MyConnectionHandler(socket, *reactor());
     // add the connection to the connections map
     std::unique_lock<std::mutex> lock(connectionsMutex);
