@@ -6,6 +6,7 @@
 #include "mySocketConnector.hpp"
 #include <unordered_map>
 #include "hash.hpp"
+#include "Poco/Net/SocketNotification.h"
 
 class MySocketConnector : public Poco::Net::SocketConnector<MyConnectionHandler> {
 public:
@@ -18,7 +19,8 @@ public:
     bool isFinished() const;
 
 protected:
-    MyConnectionHandler* createServiceHandler();
+    MyConnectionHandler* createServiceHandler() override;
+    void onError(int errorCode ) override;
 
 private:
     std::unordered_map<Hash, MyConnectionHandler*, Hash::Hasher>& connections;

@@ -24,6 +24,11 @@ MyConnectionHandler* MySocketConnector::createServiceHandler() {
     return connectionHandler;
 }
 
+void MySocketConnector::onError(int errorCode) {
+    std::cout << "Connection failed to " << remoteAddress.host().toString() << " with error code " <<
+    errorCode << std::endl;
+}
+
 bool MySocketConnector::isFinished() const {
     return finished;
 }
