@@ -84,6 +84,7 @@ void ResultHandler::submitCalculation(ull lowerBound) {
 }
 
 std::vector<ull> ResultHandler::calculatePrimes(ull lowerBound) {
+        std::cout << "i calc " << lowerBound << std::endl;
         std::vector<ull> primes;
         ull upperBound = lowerBound + INTERVAL_SIZE;
         for(ull i=lowerBound; i <= upperBound; i++)

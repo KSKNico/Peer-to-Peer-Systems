@@ -245,10 +245,11 @@ void Peer::process_joinack_message(Message message) {
 
         Peer::stabilize();
         Peer::findFingers();
-
+        std::cout << "pred: " << predecessor << " succ: " << successor << std::endl;
         return;
     }
 
+    std::cout << "pred: " << predecessor << " succ: " << successor << std::endl;
     // do we need this resend-block?
     /*std::string ip = address.toString();
     std::string fullMessage = "JOIN," + ip;
@@ -405,6 +406,7 @@ void Peer::process_fingack_message(Message message) {
 }
 
 void Peer::process_find_interval_message(Message message, std::pair<const Hash, MyConnectionHandler *> connection) {
+    std::cout << "process find" << std::endl;
     Message::find_interval_message msg = message.decode_find_interval_message();
     unsigned long long highest_interval = resultHandler.getHighest();
 
@@ -416,6 +418,7 @@ void Peer::process_find_interval_message(Message message, std::pair<const Hash, 
 void Peer::process_find_interval_ack_message(Message message) {
     Message::find_interval_ack_message msg = message.decode_find_interval_ack_message();
     auto highestInterval = resultHandler.getHighest();
+    std::cout << "process find ack" << std::endl;
     if (highestInterval < msg.highest_known_interval) {
         Hash interval_hash = Hash::hashInterval(msg.highest_known_interval);
         std::string closestIP = findClosestPeer(interval_hash);
@@ -430,6 +433,7 @@ void Peer::process_find_interval_ack_message(Message message) {
             outgoingMessages[Hash::hashSocketAddress(Poco::Net::SocketAddress(closestIP))].push_back(ans);
         }
     } else {
+        std::cout << "in else" << std::endl;
         resultHandler.submitCalculation(highestInterval + INTERVAL_SIZE);
     }
 }
@@ -529,6 +533,7 @@ void Peer::process_stabilizeack_message(Message message, std::pair<const Hash, M
 void Peer::processMessage(Message message, std::pair<const Hash, MyConnectionHandler *> connection) {
     std::string message_type(message.data.data(), message.data.size());
     size_t pos = message_type.find(',');
+    std::cout << message_type << std::endl;
 
     if (pos == std::string::npos) {
         std::cout << "No ',' in message with type" << std::endl;
@@ -594,7 +599,6 @@ void Peer::processMessage(Message message, std::pair<const Hash, MyConnectionHan
         process_stabilizeack_message(message, connection);
     } else {
         std::cout << "Message from an unknown type, ignore it." << std::endl;
-        std::cout << message_type << std::endl;
     }
 }
 
