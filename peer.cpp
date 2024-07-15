@@ -419,18 +419,27 @@ void Peer::process_find_interval_ack_message(Message message) {
     Message::find_interval_ack_message msg = message.decode_find_interval_ack_message();
     auto highestInterval = resultHandler.getHighest();
     std::cout << "process find ack" << std::endl;
+
     if (highestInterval < msg.highest_known_interval) {
         Hash interval_hash = Hash::hashInterval(msg.highest_known_interval);
         std::string closestIP = findClosestPeer(interval_hash);
-        std::string full_msg = "FIND_INTERVAL," + address.toString() + "," + std::to_string(msg.highest_known_interval);
-        Message ans(full_msg);
-        if (connections.contains(Hash::hashSocketAddress(Poco::Net::SocketAddress(closestIP)))) {
-            connections.at(Hash::hashSocketAddress(Poco::Net::SocketAddress(closestIP)))->ioInterface.queueOutgoingMessage(ans);
-        } else {
-            connectors.emplace(Hash::hashSocketAddress(Poco::Net::SocketAddress(closestIP)), std::make_unique<MySocketConnector>(Poco::Net::SocketAddress(closestIP), reactor,
-                                                                                                  connections,
-                                                                                                  connectionsMutex));
-            outgoingMessages[Hash::hashSocketAddress(Poco::Net::SocketAddress(closestIP))].push_back(ans);
+
+        if (closestIP == address.toString())
+        {
+            resultHandler.submitCalculation(msg.highest_known_interval + INTERVAL_SIZE);
+            std::cout << "highest ack was me all along, continue calc" << std::endl;
+        }
+        else {
+            std::string full_msg = "FIND_INTERVAL," + address.toString() + "," + std::to_string(msg.highest_known_interval);
+            Message ans(full_msg);
+            if (connections.contains(Hash::hashSocketAddress(Poco::Net::SocketAddress(closestIP)))) {
+                connections.at(Hash::hashSocketAddress(Poco::Net::SocketAddress(closestIP)))->ioInterface.queueOutgoingMessage(ans);
+            } else {
+                connectors.emplace(Hash::hashSocketAddress(Poco::Net::SocketAddress(closestIP)), std::make_unique<MySocketConnector>(Poco::Net::SocketAddress(closestIP), reactor,
+                                                                                                 connections,
+                                                                                                 connectionsMutex));
+                outgoingMessages[Hash::hashSocketAddress(Poco::Net::SocketAddress(closestIP))].push_back(ans);
+            }
         }
     } else {
         std::cout << "in else" << std::endl;
