@@ -55,7 +55,7 @@ Peer::Peer(Poco::Net::SocketAddress ownAddress, Poco::Net::SocketAddress remoteA
     auto data = Message::MessageData{};
     std::string str = "JOIN," + address.toString();
     std::strncpy(data.data(), str.c_str(), data.size());
-    std::unique_lock<std::mutex>(connectionsMutex);
+    std::unique_lock<std::mutex> lock(connectionsMutex);
 
     
     connections.at(Hash::hashSocketAddress(remoteAddress))->ioInterface.queueOutgoingMessage(Message(data));
@@ -216,7 +216,7 @@ void Peer::process_join_message(Message message, std::pair<const Hash, MyConnect
 
     // for good measure inform closest peer to look for new neighbours
     if (closestIP != ip){
-        std::string stabilize_message = "STABILIZE" + ',' + address.toString();
+        std::string stabilize_message = "STABILIZE," + address.toString();
         Message stab(stabilize_message);
         if (connections.contains(Hash::hashSocketAddress(Poco::Net::SocketAddress(closestIP)))) {
             connections.at(Hash::hashSocketAddress(Poco::Net::SocketAddress(closestIP)))->ioInterface.queueOutgoingMessage(stab);
@@ -434,6 +434,98 @@ void Peer::process_find_interval_ack_message(Message message) {
     }
 }
 
+void Peer::stabilize() {
+    std::string stabilize_message = "STABILIZE," + address.toString();
+    Message ans(stabilize_message);
+
+    if (predecessor != address){
+        if (connections.contains(Hash::hashSocketAddress(predecessor))) {
+            connections.at(Hash::hashSocketAddress(predecessor))->ioInterface.queueOutgoingMessage(ans);
+        } else {
+            connectors.insert(std::make_pair(Hash::hashSocketAddress(predecessor), std::make_unique<MySocketConnector>(predecessor, reactor,
+                                                                                                  connections,
+                                                                                                  connectionsMutex)));
+            outgoingMessages[Hash::hashSocketAddress(predecessor)].push_back(ans);
+        }
+    }    
+    if (successor != address){
+        if (connections.contains(Hash::hashSocketAddress(successor))) {
+            connections.at(Hash::hashSocketAddress(successor))->ioInterface.queueOutgoingMessage(ans);
+        } else {
+            connectors.insert(std::make_pair(Hash::hashSocketAddress(successor), std::make_unique<MySocketConnector>(successor, reactor,
+                                                                                                  connections,
+                                                                                                  connectionsMutex)));
+            outgoingMessages[Hash::hashSocketAddress(successor)].push_back(ans);
+        }
+    }
+}
+
+void Peer::process_stabilize_message(Message message){
+    //
+    Message::stabilize_message msg = message.decode_stabilize_message();
+    auto remoteIP = Poco::Net::SocketAddress(msg.IP_address);
+
+    std::string stabilize_message = "STABILIZE_ACK," + address.toString() + "," + predecessor.toString() + "," + successor.toString();
+    Message stab(stabilize_message);
+    if (connections.contains(Hash::hashSocketAddress(remoteIP))) {
+        connections.at(Hash::hashSocketAddress(remoteIP))->ioInterface.queueOutgoingMessage(stab);
+    } else {
+        connectors.insert(std::make_pair(Hash::hashSocketAddress(remoteIP), std::make_unique<MySocketConnector>(remoteIP, reactor,
+                                                                                              connections,
+                                                                                              connectionsMutex)));
+        outgoingMessages[Hash::hashSocketAddress(remoteIP)].push_back(stab);
+    }
+
+    std::string pred_message = "PRED," + address.toString();
+    Message pred(pred_message);
+    if (connections.contains(Hash::hashSocketAddress(predecessor))) {
+        connections.at(Hash::hashSocketAddress(predecessor))->ioInterface.queueOutgoingMessage(pred);
+    } else {
+        connectors.insert(std::make_pair(Hash::hashSocketAddress(predecessor), std::make_unique<MySocketConnector>(predecessor, reactor,
+                                                                                              connections,
+                                                                                              connectionsMutex)));
+        outgoingMessages[Hash::hashSocketAddress(predecessor)].push_back(pred);
+    }
+
+    std::string succ_message = "SUCC," + address.toString();
+    Message succ(pred_message);
+    if (connections.contains(Hash::hashSocketAddress(successor))) {
+        connections.at(Hash::hashSocketAddress(successor))->ioInterface.queueOutgoingMessage(succ);
+    } else {
+        connectors.insert(std::make_pair(Hash::hashSocketAddress(successor), std::make_unique<MySocketConnector>(successor, reactor,
+                                                                                              connections,
+                                                                                              connectionsMutex)));
+        outgoingMessages[Hash::hashSocketAddress(successor)].push_back(succ);
+    }
+}
+
+void Peer::process_stabilizeack_message(Message message, std::pair<const Hash, MyConnectionHandler *> connection) {
+    Message::stabilize_ack_message msg = message.decode_stabilize_ack_message();
+    Hash myPosition = Hash::hashSocketAddress(address);
+    auto possiblePred = Poco::Net::SocketAddress(msg.senderPred);
+    Hash remotePred = Hash::hashSocketAddress(possiblePred);
+    auto possibleSucc = Poco::Net::SocketAddress(msg.senderSucc);
+    Hash remoteSucc = Hash::hashSocketAddress(possibleSucc);
+
+    //check if the returned values are between me and current pred/succ
+    if (!myPosition.isBefore(remotePred) && Hash::hashSocketAddress(predecessor).isBefore(remotePred)) {
+        predecessor = possiblePred;
+    }
+
+    if (myPosition.isBefore(remotePred) && !Hash::hashSocketAddress(successor).isBefore(remotePred)) {
+        successor = possiblePred;
+    }
+
+    if (!remoteSucc.isBefore(myPosition) && remoteSucc.isBefore(Hash::hashSocketAddress(successor))) {
+        successor = possibleSucc;
+    }
+
+    if (remoteSucc.isBefore(myPosition) && !remoteSucc.isBefore(Hash::hashSocketAddress(predecessor))) {
+        predecessor = possibleSucc;
+    }
+
+}
+
 void Peer::processMessage(Message message, std::pair<const Hash, MyConnectionHandler *> connection) {
     std::string message_type(message.data.data(), message.data.size());
     size_t pos = message_type.find(',');
@@ -490,106 +582,20 @@ void Peer::processMessage(Message message, std::pair<const Hash, MyConnectionHan
         process_getack_message(message);
     } else if ((message_type.substr(0, pos) == "FIND_INTERVAL")) {
         message.type = Message::MessageType::FIND_INTERVAL;
-        process_find_interval_message(message);
+        process_find_interval_message(message, connection);
     } else if ((message_type.substr(0, pos) == "FIND_INTERVAL_ACK")) {
         message.type = Message::MessageType::FIND_INTERVAL_ACK;
         process_find_interval_ack_message(message);
+    } else if ((message_type.substr(0, pos) == "STABILIZE")) {
+        message.type = Message::MessageType::STABILIZE;
+        process_stabilize_message(message);
+    } else if ((message_type.substr(0, pos) == "STABILIZE_ACK")) {
+        message.type = Message::MessageType::STABILIZE_ACK;
+        process_stabilizeack_message(message, connection);
     } else {
         std::cout << "Message from an unknown type, ignore it." << std::endl;
         std::cout << message_type << std::endl;
     }
-}
-
-void Peer::stabilize() {
-    std::string stabilize_message = "STABILIZE" + ',' + address.toString();
-    Message ans(stabilize_message);
-
-    if (predecessor != address){
-        if (connections.contains(Hash::hashSocketAddress(predecessor))) {
-            connections.at(Hash::hashSocketAddress(predecessor))->ioInterface.queueOutgoingMessage(ans);
-        } else {
-            connectors.insert(std::make_pair(Hash::hashSocketAddress(predecessor), std::make_unique<MySocketConnector>(predecessor, reactor,
-                                                                                                  connections,
-                                                                                                  connectionsMutex)));
-            outgoingMessages[Hash::hashSocketAddress(predecessor)].push_back(ans);
-        }
-    }    
-    if (successor != address){
-        if (connections.contains(Hash::hashSocketAddress(successor))) {
-            connections.at(Hash::hashSocketAddress(successor))->ioInterface.queueOutgoingMessage(ans);
-        } else {
-            connectors.insert(std::make_pair(Hash::hashSocketAddress(successor), std::make_unique<MySocketConnector>(successor, reactor,
-                                                                                                  connections,
-                                                                                                  connectionsMutex)));
-            outgoingMessages[Hash::hashSocketAddress(successor)].push_back(ans);
-        }
-    }
-}
-
-void Peer::process_stabilize_message(Message message){
-    //
-    Message::stab_message msg = message.decode_stab_message();
-    auto remoteIP = Poco::Net::SocketAddress(msg.IP_address);
-
-    std::string stabilize_message = "STABILIZEACK" + ',' + address.toString() + ',' + predecessor.toString() + ',' + successor.toString();
-    Message stab(stabilize_message);
-    if (connections.contains(Hash::hashSocketAddress(remoteIP))) {
-        connections.at(Hash::hashSocketAddress(remoteIP))->ioInterface.queueOutgoingMessage(stab);
-    } else {
-        connectors.insert(std::make_pair(Hash::hashSocketAddress(remoteIP), std::make_unique<MySocketConnector>(remoteIP, reactor,
-                                                                                              connections,
-                                                                                              connectionsMutex)));
-        outgoingMessages[Hash::hashSocketAddress(remoteIP)].push_back(stab);
-    }
-
-    std::string pred_message = "PRED" + ',' + address.toString();
-    Message pred(pred_message);
-    if (connections.contains(Hash::hashSocketAddress(predecessor))) {
-        connections.at(Hash::hashSocketAddress(predecessor))->ioInterface.queueOutgoingMessage(pred);
-    } else {
-        connectors.insert(std::make_pair(Hash::hashSocketAddress(predecessor), std::make_unique<MySocketConnector>(predecessor, reactor,
-                                                                                              connections,
-                                                                                              connectionsMutex)));
-        outgoingMessages[Hash::hashSocketAddress(predecessor)].push_back(pred);
-    }
-
-    std::string succ_message = "SUCC" + ',' + address.toString();
-    Message succ(pred_message);
-    if (connections.contains(Hash::hashSocketAddress(successor))) {
-        connections.at(Hash::hashSocketAddress(successor))->ioInterface.queueOutgoingMessage(succ);
-    } else {
-        connectors.insert(std::make_pair(Hash::hashSocketAddress(successor), std::make_unique<MySocketConnector>(successor, reactor,
-                                                                                              connections,
-                                                                                              connectionsMutex)));
-        outgoingMessages[Hash::hashSocketAddress(successor)].push_back(succ);
-    }
-}
-
-void Peer::process_stabilizeack_message(Message message, std::pair<const Hash, MyConnectionHandler *> connection) {
-    Message::staback_message msg = message.decode_staback_message();
-    Hash myPosition = Hash::hashSocketAddress(address);
-    auto possiblePred = Poco::Net::SocketAddress(msg.senderPred);
-    Hash remotePred = Hash::hashSocketAddress(possiblePred);
-    auto possibleSucc = Poco::Net::SocketAddress(msg.senderSucc);
-    Hash remoteSucc = Hash::hashSocketAddress(possibleSucc);
-
-    //check if the returned values are between me and current pred/succ
-    if (!myPosition.isBefore(remotePred) && Hash::hashSocketAddress(predecessor).isBefore(remotePred)) {
-        predecessor = possiblePred;
-    }
-
-    if (myPosition.isBefore(remotePred) && !Hash::hashSocketAddress(successor).isBefore(remotePred)) {
-        successor = possiblePred;
-    }
-
-    if (!remoteSucc.isBefore(myPosition) && remoteSucc.isBefore(Hash::hashSocketAddress(successor))) {
-        successor = possibleSucc;
-    }
-
-    if (remoteSucc.isBefore(myPosition) && !remoteSucc.isBefore(Hash::hashSocketAddress(predecessor))) {
-        predecessor = possibleSucc;
-    }
-
 }
 
 void Peer::findFingers(){
@@ -703,7 +709,7 @@ void Peer::run() {
 
         doFindFingersRoutine();
         doIntervalRoutine();
-        doStabilizeRoutine();
+//        doStabilizeRoutine();
 
         connectionsLock.unlock();
 

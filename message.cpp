@@ -240,8 +240,8 @@ Message::find_interval_ack_message Message::decode_find_interval_ack_message() {
     return msg;
 }
 
-Message::stab_message Message::decode_stab_message() {
-    stab_message msg;
+Message::stabilize_message Message::decode_stabilize_message() {
+    stabilize_message msg;
     std::string str(data.data(), data.size());
 
     msg.IP_address = str;
@@ -249,14 +249,14 @@ Message::stab_message Message::decode_stab_message() {
     return msg;
 }
 
-Message::staback_message Message::decode_staback_message() {
-    staback_message msg;
+Message::stabilize_ack_message Message::decode_stabilize_ack_message() {
+    stabilize_ack_message msg;
     std::string str(data.data(), data.size());
 
     size_t pos = str.find(',');
 
     if(pos == std::string::npos){
-        std::cout << "No ',' in FINGACK message" << std::endl;
+        std::cout << "No ',' in STABILIZE_ACK message" << std::endl;
         return msg;
     }
 

@@ -60,8 +60,8 @@ public:
         FINGACK,
         FIND_INTERVAL,
         FIND_INTERVAL_ACK,
-        STAB,
-        STABACK,
+        STABILIZE,
+        STABILIZE_ACK,
     };
     struct get_message{
         std::string IP_address;
@@ -113,11 +113,11 @@ public:
         std::string IP_address;
         unsigned long long highest_known_interval;
     };
-    struct stab_message
+    struct stabilize_message
     {
         std::string IP_address;
     };
-    struct staback_message
+    struct stabilize_ack_message
     {
         std::string IP_address;
         std::string senderPred;
@@ -155,6 +155,6 @@ public:
     fingack_message decode_fingack_message();
     find_interval_message decode_find_interval_message();
     find_interval_ack_message decode_find_interval_ack_message();
-    stab_message decode_stab_message();
-    staback_message decode_staback_message();
+    stabilize_message decode_stabilize_message();
+    stabilize_ack_message decode_stabilize_ack_message();
 };
