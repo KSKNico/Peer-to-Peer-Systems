@@ -503,7 +503,7 @@ void Peer::process_stabilize_message(Message message){
     }
 }
 
-void Peer::process_stabilizeack_message(Message message, std::pair<const Hash, MyConnectionHandler *> connection) {
+void Peer::process_stabilizeack_message(Message message) {
     Message::stabilize_ack_message msg = message.decode_stabilize_ack_message();
     Hash myPosition = Hash::hashSocketAddress(address);
     auto possiblePred = Poco::Net::SocketAddress(msg.senderPred);
@@ -596,7 +596,7 @@ void Peer::processMessage(Message message, std::pair<const Hash, MyConnectionHan
         process_stabilize_message(message);
     } else if ((message_type.substr(0, pos) == "STABILIZE_ACK")) {
         message.type = Message::MessageType::STABILIZE_ACK;
-        process_stabilizeack_message(message, connection);
+        process_stabilizeack_message(message);
     } else {
         std::cout << "Message from an unknown type, ignore it." << std::endl;
     }
@@ -686,7 +686,7 @@ void Peer::run() {
                                                                                         connections,
                                                                                         connectionsMutex)));
     }
-    sleep(1000);
+    sleep(2000);
     }*/
     
     // to get the thing going we calculate the first interval

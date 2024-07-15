@@ -69,7 +69,7 @@ class Peer {
     //return STABACK Message to sender, send out a PRED and SUCC message
     void process_stabilize_message(Message message);
     //updates current pred or succ if necessary
-    void process_stabilizeack_message(Message message, std::pair<const Hash, MyConnectionHandler *> connection);
+    void process_stabilizeack_message(Message message);
     //starts iterating through the ring and fills fingertable
     void findFingers();
 
