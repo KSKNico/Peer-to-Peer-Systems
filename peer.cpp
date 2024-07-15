@@ -70,7 +70,7 @@ Peer::Peer(Poco::Net::SocketAddress ownAddress) :
 
     // Peer::sectorHandler.initialize(Peer::address);
 
-    std::cout << "Peer has address: " << address.toString() << std::endl;
+    std::cout << "Bootstrap Peer has address: " << address.toString() << std::endl;
     std::cout << "Peer has hash: " << id.toString() << std::endl;
 
     thread.start(reactor);
@@ -488,8 +488,15 @@ void Peer::processMessage(Message message, std::pair<const Hash, MyConnectionHan
     } else if ((message_type.substr(0, pos) == "GETACK")) {
         message.type = Message::MessageType::GETACK;
         process_getack_message(message);
+    } else if ((message_type.substr(0, pos) == "FIND_INTERVAL")) {
+        message.type = Message::MessageType::FIND_INTERVAL;
+        process_find_interval_message(message);
+    } else if ((message_type.substr(0, pos) == "FIND_INTERVAL_ACK")) {
+        message.type = Message::MessageType::FIND_INTERVAL_ACK;
+        process_find_interval_ack_message(message);
     } else {
-        std::cout << "Message from an unknown type, ignore it.";
+        std::cout << "Message from an unknown type, ignore it." << std::endl;
+        std::cout << message_type << std::endl;
     }
 }
 
