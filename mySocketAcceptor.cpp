@@ -9,6 +9,7 @@ MySocketAcceptor::MySocketAcceptor(Poco::Net::ServerSocket& serverSocket,
 
 MyConnectionHandler* MySocketAcceptor::createServiceHandler(Poco::Net::StreamSocket& socket) {
     // change port to static port of 5000
+    std::cout << "Connection accepted from: " << socket.address().host().toString() << std::endl;
     Poco::Net::SocketAddress address(socket.address().host().toString(), 5000);
     auto hash = Hash::hashSocketAddress(address);
     MyConnectionHandler *connectionHandler = new MyConnectionHandler(socket, *reactor());

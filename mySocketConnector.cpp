@@ -13,6 +13,7 @@ remoteAddress(address)
  {}
 
 MyConnectionHandler* MySocketConnector::createServiceHandler() {
+    std::cout << "Connection established to: " << remoteAddress.host().toString() << std::endl;
     auto connectionHandler = new MyConnectionHandler(Poco::Net::SocketConnector<MyConnectionHandler>::socket(), 
                                     *Poco::Net::SocketConnector<MyConnectionHandler>::reactor());
     auto hash = Hash::hashSocketAddress(remoteAddress);

@@ -31,6 +31,7 @@ int main(int argc, char* argv[]) {
     Poco::Net::SocketAddress ownSocketAddress(Poco::Net::IPAddress(ownIPAddress_str), PORT);
     Poco::Net::SocketAddress remoteSocketAddress(Poco::Net::IPAddress(remoteIPAddress_str), PORT);
 
+    /*
     try {
         // Get the list of network interfaces
         Poco::Net::NetworkInterface::Map ifs = Poco::Net::NetworkInterface::map();
@@ -54,6 +55,7 @@ int main(int argc, char* argv[]) {
     catch (std::exception& ex) {
         std::cerr << "Standard Exception: " << ex.what() << std::endl;
     }
+    */
 
     // create only one peer!
     if (argc == 2) {
