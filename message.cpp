@@ -199,9 +199,9 @@ Message::getack_message Message::decode_getack_message() {
     msg.IP_address = str.substr(0, pos);
     std::string rest = str.substr(pos+1);
 
-    pos = str.find(',');
-    msg.start_of_interval = std::stoull(str.substr(0, pos));
-    msg.RoutingIP = str.substr(pos+1);
+    pos = rest.find(',');
+    msg.start_of_interval = std::stoull(rest.substr(0, pos));
+    msg.RoutingIP = rest.substr(pos+1);
 
     return msg;
 }
@@ -256,13 +256,16 @@ Message::stabilize_ack_message Message::decode_stabilize_ack_message() {
     size_t pos = str.find(',');
 
     if(pos == std::string::npos){
-        std::cout << "No ',' in STABILIZE_ACK message" << std::endl;
+        std::cout << "No ',' in STABILIZEACK message" << std::endl;
         return msg;
     }
 
     msg.IP_address = str.substr(0, pos);
-    msg.senderPred = str.substr(pos+1);
-    msg.senderSucc = str.substr(pos+2);
+    std::string rest = str.substr(pos+1);
+
+    pos = rest.find(',');
+    msg.senderPred = rest.substr(0, pos);
+    msg.senderSucc = rest.substr(pos+1);
 
     return msg;
 }
