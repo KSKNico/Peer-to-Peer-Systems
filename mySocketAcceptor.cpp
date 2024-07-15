@@ -10,12 +10,19 @@ MySocketAcceptor::MySocketAcceptor(Poco::Net::ServerSocket& serverSocket,
 
 MyConnectionHandler* MySocketAcceptor::createServiceHandler(Poco::Net::StreamSocket& socket) {
     // change port to static port of 5000
-    std::cout << "Connection accepted from: " << socket.address().host().toString() << std::endl;
+    std::unique_lock<std::mutex> lock(connectionsMutex);
+
     Poco::Net::SocketAddress address(socket.address().host().toString(), 5000);
     auto hash = Hash::hashSocketAddress(address);
+
+    if (connections.contains(hash)) {
+        std::cout << "Connection to " << socket.address().host().toString() << " already exists." << std::endl; 
+        return NULL;
+    }
+
+    std::cout << "Connection accepted from: " << socket.address().host().toString() << std::endl;
     MyConnectionHandler *connectionHandler = new MyConnectionHandler(socket, *reactor());
     // add the connection to the connections map
-    std::unique_lock<std::mutex> lock(connectionsMutex);
     connections.insert(std::make_pair(hash, connectionHandler));
     return connectionHandler;
 }

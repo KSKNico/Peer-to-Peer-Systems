@@ -14,11 +14,16 @@ remoteAddress(address)
  {}
 
 MyConnectionHandler* MySocketConnector::createServiceHandler() {
+    std::unique_lock<std::mutex>(connectionsMutex);
+    auto hash = Hash::hashSocketAddress(remoteAddress);
+    if (connections.contains(hash)) {
+        std::cout << "Connection to " << remoteAddress.host().toString() << " already exists." << std::endl; 
+        return NULL;
+    }
     std::cout << "Connection established to: " << remoteAddress.host().toString() << std::endl;
     auto connectionHandler = new MyConnectionHandler(Poco::Net::SocketConnector<MyConnectionHandler>::socket(), 
                                     *Poco::Net::SocketConnector<MyConnectionHandler>::reactor());
-    auto hash = Hash::hashSocketAddress(remoteAddress);
-    std::unique_lock<std::mutex>(connectionsMutex);
+
     connections.insert(std::make_pair(hash, connectionHandler));
     this->finished = true;
     return connectionHandler;
