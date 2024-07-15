@@ -13,7 +13,7 @@ public:
 
     static  unsigned long long getUpperBound();
 
-    public: static vector<unsigned long long >calculatePrimes(unsigned long long  lowerBound, unsigned long long upperBound);
+    public: static vector<unsigned long long >calculatePrimes(unsigned long long  lowerBound);
 
 
 };

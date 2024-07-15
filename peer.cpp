@@ -671,7 +671,7 @@ void Peer::doStabilizeRoutine() {
 void Peer::run() {
 
     //join every 2 seconds until you are part of the network - aka you got a joinack
-    while (!isBootstrap && successor == address && predecessor == address)
+    /*while (!isBootstrap && successor == address && predecessor == address)
     {
     std::string join = "JOIN," + address.toString();
     Message join_message(join);
@@ -683,7 +683,7 @@ void Peer::run() {
                                                                                         connectionsMutex)));
     }
     sleep(1000);
-    }
+    }*/
     
     // to get the thing going we calculate the first interval
     resultHandler.submitCalculation(0);
@@ -709,7 +709,7 @@ void Peer::run() {
 
         doFindFingersRoutine();
         doIntervalRoutine();
-//        doStabilizeRoutine();
+        doStabilizeRoutine();
 
         connectionsLock.unlock();
 

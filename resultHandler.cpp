@@ -1,4 +1,5 @@
 #include "resultHandler.hpp"
+#include <iostream>
 
 void ResultHandler::updateResultWithSingleFuture(ull lowerBound) {
     std::unique_lock<std::mutex> lock(futuresMutex);
@@ -78,6 +79,7 @@ void ResultHandler::submitCalculation(ull lowerBound) {
     if (futures.find(lowerBound) != futures.end()) {
         return;
     }
+    std::cout << "i want to calc" << std::endl;
     futures[lowerBound] = std::async(std::launch::async, &ResultHandler::calculatePrimes, lowerBound);
 }
 

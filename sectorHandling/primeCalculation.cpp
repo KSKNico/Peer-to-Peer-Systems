@@ -32,7 +32,9 @@ using namespace std;
 
 
 
-vector<unsigned long long > primeCalculation::calculatePrimes(unsigned long long lowerBound, unsigned long long upperBound){
+vector<unsigned long long > primeCalculation::calculatePrimes(unsigned long long lowerBound){
+        unsigned long long upperBound = lowerBound+1000;
+        std::cout << "i calculate " << lowerBound << " to " << upperBound << std::endl;
         vector<unsigned long long > primes;
         for(unsigned long long i=lowerBound; i <= upperBound; i++)
         {
