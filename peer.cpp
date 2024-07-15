@@ -32,6 +32,8 @@ Peer::Peer(Poco::Net::SocketAddress ownAddress, Poco::Net::SocketAddress remoteA
     Poco::Net::SocketAddress bootstrapAddress = remoteAddress;
     bool isBootstrap = false;
     address = serverSocket.address();
+    successor = address;
+    predecessor = address;
     id = Hash::hashSocketAddress(address);
 
     std::cout << "Peer created with address: " << address.toString() << std::endl;
@@ -66,6 +68,8 @@ Peer::Peer(Poco::Net::SocketAddress ownAddress) :
         id(Hash::hashSocketAddress(ownAddress)) {
     bool isBootstrap = true;
     address = serverSocket.address();
+    successor = address;
+    predecessor = address;
     id = Hash::hashSocketAddress(address);
 
     // Peer::sectorHandler.initialize(Peer::address);
@@ -204,9 +208,8 @@ void Peer::process_join_message(Message message, std::pair<const Hash, MyConnect
 
     if (closestIP == ip) {
         // im the closest one before peer -> set closestIP to successor and set successor to newly joined peer
-        if (successor.toString() != "0.0.0.0:0") {
-            closestIP = successor.toString();
-        }
+        closestIP = successor.toString();
+        
         successor = peerIP;
     }
     std::string fullMessage = "JOINACK," + ip + "," + closestIP;
