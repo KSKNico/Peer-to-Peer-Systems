@@ -24,7 +24,7 @@ MyConnectionHandler* MySocketConnector::createServiceHandler() {
     auto hash = Hash::hashSocketAddress(remoteAddress);
     if (connections.contains(hash)) {
         std::cout << "Connection to " << remoteAddress.host().toString() << " already exists." << std::endl; 
-        return NULL;
+        return connections.at(hash);
     }
     std::cout << "Connection established to: " << remoteAddress.host().toString() << std::endl;
     auto connectionHandler = new MyConnectionHandler(Poco::Net::SocketConnector<MyConnectionHandler>::socket(), 
