@@ -1,4 +1,5 @@
 #include "mySocketConnector.hpp"
+#include <iostream>
 
 MySocketConnector::MySocketConnector(const Poco::Net::SocketAddress& address, 
     Poco::Net::SocketReactor& reactor,

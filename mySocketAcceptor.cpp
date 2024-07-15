@@ -1,4 +1,5 @@
 #include "mySocketAcceptor.hpp"
+#include <iostream>
 
 MySocketAcceptor::MySocketAcceptor(Poco::Net::ServerSocket& serverSocket, 
     Poco::Net::SocketReactor& reactor, 
