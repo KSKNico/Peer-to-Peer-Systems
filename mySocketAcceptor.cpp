@@ -17,7 +17,7 @@ MyConnectionHandler* MySocketAcceptor::createServiceHandler(Poco::Net::StreamSoc
 
     if (connections.contains(hash)) {
         std::cout << "Connection to " << socket.address().host().toString() << " already exists." << std::endl; 
-        return NULL;
+        return connections.at(hash);
     }
 
     std::cout << "Connection accepted from: " << socket.address().host().toString() << std::endl;
