@@ -13,13 +13,13 @@ constexpr int PORT = 5000;
 // second argument remote IP (optional)
 
 int main(int argc, char* argv[]) {
-    std::string ownIPAddress_str;
-    std::string remoteIPAddress_str;
+    std::string ownIPAddress_str = "";
+    std::string remoteIPAddress_str = "";
     if (argc < 2) {
         std::cerr << "Usage: " << argv[0] << " <own IP> [<remote IP>]" << std::endl;
         return 1;
     } else if (argc == 2) {
-         ownIPAddress_str = argv[1];
+        ownIPAddress_str = argv[1];
     } else if (argc == 3) {
         ownIPAddress_str = argv[1];
         remoteIPAddress_str = argv[2];
@@ -55,9 +55,16 @@ int main(int argc, char* argv[]) {
         std::cerr << "Standard Exception: " << ex.what() << std::endl;
     }
 
+    // create only one peer!
+    if (argc == 2) {
+        Peer peer_1(ownSocketAddress);
+        peer_1.run();
+    } else {
+        Peer peer_1(ownSocketAddress, remoteSocketAddress);
+        peer_1.run();
+    }
 
-    Peer peer_1(ownSocketAddress);
-    peer_1.run();
+
 
     // start two threads that use the run method
     
