@@ -199,9 +199,9 @@ Message::getack_message Message::decode_getack_message() {
     msg.IP_address = str.substr(0, pos);
     std::string rest = str.substr(pos+1);
 
-    pos = str.find(',');
-    msg.start_of_interval = std::stoull(str.substr(0, pos));
-    msg.RoutingIP = str.substr(pos+1);
+    pos = rest.find(',');
+    msg.start_of_interval = std::stoull(rest.substr(0, pos));
+    msg.RoutingIP = rest.substr(pos+1);
 
     return msg;
 }
