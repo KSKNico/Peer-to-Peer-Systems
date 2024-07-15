@@ -17,6 +17,7 @@ public:
     );
 
     bool isFinished() const;
+    ~MySocketConnector() override;
 
 protected:
     MyConnectionHandler* createServiceHandler() override;
