@@ -13,9 +13,11 @@ finished(false),
 remoteAddress(address)
  {}
 
+/*
 MySocketConnector::~MySocketConnector() {
     std::cout << "MySocketConnector destructor called, this should not be called." << std::endl;
 }
+*/
 
 MyConnectionHandler* MySocketConnector::createServiceHandler() {
     std::unique_lock<std::mutex>(connectionsMutex);
