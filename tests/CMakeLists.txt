@@ -20,15 +20,12 @@ include_directories(${CMAKE_CURRENT_SOURCE_DIR}/..)
 # Gather all test files
 file(GLOB TEST_SOURCES "*.cpp")
 
-file(GLOB PROJECT_SOURCES "../message.cpp" "../resultHandler.cpp" "../timing.cpp" 
-"../mySocketConnector.cpp"
-"../mySocketAcceptor.cpp"
-"../myConnectionHandler.cpp"
-"../iointerface.cpp"
-"../hash.cpp")
+file(GLOB PROJECT_SOURCES "../src/message.cpp")
 
 # Create the test executable
 add_executable(runTests ${TEST_SOURCES} ${PROJECT_SOURCES})
+
+find_package(Poco REQUIRED COMPONENTS Foundation Util Net)
 
 # Link GoogleTest and GoogleMock to the test executable
 target_link_libraries(runTests gtest gtest_main)

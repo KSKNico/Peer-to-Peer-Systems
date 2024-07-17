@@ -8,15 +8,9 @@ set(CMAKE_CXX_STANDARD 20) # Set C++ standard to C++20
 
 set(CMAKE_COLOR_MAKEFILE ON)
 
+add_subdirectory(src)
 
-file(GLOB SOURCES "*.cpp")
-
-
-find_package(Poco REQUIRED COMPONENTS Foundation Util Net)
-
-add_executable(${PROJECT_NAME} ${SOURCES})
-
-target_link_libraries(${PROJECT_NAME} Poco::Foundation Poco::Util Poco::Net)
+# target_link_libraries(${PROJECT_NAME} Poco::Foundation Poco::Util Poco::Net)
 
 set_target_properties(${PROJECT_NAME} PROPERTIES RUNTIME_OUTPUT_DIRECTORY ${CMAKE_SOURCE_DIR}/bin)
 
