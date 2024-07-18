@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.30) # CMake 3.12 or higher is required for CXX_STANDARD 20
+cmake_minimum_required(VERSION 3.12) # CMake 3.12 or higher is required for CXX_STANDARD 20
 
 project(prime-finder)
 
