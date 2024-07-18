@@ -10,7 +10,7 @@ Hash Hash::hashSocketAddress(Poco::Net::SocketAddress const &address) {
     engine.update(address.toString());
     auto d = engine.digest();
     uint64_t hashValue = 0;
-    for (int i = 0; i < sizeof(uint64_t); i++) {
+    for (long unsigned int i = 0; i < sizeof(uint64_t); i++) {
         hashValue = (hashValue << 8) | d[i];
     }
     return Hash(hashValue);
@@ -20,7 +20,7 @@ Hash Hash::hashInterval(unsigned long long intervalStart) {
     engine.update(std::to_string(intervalStart));
     auto d = engine.digest();
     uint64_t hashValue = 0;
-    for (int i = 0; i < sizeof(uint64_t); i++) {
+    for (long unsigned int i = 0; i < sizeof(uint64_t); i++) {
         hashValue = (hashValue << 8) | d[i];
     }
     return Hash(hashValue);
@@ -29,7 +29,6 @@ Hash Hash::hashInterval(unsigned long long intervalStart) {
 bool Hash::compareHashes(Hash const &hash1, Hash const &hash2) {
     return hash1.hashValue == hash2.hashValue;
 }
-
 
 std::string Hash::toString() const {
     std::stringstream ss;
@@ -44,7 +43,6 @@ Hash Hash::fromString(std::string &str) {
     ss >> hashValue;
     return Hash(hashValue);
 }
-
 
 bool Hash::operator==(const Hash &other) const {
     return compareHashes(*this, other);
@@ -74,7 +72,7 @@ bool Hash::operator>=(const Hash &other) const {
     return !(*this < other);
 }
 
-std::size_t Hash::Hasher::operator()(const Hash& hash) const {
+std::size_t Hash::Hasher::operator()(const Hash &hash) const {
     return hash.hashValue;
 }
 
@@ -90,7 +88,7 @@ Hash Hash::operator-(const Hash &other) const {
 
 Hash Hash::distance(Hash const &other) const {
     // return the smaller distance!
-    return std::min((*this-other).hashValue, (other-*this).hashValue);
+    return std::min((*this - other).hashValue, (other - *this).hashValue);
 }
 
 bool Hash::isBefore(Hash const &other) const {

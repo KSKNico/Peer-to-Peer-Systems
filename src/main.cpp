@@ -1,13 +1,14 @@
-#include <iostream>
 #include <future>
-#include "Poco/Net/SocketAddress.h"
+#include <iostream>
+
 #include "Poco/Net/NetworkInterface.h"
+#include "Poco/Net/SocketAddress.h"
 
 constexpr int PORT = 5000;
 
-// pass command line arguments to the program with the current IP and potentially the remote IP plus port
-// first argument own IP
-// second argument remote IP (optional)
+// pass command line arguments to the program with the current IP and
+// potentially the remote IP plus port first argument own IP second argument
+// remote IP (optional)
 
 int main(int argc, char* argv[]) {
     std::string ownIPAddress_str = "";

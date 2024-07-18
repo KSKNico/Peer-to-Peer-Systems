@@ -1,160 +1,51 @@
 #pragma once
-#include <string>
 #include <array>
 #include <cstdint>
+#include <string>
 #include <vector>
 
+#include "../hash.hpp"
 #include "Poco/Buffer.h"
 #include "Poco/FIFOBuffer.h"
+#include "Poco/Net/SocketAddress.h"
 
-// a message is ascii encoded and is always 1024 bytes long
+enum class MessageType {
+    ID,
+    JOIN,
+    UNKNOWN,
+};
+
 class Message {
-public:
-    /*
-     * structure of GET: "<type>, <IP address from sender>, <first number of requested interval>"
-     * example: if peer 127.0.0.1:5001 wants to get primes of the interval [1, 1000] from peer 127.0.0.1:5002 it sends:
-     * "GET,127.0.0.1:5001,1" so "," is the delimiter
-     *
-     * structure of GETACK : "<type>, <IP address from sender>, <IP address for routing>"
-     *
-     * structure of PUT: "<type>, <IP address from sender>, <first number of interval>[, value1, value2, ...]"
-     * example: if peer 127.0.0.1:5001 wants to put the primes 2 and 3 in the interval [1, 1000] for which
-     * peer 127.0.0.1:5002 is responsible it sends:
-     * "PUT,127.0.0.1:5001,1,2,3"
-     * if this PUT is the answer of a GET message and the peer has yet no results for this interval it sends:
-     * "PUT,127.0.0.1:5001,1"
-     *
-     * structure of JOIN: "<type>, <IP address from sender>"
-     *
-     * structure of JOINACK: "<type>, <IP address from sender>, <IP of closest known peer before searcher in the circle>"
-     *
-     * structure of SUCC: "<type>, <IP address from sender>"
-     *
-     * structure of SUCCACK: "<type>, <IP address from sender>, <IP of closest known peer>"
-     *
-     * structure of PRED: "<type>, <IP address from sender>"
-     *
-     * structure of PREDACK: "<type>, <IP address from sender>, <IP of closest known peer>"
-     *
-     * closest IP in SUCCACK should be in the last step the successor of the requester
-     *
-     * structure of FING: "<type>, <IP address from sender>"
-     *
-     * structure of FINGACK: "<type>, <IP address from sender>, <IP address of successor of sender>"
-     *
-     * structure of FIND_INTERVAL: "<type>, <IP address from sender>, <highest known interval>"
-     *
-     * structure of FIND_INTERVAL_ACK: "<type>, <IP address from sender>, <highest known interval>"
-     */
-    enum class MessageType {
-        GET,
-        GETACK,
-        PUT,
-        JOIN,
-        JOINACK,
-        SUCC,
-        SUCCACK,
-        PRED,
-        PREDACK,
-        FING,
-        FINGACK,
-        FIND_INTERVAL,
-        FIND_INTERVAL_ACK,
-        STABILIZE,
-        STABILIZE_ACK,
-    };
-    struct get_message{
-        std::string IP_address;
-        unsigned long long start_of_interval;
-    };
-    struct getack_message{
-        std::string IP_address;
-        unsigned long long start_of_interval;
-        std::string RoutingIP;
-    };
-    struct put_message{
-        std::string IP_address;
-        unsigned long long start_of_interval;
-        std::vector<unsigned long long> primes;
-    };
-    struct join_message{
-        std::string IP_address;
-    };
-    struct joinack_message{
-        std::string IP_address;
-        std::string ClosestKnownIP;
-    };
-    struct succ_message{
-        std::string IP_address;
-    };
-    struct succack_message{
-        std::string IP_address;
-        std::string ClosestKnownIP;
-    };
-    struct pred_message{
-        std::string IP_address;
-    };
-    struct predack_message{
-        std::string IP_address;
-        std::string currentPred;
-    };
-    struct fing_message{
-        std::string IP_address;
-    };
-    struct fingack_message{
-        std::string IP_address;
-        std::string SuccessorIP;
-    };
-    struct find_interval_message{
-        std::string IP_address;
-        unsigned long long highest_known_interval;
-    };
-    struct find_interval_ack_message{
-        std::string IP_address;
-        unsigned long long highest_known_interval;
-    };
-    struct stabilize_message
-    {
-        std::string IP_address;
-    };
-    struct stabilize_ack_message
-    {
-        std::string IP_address;
-        std::string senderPred;
-        std::string senderSucc;
-    };
-
-    constexpr static int FIXED_MESSAGE_SIZE = 1024;
-
-    // used inside of a message to separate parts
-    constexpr static char PART_DELIMITER = ',';
-
-    using MessageData = std::array<char, FIXED_MESSAGE_SIZE>;
-
-    Message(MessageData data);
-    Message(std::string str);
+   public:
     Message();
-    MessageType type;
-    MessageData data;
 
-    bool isEmpty() const;
+    virtual std::string toString() const;
+    static Message fromString(const std::string &str);
+    static std::string extractHead(const Poco::FIFOBuffer &buffer);
 
-    static Message fromBuffer(Poco::BasicFIFOBuffer<char> &buffer);
-    static Poco::Buffer<char> toBuffer(const Message &message);
+    static MessageType getMessageType(const std::string &str);
+    static std::string messageTypeToString(const MessageType type);
+};
 
-    get_message decode_get_message();
-    getack_message decode_getack_message();
-    put_message decode_put_message();
-    join_message decode_join_message();
-    joinack_message decode_joinack_message();
-    succ_message decode_succ_message();
-    succack_message decode_succack_message();
-    pred_message decode_pred_message();
-    predack_message decode_predack_message();
-    fing_message decode_fing_message();
-    fingack_message decode_fingack_message();
-    find_interval_message decode_find_interval_message();
-    find_interval_ack_message decode_find_interval_ack_message();
-    stabilize_message decode_stabilize_message();
-    stabilize_ack_message decode_stabilize_ack_message();
+// used to exchange the id of a peer
+class IDMessage : public Message {
+   public:
+    IDMessage(Poco::Net::SocketAddress);
+    std::string toString() const override;
+    static IDMessage fromString(const std::string &str);
+    static constexpr std::string head = "ID";
+
+   private:
+    Poco::Net::SocketAddress ownAddress;
+};
+
+class JoinMessage : public Message {
+   public:
+    JoinMessage(Hash);
+    std::string toString() const override;
+    static Message fromString(const std::string &str);
+    static constexpr std::string head = "JOIN";
+
+   private:
+    Hash id;
 };

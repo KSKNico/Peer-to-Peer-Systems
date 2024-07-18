@@ -9,9 +9,14 @@ file(GLOB_RECURSE SOURCES "*.cpp")
 
 
 
+
 # target_sources(${PROJECT_NAME} PRIVATE ${SOURCES})
 
 add_executable(${PROJECT_NAME} ${SOURCES})
+
+
+# add extra pedantic
+target_compile_options(${PROJECT_NAME} PRIVATE -Wall -Wextra -Wpedantic)
 
 find_package(Poco REQUIRED COMPONENTS Foundation Util Net)
 
