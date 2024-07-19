@@ -8,7 +8,9 @@ class Acceptor {
    public:
     Acceptor(unsigned int port);
 
-    Connection accept();
+    std::unique_ptr<Connection> accept();
+
+    bool hasConnection();
 
    private:
     Poco::Net::ServerSocket serverSocket;

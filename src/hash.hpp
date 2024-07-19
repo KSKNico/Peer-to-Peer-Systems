@@ -36,9 +36,8 @@ class Hash {
 
     bool isBefore(Hash const& other) const;
 
-    struct Hasher {
-        // returns a hash type compatible with map types
-        std::size_t operator()(const Hash& hash) const;
+    struct SocketAddressHasher {
+        std::size_t operator()(const Poco::Net::SocketAddress& addr) const;
     };
 
     bool operator==(const Hash& other) const;
@@ -53,6 +52,8 @@ class Hash {
 
     // this wraps around if the difference is negative
     Hash operator-(const Hash& other) const;
+
+    HashType getHashValue() const;
 
    private:
     uint64_t hashValue;

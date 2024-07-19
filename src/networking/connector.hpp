@@ -2,13 +2,15 @@
 
 #include <unordered_map>
 
+#include "../hash.hpp"
 #include "Poco/Net/SocketAddress.h"
 #include "Poco/Net/StreamSocket.h"
+#include "connection.hpp"
 
 class Connector {
    public:
-    void connect(Poco::Net::SocketAddress address);
+    std::unique_ptr<Connection> connect(const Poco::Net::SocketAddress &address);
 
    private:
-    std::unordered_map<Poco::Net::SocketAddress, Poco::Net::StreamSocket> outboundConnections;
+    ConnectionsMap outboundConnections;
 };

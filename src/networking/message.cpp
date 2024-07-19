@@ -55,7 +55,9 @@ std::string Message::toString() const {
     return "";
 }
 
-IDMessage::IDMessage(Poco::Net::SocketAddress ownAddress) : ownAddress(ownAddress) {}
+IDMessage::IDMessage(Poco::Net::SocketAddress ownAddress) : ownAddress(ownAddress) {
+    type = MessageType::ID;
+}
 
 std::string IDMessage::toString() const {
     return head + MESSAGE_DELIMITER + ownAddress.toString();

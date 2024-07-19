@@ -72,10 +72,6 @@ bool Hash::operator>=(const Hash &other) const {
     return !(*this < other);
 }
 
-std::size_t Hash::Hasher::operator()(const Hash &hash) const {
-    return hash.hashValue;
-}
-
 Hash Hash::fromExponent(const uint8_t exponent) {
     uint64_t hashValue = 1;
     hashValue <<= exponent;
@@ -93,4 +89,18 @@ Hash Hash::distance(Hash const &other) const {
 
 bool Hash::isBefore(Hash const &other) const {
     return this->distance(other) == (other - *this).hashValue;
+}
+
+Hash::HashType Hash::getHashValue() const {
+    return this->hashValue;
+}
+
+/*
+std::size_t std::hash<Poco::Net::SocketAddress>::operator()(const Poco::Net::SocketAddress &addr) const {
+    return Hash::hashSocketAddress(addr).getHashValue();
+}
+*/
+
+std::size_t Hash::SocketAddressHasher::operator()(const Poco::Net::SocketAddress &addr) const {
+    return Hash::hashSocketAddress(addr).getHashValue();
 }

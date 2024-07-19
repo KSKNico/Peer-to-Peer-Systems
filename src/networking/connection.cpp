@@ -3,9 +3,10 @@
 #include <cassert>
 
 #include "../globalDefinitions.hpp"
+#include "../hash.hpp"
 
 Connection::Connection(Poco::Net::StreamSocket&& socket)
-    : socket(std::move(socket)), inputBuffer(MAX_MESSAGE_SIZE), outputBuffer(MAX_MESSAGE_SIZE), stream(socket) {};
+    : socket(socket), inputBuffer(MAX_MESSAGE_SIZE), outputBuffer(MAX_MESSAGE_SIZE), stream(socket) {};
 
 void Connection::sendMessage(Message message) {
     std::string str = message.toString();
@@ -18,6 +19,7 @@ std::optional<Message> Connection::receiveMessage() {
 
     // check for eofbit
     if (stream.eof() || stream.fail()) {
+        assert(*(inputBuffer.begin() + inputBuffer.used() - 1) != MESSAGE_TERMINATOR);
         return std::nullopt;
     }
 
@@ -45,4 +47,10 @@ std::optional<Message> Connection::receiveMessage() {
     }
 
     return std::nullopt;
+};
+
+bool Connection::isConnected() {
+    int value = 0;
+    socket.getOption(SOL_SOCKET, SO_ERROR, value);
+    return value == 0;
 };

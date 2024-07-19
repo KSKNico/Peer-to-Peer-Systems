@@ -21,7 +21,10 @@ include_directories(${CMAKE_CURRENT_SOURCE_DIR}/..)
 # Gather all test files
 file(GLOB TEST_SOURCES "*.cpp")
 
-file(GLOB PROJECT_SOURCES "../src/message.cpp")
+file(GLOB_RECURSE PROJECT_SOURCES "../src/*.cpp")
+
+# remove main file
+list(REMOVE_ITEM PROJECT_SOURCES ${CMAKE_CURRENT_SOURCE_DIR}/../src/main.cpp)
 
 # Create the test executable
 add_executable(runTests ${TEST_SOURCES} ${PROJECT_SOURCES})

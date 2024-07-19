@@ -25,6 +25,9 @@ class Message {
 
     static MessageType getMessageType(const std::string &str);
     static std::string messageTypeToString(const MessageType type);
+
+   protected:
+    MessageType type;
 };
 
 // used to exchange the id of a peer

@@ -1,5 +1,7 @@
 #pragma once
 
+#include <unordered_map>
+
 #include "Poco/Net/SocketAddress.h"
 #include "Poco/Net/SocketStream.h"
 #include "Poco/Net/StreamSocket.h"
@@ -16,6 +18,8 @@ class Connection {
     bool isConnected();
     bool isReadable();
     bool isWritable();
+    Poco::Net::SocketAddress getOwnAddress() const;
+    Poco::Net::SocketAddress getPeerAddress() const;
 
    private:
     Poco::Net::StreamSocket socket;
@@ -23,3 +27,6 @@ class Connection {
     Poco::FIFOBuffer outputBuffer;
     Poco::Net::SocketStream stream;
 };
+
+using ConnectionsMap =
+    std::unordered_map<Poco::Net::SocketAddress, std::unique_ptr<Connection>, Hash::SocketAddressHasher>;
