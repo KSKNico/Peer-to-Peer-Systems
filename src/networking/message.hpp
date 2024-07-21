@@ -17,13 +17,16 @@ enum class MessageType {
 
 class Message {
    public:
-    Message();
-
+    Message(MessageType type);
+    virtual ~Message() = default;
     virtual std::string toString() const;
-    static Message fromString(const std::string &str);
+    // static Message fromString(const std::string &str);
     static std::string extractHead(const Poco::FIFOBuffer &buffer);
+    static std::string extractHead(const std::string &str);
 
     static MessageType getMessageType(const std::string &str);
+    static MessageType getMessageType(const Message &message);
+
     static std::string messageTypeToString(const MessageType type);
 
    protected:

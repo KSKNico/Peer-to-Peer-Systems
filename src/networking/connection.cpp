@@ -6,36 +6,60 @@
 #include "../hash.hpp"
 
 Connection::Connection(Poco::Net::StreamSocket&& socket)
-    : socket(socket), inputBuffer(MAX_MESSAGE_SIZE), outputBuffer(MAX_MESSAGE_SIZE), stream(socket) {};
+    : socket(socket), stream(socket) {
+    socket.setBlocking(false);
+    str.reserve(MAX_MESSAGE_SIZE);
+    remaining.reserve(MAX_MESSAGE_SIZE);
+};
 
-void Connection::sendMessage(Message message) {
-    std::string str = message.toString();
+void Connection::_sendString(const std::string& str) {
     stream.write(str.c_str(), str.size());
+    stream.flush();
+};
+
+void Connection::sendMessage(const Message& message) {
+    assert(message.toString().size() < MAX_MESSAGE_SIZE);
+
+    // call the specialized function for the message type
+    std::string str = message.toString();
+    str += MESSAGE_TERMINATOR;
+    stream.write(str.c_str(), str.size());
+    stream.flush();
+};
+
+void Connection::sendMessages(const std::vector<Message>& messages) {
+    for (auto& message : messages) {
+        sendMessage(message);
+    }
 };
 
 std::optional<Message> Connection::receiveMessage() {
-    std::string str;
-    stream.getline(inputBuffer.begin(), MAX_MESSAGE_SIZE - inputBuffer.used());
+    str.clear();
+    std::getline(stream, str, MESSAGE_TERMINATOR);
+
+    str = remaining + str;
 
     // check for eofbit
-    if (stream.eof() || stream.fail()) {
-        assert(*(inputBuffer.begin() + inputBuffer.used() - 1) != MESSAGE_TERMINATOR);
+    if (stream.bad() || stream.fail()) {
         return std::nullopt;
     }
 
-    assert(inputBuffer.used() < MAX_MESSAGE_SIZE);
-    assert(inputBuffer.used() > 0);
-    assert(inputBuffer[inputBuffer.used() - 1] == MESSAGE_TERMINATOR);
+    if (stream.eof()) {
+        assert(str.back() != MESSAGE_TERMINATOR);
+        remaining = str;
+        stream.clear();
+        return std::nullopt;
+    }
 
-    std::string head = Message::extractHead(inputBuffer);
+    assert(str.size() > 0);
+    assert(str.size() < MAX_MESSAGE_SIZE);
+
+    std::string head = Message::extractHead(str);
     MessageType type = Message::getMessageType(head);
-
-    std::string content = std::string(inputBuffer.begin(), inputBuffer.begin() + inputBuffer.used() - 1);
-    inputBuffer.drain();
 
     switch (type) {
         case MessageType::ID:
-            return IDMessage::fromString(content);
+            return std::make_optional(IDMessage::fromString(str));
             /*
         case MessageType::JOIN:
             return JoinMessage::fromString(content);
@@ -49,8 +73,35 @@ std::optional<Message> Connection::receiveMessage() {
     return std::nullopt;
 };
 
+std::vector<Message> Connection::receiveMessages() {
+    std::vector<Message> messages;
+    while (isReadable()) {
+        auto message = receiveMessage();
+        if (message.has_value()) {
+            messages.push_back(message.value());
+        }
+    }
+    return messages;
+};
+
 bool Connection::isConnected() {
     int value = 0;
     socket.getOption(SOL_SOCKET, SO_ERROR, value);
     return value == 0;
+};
+
+bool Connection::isReadable() {
+    return socket.poll(0, Poco::Net::Socket::SELECT_READ);
+};
+
+bool Connection::isWritable() {
+    return socket.poll(0, Poco::Net::Socket::SELECT_WRITE);
+};
+
+Poco::Net::SocketAddress Connection::getOwnAddress() const {
+    return socket.address();
+};
+
+Poco::Net::SocketAddress Connection::getPeerAddress() const {
+    return socket.peerAddress();
 };

@@ -8,7 +8,7 @@
 
 #include "../globalDefinitions.hpp"
 
-Message::Message() {}
+Message::Message(MessageType type) : type(type) {}
 
 std::string Message::extractHead(const Poco::FIFOBuffer &buffer) {
     std::string head;
@@ -17,6 +17,17 @@ std::string Message::extractHead(const Poco::FIFOBuffer &buffer) {
             break;
         }
         head += buffer[i];
+    }
+    return head;
+}
+
+std::string Message::extractHead(const std::string &str) {
+    std::string head;
+    for (std::size_t i = 0; i < str.size(); i++) {
+        if (str[i] == MESSAGE_DELIMITER) {
+            break;
+        }
+        head += str[i];
     }
     return head;
 }
@@ -55,8 +66,11 @@ std::string Message::toString() const {
     return "";
 }
 
-IDMessage::IDMessage(Poco::Net::SocketAddress ownAddress) : ownAddress(ownAddress) {
-    type = MessageType::ID;
+MessageType Message::getMessageType(const Message &message) {
+    return message.type;
+};
+
+IDMessage::IDMessage(Poco::Net::SocketAddress ownAddress) : Message(MessageType::ID), ownAddress(ownAddress) {
 }
 
 std::string IDMessage::toString() const {

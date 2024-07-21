@@ -11,8 +11,8 @@ class Connection {
    public:
     Connection(Poco::Net::StreamSocket&& socket);
 
-    void sendMessage(Message message);
-    void sendMessages(std::vector<Message> messages);
+    void sendMessage(const Message& message);
+    void sendMessages(const std::vector<Message>& messages);
     std::optional<Message> receiveMessage();
     std::vector<Message> receiveMessages();
     bool isConnected();
@@ -21,11 +21,18 @@ class Connection {
     Poco::Net::SocketAddress getOwnAddress() const;
     Poco::Net::SocketAddress getPeerAddress() const;
 
+    // should not be called
+    void _sendString(const std::string& str);
+
+    // delete copy constructor and copy assignment operator
+    Connection(const Connection&) = delete;
+    Connection& operator=(const Connection&) = delete;
+
    private:
     Poco::Net::StreamSocket socket;
-    Poco::FIFOBuffer inputBuffer;
-    Poco::FIFOBuffer outputBuffer;
     Poco::Net::SocketStream stream;
+    std::string remaining;
+    std::string str;
 };
 
 using ConnectionsMap =
