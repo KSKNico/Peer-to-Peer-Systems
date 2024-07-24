@@ -31,6 +31,9 @@ TEST(Hash, SocketAddress) {
     map.insert({addr, 1});
 
     EXPECT_EQ(map.at(addr), 1);
+
+    auto addr2 = Poco::Net::SocketAddress();
+    ASSERT_EQ(addr2.toString(), "0.0.0.0:0");
 }
 
 TEST(Hash, Functions) {
