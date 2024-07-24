@@ -18,9 +18,9 @@ add_executable(${PROJECT_NAME} ${SOURCES})
 # add extra pedantic
 target_compile_options(${PROJECT_NAME} PRIVATE -Wall -Wextra -Wpedantic)
 
-find_package(Poco REQUIRED COMPONENTS Foundation Util Net)
+find_package(Poco REQUIRED COMPONENTS Foundation Util Net Crypto)
 
-target_link_libraries(${PROJECT_NAME} Poco::Foundation Poco::Util Poco::Net ${LIBRARY_NAME})
+target_link_libraries(${PROJECT_NAME} Poco::Crypto Poco::Util Poco::Net Poco::Foundation)
 
 set_target_properties(${PROJECT_NAME} PROPERTIES RUNTIME_OUTPUT_DIRECTORY ${CMAKE_SOURCE_DIR}/bin)
 

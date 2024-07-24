@@ -29,13 +29,13 @@ list(REMOVE_ITEM PROJECT_SOURCES ${CMAKE_CURRENT_SOURCE_DIR}/../src/main.cpp)
 # Create the test executable
 add_executable(runTests ${TEST_SOURCES} ${PROJECT_SOURCES})
 
-find_package(Poco REQUIRED COMPONENTS Foundation Util Net)
+find_package(Poco REQUIRED COMPONENTS Foundation Util Net Crypto)
 
 # Link GoogleTest and GoogleMock to the test executable
 target_link_libraries(runTests gtest gtest_main)
 
 # Link Poco libraries to the test executable
-target_link_libraries(runTests Poco::Foundation Poco::Util Poco::Net)
+target_link_libraries(runTests Poco::Foundation Poco::Util Poco::Net Poco::Crypto)
 
 # Add the tests to CTest
 include(GoogleTest)
