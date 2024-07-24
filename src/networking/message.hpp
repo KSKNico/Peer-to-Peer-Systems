@@ -13,8 +13,8 @@ enum class MessageType {
     ID,
     JOIN,
     INCOMPLETE,
-    ERROR,
-    UNKNOWN
+    ERRORED,
+    UNKNOWN,
 };
 
 class Message {
@@ -68,8 +68,8 @@ class IncompleteMessage : public Message {
     const std::string snippet;
 };
 
-class ErrorMessage : public Message {
+class ErroredMessage : public Message {
    public:
-    ErrorMessage();
+    ErroredMessage();
     std::string toString() const override;
 };

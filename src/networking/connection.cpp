@@ -41,7 +41,7 @@ Message Connection::receiveMessage() {
 
     // check for eofbit
     if (stream.bad() || stream.fail()) {
-        return ErrorMessage();
+        return ErroredMessage();
     }
 
     if (stream.eof()) {

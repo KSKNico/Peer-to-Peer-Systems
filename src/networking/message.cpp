@@ -56,7 +56,7 @@ std::string Message::messageTypeToString(const MessageType type) {
             return "JOIN";
         case MessageType::INCOMPLETE:
             return "INCOMPLETE";
-        case MessageType::ERROR:
+        case MessageType::ERRORED:
             return "ERROR";
         default:
             throw std::runtime_error("Unknown message type");
@@ -77,7 +77,7 @@ bool Message::isComplete() const {
 }
 
 bool Message::isError() const {
-    return type == MessageType::ERROR;
+    return type == MessageType::ERRORED;
 }
 
 IDMessage::IDMessage(Poco::Net::SocketAddress ownAddress) : ownAddress(ownAddress) {
@@ -108,10 +108,10 @@ std::string IncompleteMessage::toString() const {
     return snippet;
 }
 
-ErrorMessage::ErrorMessage() {
-    type = MessageType::ERROR;
+ErroredMessage::ErroredMessage() {
+    type = MessageType::ERRORED;
 }
 
-std::string ErrorMessage::toString() const {
+std::string ErroredMessage::toString() const {
     return "";
 }
