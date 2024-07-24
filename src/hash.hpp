@@ -17,6 +17,8 @@ class Hash {
     static constexpr int HASH_BIT_SIZE = sizeof(HashType) * 8;
     static constexpr int HASH_BYTE_SIZE = sizeof(HashType);
 
+    Hash(Poco::Net::SocketAddress const& addr);
+
     std::string toString() const;
 
     static Hash fromString(std::string& str);
@@ -25,8 +27,9 @@ class Hash {
 
     static Hash hashInterval(unsigned long long intervalStart);
 
-    // calculates distance between two hashes
-    // this wraps around the circle
+    // calculates the distance from this hash to the other
+    // the distance is not commutative as it is a ring that can only be traversed in one direction
+    // so distance(a, b) != distance(b, a)
     Hash distance(Hash const& other) const;
 
     // creates a hash by calculating 2**exponent
@@ -34,7 +37,7 @@ class Hash {
 
     static bool compareHashes(Hash const& hash1, Hash const& hash2);
 
-    bool isBefore(Hash const& other) const;
+    // bool isBefore(Hash const& other) const;
 
     struct SocketAddressHasher {
         std::size_t operator()(const Poco::Net::SocketAddress& addr) const;
@@ -58,4 +61,5 @@ class Hash {
    private:
     uint64_t hashValue;
     Hash(uint64_t hashValue);
+    Hash() = delete;
 };
