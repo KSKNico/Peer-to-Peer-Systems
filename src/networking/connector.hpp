@@ -9,7 +9,7 @@
 
 class Connector {
    public:
-    std::unique_ptr<Connection> connect(const Poco::Net::SocketAddress &address);
+    std::unique_ptr<Connection> connect(const Poco::Net::SocketAddress &address, bool blocking = true);
 
    private:
     ConnectionsMap outboundConnections;

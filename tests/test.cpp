@@ -64,7 +64,7 @@ TEST(ConnectionTest, ConnectionTestWithMessage) {
         auto message = connection2->receiveMessage();
         std::cout << "Message received" << std::endl;
 
-        ASSERT_TRUE(message.has_value());
+        ASSERT_TRUE(message.isComplete() && !message.isError());
     } else {
         std::cout << "Connection 2 is not readable" << std::endl;
     }
@@ -106,8 +106,8 @@ TEST(ConnectionTest, StressTest) {
 
     int received = 0;
     while (received < numMessages) {
-        std::optional<Message> msgOptional = connection2->receiveMessage();
-        if (msgOptional.has_value()) {
+        auto msg = connection2->receiveMessage();
+        if (msg.isComplete()) {
             ++received;
         } else {
             break;
@@ -143,12 +143,12 @@ TEST(ConnectionTest, StreamTest) {
 
     connection1->_sendString("ID,");
 
-    std::optional<Message> messageOpt;
+    Message message;
     if (connection2->isReadable()) {
-        messageOpt = connection2->receiveMessage();
+        message = connection2->receiveMessage();
         std::cout << "Message received" << std::endl;
 
-        ASSERT_TRUE(!messageOpt.has_value());
+        EXPECT_TRUE(!message.isComplete());
     } else {
         std::cout << "Connection 2 is not readable" << std::endl;
     }
@@ -158,7 +158,7 @@ TEST(ConnectionTest, StreamTest) {
     }
 
     if (connection2->isReadable()) {
-        messageOpt = connection2->receiveMessage();
-        EXPECT_TRUE(messageOpt.has_value());
+        message = connection2->receiveMessage();
+        EXPECT_TRUE(message.isComplete());
     }
 }

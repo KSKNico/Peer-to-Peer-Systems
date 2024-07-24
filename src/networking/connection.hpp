@@ -13,7 +13,7 @@ class Connection {
 
     void sendMessage(const Message& message);
     void sendMessages(const std::vector<Message>& messages);
-    std::optional<Message> receiveMessage();
+    Message receiveMessage();
     std::vector<Message> receiveMessages();
     bool isConnected();
     bool isReadable();

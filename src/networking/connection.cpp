@@ -33,7 +33,7 @@ void Connection::sendMessages(const std::vector<Message>& messages) {
     }
 };
 
-std::optional<Message> Connection::receiveMessage() {
+Message Connection::receiveMessage() {
     str.clear();
     std::getline(stream, str, MESSAGE_TERMINATOR);
 
@@ -41,14 +41,14 @@ std::optional<Message> Connection::receiveMessage() {
 
     // check for eofbit
     if (stream.bad() || stream.fail()) {
-        return std::nullopt;
+        return ErrorMessage();
     }
 
     if (stream.eof()) {
         assert(str.back() != MESSAGE_TERMINATOR);
         remaining = str;
         stream.clear();
-        return std::nullopt;
+        return IncompleteMessage(remaining);
     }
 
     assert(str.size() > 0);
@@ -59,26 +59,22 @@ std::optional<Message> Connection::receiveMessage() {
 
     switch (type) {
         case MessageType::ID:
-            return std::make_optional(IDMessage::fromString(str));
+            return IDMessage::fromString(str);
             /*
         case MessageType::JOIN:
             return JoinMessage::fromString(content);
         */
-        case MessageType::UNKNOWN:
-            return std::nullopt;
-        default:
-            return std::nullopt;
     }
 
-    return std::nullopt;
+    throw std::runtime_error("Unknown message type");
 };
 
 std::vector<Message> Connection::receiveMessages() {
     std::vector<Message> messages;
     while (isReadable()) {
         auto message = receiveMessage();
-        if (message.has_value()) {
-            messages.push_back(message.value());
+        if (message.isComplete()) {
+            messages.push_back(message);
         }
     }
     return messages;

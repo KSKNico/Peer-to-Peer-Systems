@@ -12,13 +12,13 @@
 enum class MessageType {
     ID,
     JOIN,
-    UNKNOWN,
+    INCOMPLETE,
+    ERROR,
+    UNKNOWN
 };
 
 class Message {
    public:
-    Message(MessageType type);
-    virtual ~Message() = default;
     virtual std::string toString() const;
     // static Message fromString(const std::string &str);
     static std::string extractHead(const Poco::FIFOBuffer &buffer);
@@ -29,6 +29,9 @@ class Message {
 
     static std::string messageTypeToString(const MessageType type);
 
+    bool isComplete() const;
+    bool isError() const;
+
    protected:
     MessageType type;
 };
@@ -38,7 +41,7 @@ class IDMessage : public Message {
    public:
     IDMessage(Poco::Net::SocketAddress);
     std::string toString() const override;
-    static IDMessage fromString(const std::string &str);
+    static IDMessage fromString(const std::string &);
     static constexpr std::string head = "ID";
 
    private:
@@ -49,9 +52,24 @@ class JoinMessage : public Message {
    public:
     JoinMessage(Hash);
     std::string toString() const override;
-    static Message fromString(const std::string &str);
+    static Message fromString(const std::string &);
     static constexpr std::string head = "JOIN";
 
    private:
     Hash id;
+};
+
+class IncompleteMessage : public Message {
+   public:
+    IncompleteMessage(const std::string &);
+    std::string toString() const override;
+
+   private:
+    const std::string snippet;
+};
+
+class ErrorMessage : public Message {
+   public:
+    ErrorMessage();
+    std::string toString() const override;
 };

@@ -8,8 +8,6 @@
 
 #include "../globalDefinitions.hpp"
 
-Message::Message(MessageType type) : type(type) {}
-
 std::string Message::extractHead(const Poco::FIFOBuffer &buffer) {
     std::string head;
     for (std::size_t i = 0; i < buffer.used(); i++) {
@@ -46,7 +44,7 @@ MessageType Message::getMessageType(const std::string &str) {
     } else if (head == JoinMessage::head) {
         return MessageType::JOIN;
     } else {
-        return MessageType::UNKNOWN;
+        throw std::runtime_error("Unknown message type: " + head);
     }
 }
 
@@ -56,10 +54,14 @@ std::string Message::messageTypeToString(const MessageType type) {
             return "ID";
         case MessageType::JOIN:
             return "JOIN";
-        case MessageType::UNKNOWN:
-            return "UNKNOWN";
+        case MessageType::INCOMPLETE:
+            return "INCOMPLETE";
+        case MessageType::ERROR:
+            return "ERROR";
+        default:
+            throw std::runtime_error("Unknown message type");
     }
-    return "UNKNOWN";
+    throw std::runtime_error("Unknown message type");
 }
 
 std::string Message::toString() const {
@@ -70,7 +72,16 @@ MessageType Message::getMessageType(const Message &message) {
     return message.type;
 };
 
-IDMessage::IDMessage(Poco::Net::SocketAddress ownAddress) : Message(MessageType::ID), ownAddress(ownAddress) {
+bool Message::isComplete() const {
+    return type != MessageType::INCOMPLETE;
+}
+
+bool Message::isError() const {
+    return type == MessageType::ERROR;
+}
+
+IDMessage::IDMessage(Poco::Net::SocketAddress ownAddress) : ownAddress(ownAddress) {
+    type = MessageType::ID;
 }
 
 std::string IDMessage::toString() const {
@@ -87,4 +98,20 @@ IDMessage IDMessage::fromString(const std::string &str) {
     }
 
     return IDMessage(Poco::Net::SocketAddress(address));
+}
+
+IncompleteMessage::IncompleteMessage(const std::string &snippet) : snippet(snippet) {
+    type = MessageType::INCOMPLETE;
+}
+
+std::string IncompleteMessage::toString() const {
+    return snippet;
+}
+
+ErrorMessage::ErrorMessage() {
+    type = MessageType::ERROR;
+}
+
+std::string ErrorMessage::toString() const {
+    return "";
 }
