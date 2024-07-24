@@ -12,7 +12,7 @@
 
 class Hash {
    public:
-    static Poco::SHA2Engine256 engine;
+    static Poco::SHA2Engine engine;
     using HashType = uint64_t;
     static constexpr int HASH_BIT_SIZE = sizeof(HashType) * 8;
     static constexpr int HASH_BYTE_SIZE = sizeof(HashType);

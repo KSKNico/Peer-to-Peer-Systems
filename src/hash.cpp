@@ -3,7 +3,7 @@
 #include <algorithm>
 #include <cassert>
 
-Poco::SHA2Engine256 Hash::engine;
+Poco::SHA2Engine Hash::engine = Poco::SHA2Engine(Poco::SHA2Engine::ALGORITHM::SHA_256);
 
 Hash::Hash(HashType hashValue) : hashValue(hashValue) {}
 
