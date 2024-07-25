@@ -132,7 +132,8 @@ std::string FindMessage::toString() const {
     return head + MESSAGE_DELIMITER + (isResponse ? "R" : "Q") + MESSAGE_DELIMITER + target.toString() + MESSAGE_DELIMITER;
 }
 
-Message FindMessage::fromString(const std::string &str) {
+FindMessage FindMessage::fromString(const std::string &str) {
+    assert(str[4] == 'Q' || str[4] == 'R');
     bool isResponse = str[4] == 'R';
     auto targetStr = str.substr(6);
     Hash target = Hash::fromString(targetStr);

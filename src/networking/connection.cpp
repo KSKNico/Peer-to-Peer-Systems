@@ -59,11 +59,15 @@ std::unique_ptr<Message> Connection::receiveMessage() {
 
     switch (type) {
         case MessageType::ID:
-            return std::make_unique<IDMessage>(IDMessage::fromString(str));
+            return std::make_unique<Message>(IDMessage::fromString(str));
+        case MessageType::FIND:
+            return std::make_unique<Message>(FindMessage::fromString(str));
             /*
         case MessageType::JOIN:
             return JoinMessage::fromString(content);
         */
+        default:
+            throw std::runtime_error("Unknown message type");
     }
 
     throw std::runtime_error("Unknown message type");

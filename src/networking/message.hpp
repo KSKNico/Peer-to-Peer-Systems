@@ -70,7 +70,7 @@ class FindMessage : public Message {
    public:
     FindMessage(const Hash &hash, bool isResponse);
     std::string toString() const override;
-    static Message fromString(const std::string &);
+    static FindMessage fromString(const std::string &);
 
     static constexpr std::string head = "FIND";
 
