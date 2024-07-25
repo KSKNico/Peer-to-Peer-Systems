@@ -3,6 +3,7 @@
 #include <unordered_map>
 
 #include "../src/fingerTable.hpp"
+#include "../src/globalDefinitions.hpp"
 #include "../src/hash.hpp"
 #include "../src/networking/acceptor.hpp"
 #include "../src/networking/connection.hpp"
@@ -25,9 +26,26 @@ TEST(Message, IDMessageTest) {
 }
 
 TEST(Message, FindMessageTest) {
-    FindMessage msg = FindMessage(Hash::hashInterval(123), false);
+    FindMessage msg = FindMessage(Hash::hashInterval(123));
     ASSERT_EQ(msg.target, Hash::hashInterval(123));
-    ASSERT_EQ(msg.isResponse, false);
+
+    // compare strings
+    auto str = msg.toString();
+    auto newMsg = FindMessage::fromString(str);
+
+    ASSERT_EQ(msg.toString(), newMsg.toString());
+}
+
+TEST(Message, FindResponseMessageTest) {
+    auto msg = FindResponseMessage(Hash::hashInterval(123), Poco::Net::SocketAddress("127.0.0.1:1234"));
+    ASSERT_EQ(msg.target, Hash::hashInterval(123));
+    ASSERT_EQ(msg.referenceAddress, Poco::Net::SocketAddress("127.0.0.1:1234"));
+
+    // compare strings
+    auto str = msg.toString();
+    auto newMsg = FindResponseMessage::fromString(str);
+
+    ASSERT_EQ(msg.toString(), newMsg.toString());
 }
 
 TEST(Hash, SocketAddress) {

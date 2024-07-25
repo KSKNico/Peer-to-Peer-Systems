@@ -23,6 +23,8 @@ class ConnectionManager {
 
     void connectTo(const Poco::Net::SocketAddress& address);
 
+    bool existsElseConnect(const Poco::Net::SocketAddress& address);
+
     void updateOutgoingConnections();
     void updateIncomingConnections();
 

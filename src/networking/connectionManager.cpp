@@ -20,6 +20,15 @@ void ConnectionManager::acceptAllConnections() {
     }
 }
 
+bool ConnectionManager::existsElseConnect(const Poco::Net::SocketAddress &address) {
+    if (pendingOutgoingConnections.contains(address) || establishedConnections.contains(address) || pendingIncomingConnections.contains(address)) {
+        return true;
+    }
+
+    connectTo(address);
+    return false;
+}
+
 void ConnectionManager::connectTo(const Poco::Net::SocketAddress &address) {
     if (pendingOutgoingConnections.contains(address) || establishedConnections.contains(address)) {
         throw std::runtime_error("Connection already exists");

@@ -13,6 +13,7 @@ enum class MessageType {
     ID,
     JOIN,
     FIND,
+    FINDR,
     INCOMPLETE,
     ERRORED,
     UNKNOWN,
@@ -20,24 +21,24 @@ enum class MessageType {
 
 class Message {
    public:
-    virtual ~Message() = default;
+    virtual ~Message() {};
 
-    virtual std::string toString() const;
+    virtual std::string toString() const = 0;
     // static Message fromString(const std::string &str);
-    static std::string extractHead(const Poco::FIFOBuffer &buffer);
+    // static std::string extractHead(const Poco::FIFOBuffer &buffer);
     static std::string extractHead(const std::string &str);
 
     static MessageType getMessageTypeFromString(const std::string &str);
 
     static std::string messageTypeToString(const MessageType type);
 
-    bool isComplete() const;
-    bool isErrored() const;
-
-    MessageType getType() const;
+    virtual bool isComplete() const final;
+    virtual bool isErrored() const final;
+    virtual MessageType getType() const final;
 
    protected:
     MessageType type;
+    Poco::Net::SocketAddress from;
 };
 
 // used to exchange the ID of a peer, i.e. the server socket address with which other peers can connect to this peer
@@ -57,25 +58,36 @@ class IDMessage : public Message {
 
 class JoinMessage : public Message {
    public:
-    JoinMessage(Hash);
+    JoinMessage();
     std::string toString() const override;
-    static Message fromString(const std::string &);
+    static JoinMessage fromString(const std::string &str);
 
     static constexpr std::string head = "JOIN";
-
-    const Hash id;
 };
 
+// used to find a peer that is responsible for a certain hash
 class FindMessage : public Message {
    public:
-    FindMessage(const Hash &hash, bool isResponse);
+    FindMessage(const Hash &hash);
     std::string toString() const override;
     static FindMessage fromString(const std::string &);
 
     static constexpr std::string head = "FIND";
 
     const Hash target;
-    const bool isResponse;
+};
+
+// contains the IP address of the next peer for the find message
+class FindResponseMessage : public Message {
+   public:
+    FindResponseMessage(const Hash &target, const Poco::Net::SocketAddress &addr);
+    std::string toString() const override;
+    static FindResponseMessage fromString(const std::string &);
+
+    static constexpr std::string head = "FINDR";
+
+    const Poco::Net::SocketAddress referenceAddress;
+    const Hash target;
 };
 
 class IncompleteMessage : public Message {

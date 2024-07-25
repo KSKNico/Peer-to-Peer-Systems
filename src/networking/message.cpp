@@ -8,6 +8,7 @@
 
 #include "../globalDefinitions.hpp"
 
+/*
 std::string Message::extractHead(const Poco::FIFOBuffer &buffer) {
     std::string head;
     for (std::size_t i = 0; i < buffer.used(); i++) {
@@ -18,6 +19,7 @@ std::string Message::extractHead(const Poco::FIFOBuffer &buffer) {
     }
     return head;
 }
+*/
 
 std::string Message::extractHead(const std::string &str) {
     std::string head;
@@ -58,6 +60,8 @@ std::string Message::messageTypeToString(const MessageType type) {
             return "JOIN";
         case MessageType::FIND:
             return "FIND";
+        case MessageType::FINDR:
+            return "FINDR";
         case MessageType::INCOMPLETE:
             return "INCOMPLETE";
         case MessageType::ERRORED:
@@ -66,10 +70,6 @@ std::string Message::messageTypeToString(const MessageType type) {
             throw std::runtime_error("Unknown message type");
     }
     throw std::runtime_error("Unknown message type");
-}
-
-std::string Message::toString() const {
-    return "";
 }
 
 MessageType Message::getType() const {
@@ -108,6 +108,19 @@ Poco::Net::SocketAddress IDMessage::getOwnAddress() const {
     return ownAddress;
 }
 
+JoinMessage::JoinMessage() {
+    type = MessageType::JOIN;
+}
+
+JoinMessage JoinMessage::fromString(const std::string &str) {
+    assert(str == "JOIN");
+    return JoinMessage();
+}
+
+std::string JoinMessage::toString() const {
+    return head;
+}
+
 IncompleteMessage::IncompleteMessage(const std::string &snippet) : snippet(snippet) {
     type = MessageType::INCOMPLETE;
 }
@@ -124,18 +137,34 @@ std::string ErroredMessage::toString() const {
     return "";
 }
 
-FindMessage::FindMessage(const Hash &target, bool isResponse) : target(target), isResponse(isResponse) {
+FindMessage::FindMessage(const Hash &target) : target(target) {
     type = MessageType::JOIN;
 }
 
 std::string FindMessage::toString() const {
-    return head + MESSAGE_DELIMITER + (isResponse ? "R" : "Q") + MESSAGE_DELIMITER + target.toString() + MESSAGE_DELIMITER;
+    return head + MESSAGE_DELIMITER + target.toString();
 }
 
 FindMessage FindMessage::fromString(const std::string &str) {
-    assert(str[4] == 'Q' || str[4] == 'R');
-    bool isResponse = str[4] == 'R';
-    auto targetStr = str.substr(6);
-    Hash target = Hash::fromString(targetStr);
-    return FindMessage(target, isResponse);
+    Hash target = Hash::fromString(str.substr(str.find(MESSAGE_DELIMITER) + 1));
+    return FindMessage(target);
+}
+
+FindResponseMessage::FindResponseMessage(const Hash &target, const Poco::Net::SocketAddress &addr) : referenceAddress(addr), target(target) {
+    type = MessageType::FINDR;
+}
+
+std::string FindResponseMessage::toString() const {
+    return head + MESSAGE_DELIMITER + target.toString() + MESSAGE_DELIMITER + referenceAddress.toString();
+}
+
+// message looks like this "FINDR,<target>,<address>"
+FindResponseMessage FindResponseMessage::fromString(const std::string &str) {
+    std::size_t firstDelimiter = str.find(MESSAGE_DELIMITER);
+    std::size_t secondDelimiter = str.find(MESSAGE_DELIMITER, firstDelimiter + 1);
+
+    std::string target = str.substr(firstDelimiter + 1, secondDelimiter - firstDelimiter - 1);
+    std::string address = str.substr(secondDelimiter + 1);
+
+    return FindResponseMessage(Hash::fromString(target), Poco::Net::SocketAddress(address));
 }

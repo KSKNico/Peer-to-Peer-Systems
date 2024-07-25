@@ -21,7 +21,7 @@ class Hash {
 
     std::string toString() const;
 
-    static Hash fromString(std::string& str);
+    static Hash fromString(const std::string& str);
 
     static Hash hashSocketAddress(Poco::Net::SocketAddress const& addr);
 

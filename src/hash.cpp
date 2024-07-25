@@ -39,7 +39,7 @@ std::string Hash::toString() const {
     return ss.str();
 }
 
-Hash Hash::fromString(std::string &str) {
+Hash Hash::fromString(const std::string &str) {
     std::stringstream ss;
     ss << std::hex << str;
     HashType hashValue;
