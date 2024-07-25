@@ -98,7 +98,7 @@ TEST(Connection, ConnectionWithMessage) {
         auto message = connection2->receiveMessage();
         std::cout << "Message received" << std::endl;
 
-        ASSERT_TRUE(message.isComplete() && !message.isError());
+        ASSERT_TRUE(message.isComplete() && !message.isErrored());
     } else {
         std::cout << "Connection 2 is not readable" << std::endl;
     }

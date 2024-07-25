@@ -30,7 +30,7 @@ std::string Message::extractHead(const std::string &str) {
     return head;
 }
 
-MessageType Message::getMessageType(const std::string &str) {
+MessageType Message::getMessageTypeFromString(const std::string &str) {
     std::string head;
     for (std::size_t i = 0; i < str.size(); i++) {
         if (str[i] == MESSAGE_DELIMITER) {
@@ -68,15 +68,15 @@ std::string Message::toString() const {
     return "";
 }
 
-MessageType Message::getMessageType(const Message &message) {
-    return message.type;
-};
+MessageType Message::getType() const {
+    return type;
+}
 
 bool Message::isComplete() const {
     return type != MessageType::INCOMPLETE;
 }
 
-bool Message::isError() const {
+bool Message::isErrored() const {
     return type == MessageType::ERRORED;
 }
 
@@ -98,6 +98,10 @@ IDMessage IDMessage::fromString(const std::string &str) {
     }
 
     return IDMessage(Poco::Net::SocketAddress(address));
+}
+
+Poco::Net::SocketAddress IDMessage::getOwnAddress() const {
+    return ownAddress;
 }
 
 IncompleteMessage::IncompleteMessage(const std::string &snippet) : snippet(snippet) {

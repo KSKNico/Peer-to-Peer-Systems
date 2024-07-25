@@ -34,6 +34,3 @@ class Connection {
     std::string remaining;
     std::string str;
 };
-
-using ConnectionsMap =
-    std::unordered_map<Poco::Net::SocketAddress, std::unique_ptr<Connection>, Hash::SocketAddressHasher>;

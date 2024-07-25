@@ -55,7 +55,7 @@ Message Connection::receiveMessage() {
     assert(str.size() < MAX_MESSAGE_SIZE);
 
     std::string head = Message::extractHead(str);
-    MessageType type = Message::getMessageType(head);
+    MessageType type = Message::getMessageTypeFromString(head);
 
     switch (type) {
         case MessageType::ID:

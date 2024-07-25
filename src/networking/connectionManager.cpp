@@ -1,20 +1,63 @@
 #include "connectionManager.hpp"
 
+#include <queue>
 #include <tuple>
 
 #include "connection.hpp"
 
-ConnectionManager::ConnectionManager(unsigned int port) : acceptor(port) {}
+ConnectionManager::ConnectionManager(Poco::Net::SocketAddress ownAddress) : acceptor(ownAddress.port()), ownAddress(ownAddress) {}
 
 void ConnectionManager::acceptAllConnections() {
     while (acceptor.hasConnection()) {
         auto connection = acceptor.accept();
         auto addr = connection->getPeerAddress();
 
-        if (!connections.contains(addr)) {
-            connections.emplace(connection->getPeerAddress(), std::move(connection));
+        if (pendingIncomingConnections.contains(addr) || establishedConnections.contains(addr)) {
+            std::cout << "Incoming connection already exists" << std::endl;
         } else {
+            pendingIncomingConnections.insert({addr, std::move(connection)});
+        }
+    }
+}
+
+bool ConnectionManager::isConnectionEstablished(const Poco::Net::SocketAddress &address) const {
+    return establishedConnections.contains(address);
+}
+
+void ConnectionManager::updateOutgoingConnections() {
+    auto toErase = std::vector<Poco::Net::SocketAddress>();
+    for (auto &[addr, connection] : pendingOutgoingConnections) {
+        if (connection->isConnected()) {
+            connection->sendMessage(IDMessage(ownAddress));
+            establishedConnections.insert({addr, std::move(connection)});
+            toErase.push_back(addr);
+        }
+    }
+
+    for (const auto &addr : toErase) {
+        pendingOutgoingConnections.erase(addr);
+    }
+}
+
+void ConnectionManager::updateIncomingConnections() {
+    for (auto &[addr, connection] : pendingIncomingConnections) {
+        if (!connection->isConnected()) {
             continue;
+        }
+
+        if (!connection->isReadable()) {
+            continue;
+        }
+
+        auto message = connection->receiveMessage();
+        if (message.getType() == MessageType::ID) {
+            if (auto idMessage = dynamic_cast<IDMessage *>(&message)) {
+                establishedConnections.insert({idMessage->getOwnAddress(), std::move(connection)});
+            } else {
+                std::cout << "Failed to cast message to IDMessage" << std::endl;
+            }
+        } else {
+            std::cout << "Received invalid message from incoming connection" << std::endl;
         }
     }
 }
