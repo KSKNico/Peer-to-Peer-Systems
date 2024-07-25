@@ -33,8 +33,6 @@ class ConnectionManager {
 
     // established connections are connections where an ID exchange has been completed
     ConnectionsMap establishedConnections;
-    MessageMap outboundMessages;
-    MessageMap inboundMessages;
     Acceptor acceptor;
     Connector connector;
 };

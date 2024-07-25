@@ -33,7 +33,7 @@ void Connection::sendMessages(const std::vector<Message>& messages) {
     }
 };
 
-Message Connection::receiveMessage() {
+std::unique_ptr<Message> Connection::receiveMessage() {
     str.clear();
     std::getline(stream, str, MESSAGE_TERMINATOR);
 
@@ -41,14 +41,14 @@ Message Connection::receiveMessage() {
 
     // check for eofbit
     if (stream.bad() || stream.fail()) {
-        return ErroredMessage();
+        return std::make_unique<ErroredMessage>();
     }
 
     if (stream.eof()) {
         assert(str.back() != MESSAGE_TERMINATOR);
         remaining = str;
         stream.clear();
-        return IncompleteMessage(remaining);
+        return std::make_unique<IncompleteMessage>(remaining);
     }
 
     assert(str.size() > 0);
@@ -59,7 +59,7 @@ Message Connection::receiveMessage() {
 
     switch (type) {
         case MessageType::ID:
-            return IDMessage::fromString(str);
+            return std::make_unique<IDMessage>(IDMessage::fromString(str));
             /*
         case MessageType::JOIN:
             return JoinMessage::fromString(content);
@@ -69,12 +69,12 @@ Message Connection::receiveMessage() {
     throw std::runtime_error("Unknown message type");
 };
 
-std::vector<Message> Connection::receiveMessages() {
-    std::vector<Message> messages;
+std::vector<std::unique_ptr<Message>> Connection::receiveMessages() {
+    std::vector<std::unique_ptr<Message>> messages;
     while (isReadable()) {
         auto message = receiveMessage();
-        if (message.isComplete()) {
-            messages.push_back(message);
+        if (message->isComplete()) {
+            messages.push_back(std::move(message));
         }
     }
     return messages;

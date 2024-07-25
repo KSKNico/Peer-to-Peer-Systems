@@ -12,6 +12,7 @@
 enum class MessageType {
     ID,
     JOIN,
+    FIND,
     INCOMPLETE,
     ERRORED,
     UNKNOWN,
@@ -46,12 +47,12 @@ class IDMessage : public Message {
     IDMessage(Poco::Net::SocketAddress);
     std::string toString() const override;
     static IDMessage fromString(const std::string &);
+
     static constexpr std::string head = "ID";
 
     Poco::Net::SocketAddress getOwnAddress() const;
 
-   private:
-    Poco::Net::SocketAddress ownAddress;
+    const Poco::Net::SocketAddress ownAddress;
 };
 
 class JoinMessage : public Message {
@@ -59,10 +60,22 @@ class JoinMessage : public Message {
     JoinMessage(Hash);
     std::string toString() const override;
     static Message fromString(const std::string &);
+
     static constexpr std::string head = "JOIN";
 
-   private:
-    Hash id;
+    const Hash id;
+};
+
+class FindMessage : public Message {
+   public:
+    FindMessage(const Hash &hash, bool isResponse);
+    std::string toString() const override;
+    static Message fromString(const std::string &);
+
+    static constexpr std::string head = "FIND";
+
+    const Hash target;
+    const bool isResponse;
 };
 
 class IncompleteMessage : public Message {

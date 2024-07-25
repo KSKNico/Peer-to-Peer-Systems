@@ -5,12 +5,8 @@
 
 class Task {
    public:
-    virtual void processMessage(const Message& message);
-};
-
-class IDTask : public Task {
-   public:
-    void processMessage(const Message& message) override;
+    virtual ~Task() = default;
+    virtual void processMessage(const Message& message) = 0;
 };
 
 class FindTask : public Task {

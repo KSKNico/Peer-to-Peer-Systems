@@ -24,6 +24,12 @@ TEST(Message, IDMessageTest) {
     EXPECT_EQ(message.toString(), newMessage.toString());
 }
 
+TEST(Message, FindMessageTest) {
+    FindMessage msg = FindMessage(Hash::hashInterval(123), false);
+    ASSERT_EQ(msg.target, Hash::hashInterval(123));
+    ASSERT_EQ(msg.isResponse, false);
+}
+
 TEST(Hash, SocketAddress) {
     Poco::Net::SocketAddress addr("127.0.0.1:1234");
 
@@ -98,7 +104,7 @@ TEST(Connection, ConnectionWithMessage) {
         auto message = connection2->receiveMessage();
         std::cout << "Message received" << std::endl;
 
-        ASSERT_TRUE(message.isComplete() && !message.isErrored());
+        ASSERT_TRUE(message->isComplete() && !message->isErrored());
     } else {
         std::cout << "Connection 2 is not readable" << std::endl;
     }
@@ -141,7 +147,7 @@ TEST(Connection, StressTest) {
     int received = 0;
     while (received < numMessages) {
         auto msg = connection2->receiveMessage();
-        if (msg.isComplete()) {
+        if (msg->isComplete()) {
             ++received;
         } else {
             break;
@@ -177,12 +183,12 @@ TEST(Connection, StreamTest) {
 
     connection1->_sendString("ID,");
 
-    Message message;
+    std::unique_ptr<Message> message;
     if (connection2->isReadable()) {
         message = connection2->receiveMessage();
         std::cout << "Message received" << std::endl;
 
-        EXPECT_TRUE(!message.isComplete());
+        EXPECT_TRUE(!message->isComplete());
     } else {
         std::cout << "Connection 2 is not readable" << std::endl;
     }
@@ -193,7 +199,7 @@ TEST(Connection, StreamTest) {
 
     if (connection2->isReadable()) {
         message = connection2->receiveMessage();
-        EXPECT_TRUE(message.isComplete());
+        EXPECT_TRUE(message->isComplete());
     }
 }
 

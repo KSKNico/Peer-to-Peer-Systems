@@ -43,6 +43,8 @@ MessageType Message::getMessageTypeFromString(const std::string &str) {
         return MessageType::ID;
     } else if (head == JoinMessage::head) {
         return MessageType::JOIN;
+    } else if (head == FindMessage::head) {
+        return MessageType::FIND;
     } else {
         throw std::runtime_error("Unknown message type: " + head);
     }
@@ -54,6 +56,8 @@ std::string Message::messageTypeToString(const MessageType type) {
             return "ID";
         case MessageType::JOIN:
             return "JOIN";
+        case MessageType::FIND:
+            return "FIND";
         case MessageType::INCOMPLETE:
             return "INCOMPLETE";
         case MessageType::ERRORED:
@@ -118,4 +122,19 @@ ErroredMessage::ErroredMessage() {
 
 std::string ErroredMessage::toString() const {
     return "";
+}
+
+FindMessage::FindMessage(const Hash &target, bool isResponse) : target(target), isResponse(isResponse) {
+    type = MessageType::JOIN;
+}
+
+std::string FindMessage::toString() const {
+    return head + MESSAGE_DELIMITER + (isResponse ? "R" : "Q") + MESSAGE_DELIMITER + target.toString() + MESSAGE_DELIMITER;
+}
+
+Message FindMessage::fromString(const std::string &str) {
+    bool isResponse = str[4] == 'R';
+    auto targetStr = str.substr(6);
+    Hash target = Hash::fromString(targetStr);
+    return FindMessage(target, isResponse);
 }

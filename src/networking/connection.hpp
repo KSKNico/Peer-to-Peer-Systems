@@ -13,8 +13,8 @@ class Connection {
 
     void sendMessage(const Message& message);
     void sendMessages(const std::vector<Message>& messages);
-    Message receiveMessage();
-    std::vector<Message> receiveMessages();
+    std::unique_ptr<Message> receiveMessage();
+    std::vector<std::unique_ptr<Message>> receiveMessages();
     bool isConnected();
     bool isReadable();
     bool isWritable();
