@@ -5,7 +5,7 @@
 
 #include "connection.hpp"
 
-ConnectionManager::ConnectionManager(Poco::Net::SocketAddress ownAddress) : acceptor(ownAddress.port()), ownAddress(ownAddress) {}
+ConnectionManager::ConnectionManager(Poco::Net::SocketAddress ownAddress) : ownAddress(ownAddress), acceptor(ownAddress.port()) {}
 
 void ConnectionManager::acceptAllConnections() {
     while (acceptor.hasConnection()) {
@@ -58,6 +58,14 @@ void ConnectionManager::updateOutgoingConnections() {
 
     for (const auto &addr : toErase) {
         pendingOutgoingConnections.erase(addr);
+    }
+}
+
+void ConnectionManager::sendMessage(const Poco::Net::SocketAddress &address, const Message &message) {
+    if (establishedConnections.contains(address)) {
+        establishedConnections.at(address)->sendMessage(message);
+    } else {
+        throw std::runtime_error("Connection does not exist");
     }
 }
 

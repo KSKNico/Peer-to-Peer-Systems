@@ -27,6 +27,10 @@ class Hash {
 
     static Hash hashInterval(unsigned long long intervalStart);
 
+    // returns true if this hash is in the interval (start, end]
+    // this means "end" is responible for this hash
+    bool isBetween(Hash const& start, Hash const& end) const;
+
     // calculates the distance from this hash to the other
     // the distance is not commutative as it is a ring that can only be traversed in one direction
     // so distance(a, b) != distance(b, a)

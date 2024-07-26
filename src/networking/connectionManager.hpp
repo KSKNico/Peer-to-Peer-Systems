@@ -22,6 +22,7 @@ class ConnectionManager {
     bool isConnectionEstablished(const Poco::Net::SocketAddress& address) const;
 
     void connectTo(const Poco::Net::SocketAddress& address);
+    void sendMessage(const Poco::Net::SocketAddress& address, const Message& message);
 
     bool existsElseConnect(const Poco::Net::SocketAddress& address);
 

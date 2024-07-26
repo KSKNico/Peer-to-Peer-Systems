@@ -33,6 +33,10 @@ bool Hash::compareHashes(Hash const &hash1, Hash const &hash2) {
     return hash1.hashValue == hash2.hashValue;
 }
 
+bool Hash::isBetween(Hash const &start, Hash const &end) const {
+    return start.distance(*this) <= start.distance(end);
+}
+
 std::string Hash::toString() const {
     std::stringstream ss;
     ss << std::hex << this->hashValue;
@@ -86,7 +90,7 @@ Hash Hash::operator-(const Hash &other) const {
     return Hash(this->hashValue - other.hashValue);
 }
 
-Hash Hash::distance(Hash const &other) const {
+Hash Hash::distance(const Hash &other) const {
     return other - *this;
 }
 

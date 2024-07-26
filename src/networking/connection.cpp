@@ -5,6 +5,13 @@
 #include "../globalDefinitions.hpp"
 #include "../hash.hpp"
 
+enum class ConnectionState {
+    UNINITIALIZED,
+    PENDING,
+    CONNECTED,
+    DISCONNECTED,
+};
+
 Connection::Connection(Poco::Net::StreamSocket&& socket)
     : socket(socket), stream(socket) {
     socket.setBlocking(false);

@@ -25,6 +25,8 @@ class FingerTable {
 
     Hash getOwnHash() const;
 
+    void updateWithAddress(const Poco::Net::SocketAddress& address);
+
    private:
     const std::size_t FINGER_TABLE_SIZE = Hash::HASH_BIT_SIZE;
     const Poco::Net::SocketAddress ownAddress;
