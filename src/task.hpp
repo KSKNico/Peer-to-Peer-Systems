@@ -17,9 +17,10 @@ class Task {
     virtual void processMessage(const Poco::Net::SocketAddress& from, const std::unique_ptr<Message>& message) = 0;
     virtual void update() = 0;
     virtual void init() = 0;
+    virtual TaskState getState() const;
 
    protected:
-    TaskState state;
+    TaskState state = TaskState::UNINITIALIZED;
     FingerTable& fingerTable;
     ConnectionManager& connectionManager;
 };
@@ -30,6 +31,7 @@ class FindTask : public Task {
     void processMessage(const Poco::Net::SocketAddress& from, const std::unique_ptr<Message>& message) override;
     void update() override;
     void init() override;
+    std::optional<Poco::Net::SocketAddress> getTargetAddress() const;
 
    private:
     const Hash target;

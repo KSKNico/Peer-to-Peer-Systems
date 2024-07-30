@@ -14,6 +14,12 @@ enum class MessageType {
     JOIN,
     FIND,
     FINDR,
+    SSUC,
+    GSUC,
+    GSUCR,
+    SPRE,
+    GPRE,
+    GPRER,
     INCOMPLETE,
     ERRORED,
     UNKNOWN,
@@ -103,4 +109,71 @@ class ErroredMessage : public Message {
    public:
     ErroredMessage();
     std::string toString() const override;
+};
+
+class GetSuccessorMessage : public Message {
+   public:
+    GetSuccessorMessage() = default;
+    std::string toString() const override;
+    static GetSuccessorMessage fromString(const std::string &str);
+
+    static constexpr std::string head = "GSUC";
+};
+
+class GetPredecessorMessage : public Message {
+   public:
+    GetPredecessorMessage() = default;
+    std::string toString() const override;
+    static GetPredecessorMessage fromString(const std::string &str);
+
+    static constexpr std::string head = "GPRE";
+};
+
+class GetSuccessorResponseMessage : public Message {
+   public:
+    GetSuccessorResponseMessage(const Poco::Net::SocketAddress &successor);
+    std::string toString() const override;
+    static GetSuccessorResponseMessage fromString(const std::string &str);
+
+    static constexpr std::string head = "GSUCR";
+
+   private:
+    const Poco::Net::SocketAddress successor;
+};
+
+class GetPredecessorResponseMessage : public Message {
+   public:
+    GetPredecessorResponseMessage(const Poco::Net::SocketAddress &predecessor);
+    std::string toString() const override;
+    static GetPredecessorResponseMessage fromString(const std::string &str);
+
+    static constexpr std::string head = "GPRER";
+
+   private:
+    const Poco::Net::SocketAddress predecessor;
+};
+
+// the receveiving peer should simply set its own successor to the address in the message
+class SetSuccessorMessage : public Message {
+   public:
+    SetSuccessorMessage(const Poco::Net::SocketAddress &successor);
+    std::string toString() const override;
+    static SetSuccessorMessage fromString(const std::string &str);
+
+    static constexpr std::string head = "SSUC";
+
+   private:
+    const Poco::Net::SocketAddress successor;
+};
+
+class SetPredecessorMessage : public Message {
+   public:
+    SetPredecessorMessage(const Poco::Net::SocketAddress &pred);
+    std::string toString() const override;
+    static SetPredecessorMessage fromString(const std::string &str);
+
+    static constexpr std::string head = "SPRE";
+
+   private:
+    const Poco::Net::SocketAddress predecessor;
 };

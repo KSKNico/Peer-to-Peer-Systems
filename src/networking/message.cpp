@@ -168,3 +168,75 @@ FindResponseMessage FindResponseMessage::fromString(const std::string &str) {
 
     return FindResponseMessage(Hash::fromString(target), Poco::Net::SocketAddress(address));
 }
+
+GetSuccessorMessage GetSuccessorMessage::fromString(const std::string &str) {
+    assert(str == "GSUC");
+    return GetSuccessorMessage();
+}
+
+std::string GetSuccessorMessage::toString() const {
+    return head;
+}
+
+GetSuccessorResponseMessage::GetSuccessorResponseMessage(const Poco::Net::SocketAddress &successor)
+    : successor(successor) {
+    type = MessageType::GSUCR;
+}
+
+std::string GetSuccessorResponseMessage::toString() const {
+    return head + MESSAGE_DELIMITER + successor.toString();
+}
+
+GetSuccessorResponseMessage GetSuccessorResponseMessage::fromString(const std::string &str) {
+    std::size_t delimiter = str.find(MESSAGE_DELIMITER);
+    std::string address = str.substr(delimiter + 1);
+    return GetSuccessorResponseMessage(Poco::Net::SocketAddress(address));
+}
+
+GetPredecessorMessage GetPredecessorMessage::fromString(const std::string &str) {
+    assert(str == "GPRE");
+    return GetPredecessorMessage();
+}
+
+std::string GetPredecessorMessage::toString() const {
+    return head;
+}
+
+GetPredecessorResponseMessage::GetPredecessorResponseMessage(const Poco::Net::SocketAddress &predecessor)
+    : predecessor(predecessor) {
+    type = MessageType::GPRER;
+}
+
+std::string GetPredecessorResponseMessage::toString() const {
+    return head + MESSAGE_DELIMITER + predecessor.toString();
+}
+
+SetSuccessorMessage::SetSuccessorMessage(const Poco::Net::SocketAddress &successor)
+    : successor(successor) {
+    type = MessageType::SSUC;
+}
+
+std::string SetSuccessorMessage::toString() const {
+    return head + MESSAGE_DELIMITER + successor.toString();
+}
+
+SetSuccessorMessage SetSuccessorMessage::fromString(const std::string &str) {
+    std::size_t delimiter = str.find(MESSAGE_DELIMITER);
+    std::string address = str.substr(delimiter + 1);
+    return SetSuccessorMessage(Poco::Net::SocketAddress(address));
+}
+
+SetPredecessorMessage::SetPredecessorMessage(const Poco::Net::SocketAddress &predecessor)
+    : predecessor(predecessor) {
+    type = MessageType::SPRE;
+}
+
+std::string SetPredecessorMessage::toString() const {
+    return head + MESSAGE_DELIMITER + predecessor.toString();
+}
+
+SetPredecessorMessage SetPredecessorMessage::fromString(const std::string &str) {
+    std::size_t delimiter = str.find(MESSAGE_DELIMITER);
+    std::string address = str.substr(delimiter + 1);
+    return SetPredecessorMessage(Poco::Net::SocketAddress(address));
+}

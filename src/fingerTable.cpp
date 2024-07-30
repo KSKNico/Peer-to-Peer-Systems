@@ -39,6 +39,10 @@ Poco::Net::SocketAddress FingerTable::getSuccessor() const {
     return successor;
 }
 
+void FingerTable::setSuccessor(const Poco::Net::SocketAddress &successor) {
+    this->successor = successor;
+}
+
 Poco::Net::SocketAddress FingerTable::getPredecessor() const {
     return predecessor;
 }

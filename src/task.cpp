@@ -5,6 +5,10 @@
 Task::Task(FingerTable& fingerTable, ConnectionManager& connectionManager) : fingerTable(fingerTable), connectionManager(connectionManager) {
 }
 
+TaskState Task::getState() const {
+    return state;
+}
+
 FindTask::FindTask(const Hash& target, FingerTable& fingerTable, ConnectionManager& connectionManager) : Task(fingerTable, connectionManager), target(target) {}
 
 void FindTask::init() {
@@ -50,10 +54,14 @@ void FindTask::processMessage(const Poco::Net::SocketAddress& from, const std::u
     auto referenceAddressHash = Hash(findMessage->referenceAddress);
     if (target.isBetween(Hash(from), referenceAddressHash)) {
         targetAddress = findMessage->referenceAddress;
-        state == TaskState::FINISHED;
+        state = TaskState::FINISHED;
     } else {
         nextHop = findMessage->referenceAddress;
     }
+}
+
+std::optional<Poco::Net::SocketAddress> FindTask::getTargetAddress() const {
+    return targetAddress;
 }
 
 JoinTask::JoinTask(const Poco::Net::SocketAddress& ownAddress,
@@ -75,7 +83,17 @@ void JoinTask::update() {
 
 void JoinTask::init() {
     connectionManager.existsElseConnect(joinAddress);
+    state = TaskState::RUNNING;
 }
 
 void JoinTask::processMessage(const Poco::Net::SocketAddress& from, const std::unique_ptr<Message>& message) {
+    findTask.processMessage(from, message);
+
+    auto targetAddressOptional = findTask.getTargetAddress();
+    if (!targetAddressOptional.has_value()) {
+        return;
+    }
+
+    fingerTable.updateWithAddress(targetAddressOptional.value());
+    fingerTable.setSuccessor(targetAddressOptional.value());
 }
