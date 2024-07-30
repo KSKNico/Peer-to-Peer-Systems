@@ -34,7 +34,7 @@ bool Hash::compareHashes(Hash const &hash1, Hash const &hash2) {
 }
 
 bool Hash::isBetween(Hash const &start, Hash const &end) const {
-    return start.distance(*this) <= start.distance(end);
+    return start.distance(*this) <= start.distance(end) && 0 < start.distance(*this).getHashValue();
 }
 
 std::string Hash::toString() const {

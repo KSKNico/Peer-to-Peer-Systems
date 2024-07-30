@@ -58,6 +58,8 @@ TEST(Hash, SocketAddress) {
 
     auto addr2 = Poco::Net::SocketAddress();
     ASSERT_EQ(addr2.toString(), "0.0.0.0:0");
+
+    ASSERT_NE(Poco::Net::SocketAddress("127.0.0.1:1234"), Poco::Net::SocketAddress("127.0.0.1:1235"));
 }
 
 TEST(Hash, Functions) {
@@ -86,6 +88,20 @@ TEST(Hash, Functions) {
 
         auto distanceHash = hash3.distance(hash4);
         ASSERT_EQ((long double)distanceHash.getHashValue(), std::exp2l(63) - 1.0);
+    }
+
+    {
+        auto address1 = Poco::Net::SocketAddress("127.0.0.1:1234");
+        auto address2 = Poco::Net::SocketAddress("127.0.0.1:1235");
+
+        auto address1Hash = Hash(address1);
+        auto address2Hash = Hash(address2);
+
+        std::cout << "Address 1: " << address1.toString() << " Hash: " << address1Hash.toString() << std::endl;
+        std::cout << "Address 2: " << address2.toString() << " Hash: " << address2Hash.toString() << std::endl;
+
+        ASSERT_TRUE(address2Hash.isBetween(address1Hash, address2Hash));
+        ASSERT_FALSE(address1Hash.isBetween(address1Hash, address2Hash));
     }
 }
 
@@ -236,4 +252,20 @@ TEST(FingerTable, InitialFingerTable) {
         std::cout << i << "\t" << ft.getFinger(i).toString() << "\t" << Hash(ft.getFinger(i)).toString() << std::endl;
     }
     */
+}
+
+TEST(FingerTable, Update) {
+    FingerTable ft(Poco::Net::SocketAddress("127.0.0.1:1234"));
+    for (int i = 0; i < FingerTable::FINGER_TABLE_SIZE; ++i) {
+        ASSERT_EQ(ft.getFinger(i), Poco::Net::SocketAddress("127.0.0.1:1234"));
+    }
+
+    ft.updateWithAddress(Poco::Net::SocketAddress("127.0.0.1:1235"));
+    ft.updateWithAddress(Poco::Net::SocketAddress("127.0.0.1:1236"));
+    ft.updateWithAddress(Poco::Net::SocketAddress("127.0.0.1:1237"));
+    ft.updateWithAddress(Poco::Net::SocketAddress("127.0.0.1:1238"));
+
+    for (int i = 0; i < FingerTable::FINGER_TABLE_SIZE; ++i) {
+        std::cout << i << ": " << ft.getFinger(i).toString() << std::endl;
+    }
 }

@@ -62,6 +62,8 @@ class Hash {
 
     HashType getHashValue() const;
 
+    static Hash _hashFromHashValue(HashType hashValue);
+
    private:
     uint64_t hashValue;
     Hash(uint64_t hashValue);

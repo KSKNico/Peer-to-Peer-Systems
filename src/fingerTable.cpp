@@ -43,17 +43,13 @@ Poco::Net::SocketAddress FingerTable::getPredecessor() const {
     return predecessor;
 }
 
-std::size_t FingerTable::getSize() const {
-    return FINGER_TABLE_SIZE;
-}
-
 void FingerTable::updateWithAddress(const Poco::Net::SocketAddress &address) {
     assert(address != ownAddress);
     Hash addressHash(address);
     for (unsigned int i = 0; i < FINGER_TABLE_SIZE; i++) {
-        auto fingerHash = Hash::fromExponent(i);
+        auto fingerHash = Hash::fromExponent(i) + ownHash;
         auto fingerPointedHash = Hash(table[i]);
-        if (addressHash - fingerHash <= fingerPointedHash - fingerHash) {
+        if (addressHash.isBetween(fingerHash, fingerPointedHash)) {
             table[i] = address;
         }
     }
