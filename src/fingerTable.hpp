@@ -1,6 +1,7 @@
 #pragma once
 
 #include <array>
+#include <optional>
 
 #include "hash.hpp"
 
@@ -16,9 +17,6 @@ class FingerTable {
     // so that the hash is not "overshot"
     Poco::Net::SocketAddress getClosestPrecedingFinger(const Hash& hash) const;
 
-    // returns the size of the finger table
-    std::size_t getSize() const;
-
     // returns the hash value the finger at index should point to
     // index must be in the range [0, Hash::HASH_BIT_SIZE)
     Hash getFingerHashValue(std::size_t index) const;
@@ -26,6 +24,10 @@ class FingerTable {
     Hash getOwnHash() const;
 
     void updateWithAddress(const Poco::Net::SocketAddress& address);
+
+    // removes the address from the finger table
+    // is the reverse of updateWithAddress
+    void removeAddress(const Poco::Net::SocketAddress& address);
 
     void setSuccessor(const Poco::Net::SocketAddress& successor);
 

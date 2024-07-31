@@ -12,6 +12,10 @@ TaskState Task::getState() const {
 FindTask::FindTask(const Hash& target, FingerTable& fingerTable, ConnectionManager& connectionManager) : Task(fingerTable, connectionManager), target(target) {}
 
 void FindTask::init() {
+    if (state != TaskState::UNINITIALIZED) {
+        return;
+    }
+
     nextHop = fingerTable.getClosestPrecedingFinger(target);
     connectionManager.existsElseConnect(nextHop.value());
     state = TaskState::RUNNING;
@@ -79,9 +83,15 @@ void JoinTask::update() {
     if (connectionManager.isConnectionEstablished(joinAddress)) {
         findTask.init();
     }
+
+
 }
 
 void JoinTask::init() {
+    if (state != TaskState::UNINITIALIZED) {
+        return;
+    }
+
     connectionManager.existsElseConnect(joinAddress);
     state = TaskState::RUNNING;
 }
@@ -97,3 +107,15 @@ void JoinTask::processMessage(const Poco::Net::SocketAddress& from, const std::u
     fingerTable.updateWithAddress(targetAddressOptional.value());
     fingerTable.setSuccessor(targetAddressOptional.value());
 }
+
+StabilizeTask::StabilizeTask(const Poco::Net::SocketAddress& ownAddress, 
+    FingerTable& fingerTable, ConnectionManager& connectionManager) : ownAddress(ownAddress), 
+    Task(fingerTable, connectionManager) {}
+
+void StabilizeTask::processMessage(const Poco::Net::SocketAddress& from, const std::unique_ptr<Message>& message) {}
+
+void StabilizeTask::init() {}
+
+void StabilizeTask::update() {}
+
+

@@ -49,7 +49,8 @@ class JoinTask : public Task {
    public:
     // requires the address of the peer where the join takes place
     // first a find is conducted on the own address to find the successor of this peer
-    JoinTask(const Poco::Net::SocketAddress& ownAddress, const Poco::Net::SocketAddress& joinAddress, FingerTable& fingerTable, ConnectionManager& connectionManager);
+    JoinTask(const Poco::Net::SocketAddress& ownAddress, const Poco::Net::SocketAddress& joinAddress, 
+    FingerTable& fingerTable, ConnectionManager& connectionManager);
     void processMessage(const Poco::Net::SocketAddress& from, const std::unique_ptr<Message>& message) override;
     void update() override;
     void init() override;
@@ -57,4 +58,23 @@ class JoinTask : public Task {
    private:
     Poco::Net::SocketAddress joinAddress;
     FindTask findTask;
+};
+
+
+// fixes successor and predecessor
+class StabilizeTask : public Task {
+    public:
+    StabilizeTask(const Poco::Net::SocketAddress& ownAddress, 
+    FingerTable& fingerTable, ConnectionManager& connectionManager);
+    void processMessage(const Poco::Net::SocketAddress& from, const std::unique_ptr<Message>& message) override;
+    void update() override;
+    void init() override;
+
+    private:
+    Poco::Net::SocketAddress ownAddress;
+    Poco::Net::SocketAddress bestSuccessor;
+    Poco::Net::SocketAddress bestPredecessor;
+    Poco::Net::SocketAddress currentSuccessor;
+    Poco::Net::SocketAddress currentPredecessor;
+
 };

@@ -269,3 +269,15 @@ TEST(FingerTable, Update) {
         std::cout << i << ": " << ft.getFinger(i).toString() << std::endl;
     }
 }
+
+TEST(FingerTable, Remove) {
+    FingerTable ft1(Poco::Net::SocketAddress("127.0.0.1:1234"));
+    auto ft2 = ft1;
+
+    ft1.updateWithAddress(Poco::Net::SocketAddress("127.0.0.1:1235"));
+    ft1.removeAddress(Poco::Net::SocketAddress("127.0.0.1:1235"));
+    
+    for (unsigned int i = 0; i < FingerTable::FINGER_TABLE_SIZE; i++) {
+        ASSERT_EQ(ft1.getFinger(i), ft2.getFinger(i));
+    }
+}
