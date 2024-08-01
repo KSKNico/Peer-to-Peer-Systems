@@ -109,8 +109,8 @@ void JoinTask::processMessage(const Poco::Net::SocketAddress& from, const std::u
 }
 
 StabilizeTask::StabilizeTask(const Poco::Net::SocketAddress& ownAddress, 
-    FingerTable& fingerTable, ConnectionManager& connectionManager) : ownAddress(ownAddress), 
-    Task(fingerTable, connectionManager) {}
+    FingerTable& fingerTable, ConnectionManager& connectionManager) : Task(fingerTable, connectionManager), ownAddress(ownAddress)
+    {}
 
 void StabilizeTask::processMessage(const Poco::Net::SocketAddress& from, const std::unique_ptr<Message>& message) {}
 
