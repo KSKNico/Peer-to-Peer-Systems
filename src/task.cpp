@@ -57,6 +57,7 @@ void FindTask::processMessage(const Poco::Net::SocketAddress& from, const std::u
 
     auto referenceAddressHash = Hash(findMessage->referenceAddress);
     if (target.isBetween(Hash(from), referenceAddressHash)) {
+        connectionManager.existsElseConnect(findMessage->referenceAddress);
         targetAddress = findMessage->referenceAddress;
         state = TaskState::FINISHED;
     } else {
