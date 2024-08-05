@@ -74,6 +74,22 @@ class StabilizeTask : public Task {
     void init() override;
 
    private:
+    bool messageSent = false;
+    Poco::Net::SocketAddress currentSuccessor;
     Poco::Net::SocketAddress ownAddress;
     std::optional<Poco::Net::SocketAddress> predecessorOfSuccessor;
+};
+
+class CheckPredecessorTask : public Task {
+   public:
+    CheckPredecessorTask(const Poco::Net::SocketAddress& ownAddress,
+                         FingerTable& fingerTable, ConnectionManager& connectionManager);
+    void processMessage(const Poco::Net::SocketAddress& from, const std::unique_ptr<Message>& message) override;
+    void update() override;
+    void init() override;
+
+   private:
+    Poco::Net::SocketAddress ownAddress;
+    bool messageSent = false;
+    std::optional<Poco::Net::SocketAddress> predecessor;
 };

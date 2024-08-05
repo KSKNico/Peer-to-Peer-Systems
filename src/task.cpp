@@ -83,8 +83,6 @@ void JoinTask::update() {
     if (connectionManager.isConnectionEstablished(joinAddress)) {
         findTask.init();
     }
-
-
 }
 
 void JoinTask::init() {
@@ -108,14 +106,63 @@ void JoinTask::processMessage(const Poco::Net::SocketAddress& from, const std::u
     fingerTable.setSuccessor(targetAddressOptional.value());
 }
 
-StabilizeTask::StabilizeTask(const Poco::Net::SocketAddress& ownAddress, 
-    FingerTable& fingerTable, ConnectionManager& connectionManager) : Task(fingerTable, connectionManager), ownAddress(ownAddress)
-    {}
+StabilizeTask::StabilizeTask(const Poco::Net::SocketAddress& ownAddress,
+                             FingerTable& fingerTable, ConnectionManager& connectionManager) : Task(fingerTable, connectionManager), ownAddress(ownAddress) {}
 
-void StabilizeTask::processMessage(const Poco::Net::SocketAddress& from, const std::unique_ptr<Message>& message) {}
+void StabilizeTask::processMessage(const Poco::Net::SocketAddress& from, const std::unique_ptr<Message>& message) {
+    if (state == TaskState::FINISHED) {
+        return;
+    }
 
-void StabilizeTask::init() {}
+    if (message->getType() != MessageType::GPRER) {
+        return;
+    }
 
-void StabilizeTask::update() {}
+    assert(from == currentSuccessor);
 
+    auto getPredecessorResponseMessage = dynamic_cast<const GetPredecessorResponseMessage*>(message.get());
+    auto predecessor = getPredecessorResponseMessage->getPredecessor();
 
+    if (predecessor != ownAddress) {
+        assert(Hash(predecessor).isBetween(fingerTable.getOwnHash(), Hash(currentSuccessor)));
+        predecessorOfSuccessor = predecessor;
+        fingerTable.setSuccessor(predecessor);
+    }
+}
+
+void StabilizeTask::init() {
+    connectionManager.existsElseConnect(fingerTable.getSuccessor());
+    currentSuccessor = fingerTable.getSuccessor();
+    state = TaskState::RUNNING;
+}
+
+void StabilizeTask::update() {
+    if (state == TaskState::FINISHED) {
+        return;
+    }
+
+    // this if statements is only executed once the predecessor of the successor is known
+    if (predecessorOfSuccessor.has_value()) {
+        connectionManager.existsElseConnect(predecessorOfSuccessor.value());
+        if (!connectionManager.isConnectionEstablished(predecessorOfSuccessor.value())) {
+            return;
+        }
+        connectionManager.sendMessage(predecessorOfSuccessor.value(), SetPredecessorMessage(ownAddress));
+        state = TaskState::FINISHED;
+        return;
+    }
+
+    if (messageSent) {
+        return;
+    }
+
+    connectionManager.existsElseConnect(currentSuccessor);
+
+    if (!connectionManager.isConnectionEstablished(currentSuccessor)) {
+        return;
+    }
+
+    assert(!messageSent);
+    connectionManager.sendMessage(currentSuccessor, GetPredecessorMessage());
+    messageSent = true;
+}

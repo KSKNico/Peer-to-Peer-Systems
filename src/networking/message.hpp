@@ -149,6 +149,8 @@ class GetPredecessorResponseMessage : public Message {
 
     static constexpr std::string head = "GPRER";
 
+    Poco::Net::SocketAddress getPredecessor() const;
+
    private:
     const Poco::Net::SocketAddress predecessor;
 };
