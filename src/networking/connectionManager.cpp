@@ -69,6 +69,22 @@ void ConnectionManager::sendMessage(const Poco::Net::SocketAddress &address, con
     }
 }
 
+std::vector<MessagePair> ConnectionManager::receiveMessages() {
+    std::vector<MessagePair> messages;
+    messages.reserve(establishedConnections.size());
+    for (auto &[addr, connection] : establishedConnections) {
+        if (!connection->isReadable()) {
+            continue;
+        }
+
+        std::unique_ptr<Message> message = connection->receiveMessage();
+        if (message->isComplete() && !message->isErrored()) {
+            messages.push_back({addr, std::move(message)});
+        }
+    }
+    return messages;
+}
+
 void ConnectionManager::updateIncomingConnections() {
     for (auto &[addr, connection] : pendingIncomingConnections) {
         if (!connection->isConnected()) {
@@ -90,4 +106,23 @@ void ConnectionManager::updateIncomingConnections() {
             std::cout << "Received invalid message from incoming connection" << std::endl;
         }
     }
+}
+
+void ConnectionManager::checkEstablishedConnections() {
+    for (auto &[addr, connection] : establishedConnections) {
+        if (!connection->isConnected()) {
+            establishedConnections.erase(addr);
+        }
+    }
+}
+
+void ConnectionManager::update() {
+    acceptAllConnections();
+    updateOutgoingConnections();
+    updateIncomingConnections();
+    checkEstablishedConnections();
+}
+
+void ConnectionManager::closeConnection(const Poco::Net::SocketAddress &address) {
+    establishedConnections.erase(address);
 }

@@ -22,6 +22,16 @@ class Peer {
     void update();
 
    private:
+    /* messages to consider processing
+        - FIND
+        - GSUC
+        - GPRE
+        - SSUC
+        - SPRE
+        all other message need to be processed by the task manager
+    */
+    void processMessage(const Poco::Net::SocketAddress& from, const std::unique_ptr<Message>& message);
+
     const Poco::Net::SocketAddress ownAddress;
     ConnectionManager connectionManager;
     FingerTable fingerTable;

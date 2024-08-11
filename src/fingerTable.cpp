@@ -40,7 +40,15 @@ Poco::Net::SocketAddress FingerTable::getSuccessor() const {
 }
 
 void FingerTable::setSuccessor(const Poco::Net::SocketAddress &successor) {
-    this->successor = successor;
+    if (Hash(successor).isBetween(ownHash, Hash(this->successor))) {
+        this->successor = successor;
+    }
+}
+
+void FingerTable::setPredecessor(const Poco::Net::SocketAddress &predecessor) {
+    if (Hash(predecessor).isBetween(Hash(this->predecessor), ownHash)) {
+        this->predecessor = predecessor;
+    }
 }
 
 Poco::Net::SocketAddress FingerTable::getPredecessor() const {

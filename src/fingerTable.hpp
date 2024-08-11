@@ -7,6 +7,7 @@
 
 class FingerTable {
    public:
+    FingerTable() = delete;
     FingerTable(const Poco::Net::SocketAddress& ownAddress);
 
     Poco::Net::SocketAddress getSuccessor() const;
@@ -30,6 +31,7 @@ class FingerTable {
     void removeAddress(const Poco::Net::SocketAddress& address);
 
     void setSuccessor(const Poco::Net::SocketAddress& successor);
+    void setPredecessor(const Poco::Net::SocketAddress& predecessor);
 
     static const std::size_t FINGER_TABLE_SIZE = Hash::HASH_BIT_SIZE;
 

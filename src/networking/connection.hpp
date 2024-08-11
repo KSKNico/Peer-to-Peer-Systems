@@ -7,6 +7,8 @@
 #include "Poco/Net/StreamSocket.h"
 #include "message.hpp"
 
+using MessagePair = std::pair<Poco::Net::SocketAddress, std::unique_ptr<Message>>;
+
 class Connection {
    public:
     Connection(Poco::Net::StreamSocket&& socket);
@@ -14,7 +16,6 @@ class Connection {
     void sendMessage(const Message& message);
     void sendMessages(const std::vector<Message>& messages);
     std::unique_ptr<Message> receiveMessage();
-    std::vector<std::unique_ptr<Message>> receiveMessages();
     bool isConnected();
     bool isReadable();
     bool isWritable();

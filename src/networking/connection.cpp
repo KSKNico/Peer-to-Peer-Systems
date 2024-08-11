@@ -73,22 +73,24 @@ std::unique_ptr<Message> Connection::receiveMessage() {
             return std::make_unique<FindResponseMessage>(FindResponseMessage::fromString(str));
         case MessageType::JOIN:
             return std::make_unique<JoinMessage>(JoinMessage::fromString(str));
+        case MessageType::GPRE:
+            return std::make_unique<GetPredecessorMessage>(GetPredecessorMessage::fromString(str));
+        case MessageType::GPRER:
+            return std::make_unique<GetPredecessorResponseMessage>(GetPredecessorResponseMessage::fromString(str));
+        case MessageType::SPRE:
+            return std::make_unique<SetPredecessorMessage>(SetPredecessorMessage::fromString(str));
+        case MessageType::GSUC:
+            return std::make_unique<GetSuccessorMessage>(GetSuccessorMessage::fromString(str));
+        case MessageType::GSUCR:
+            return std::make_unique<GetSuccessorResponseMessage>(GetSuccessorResponseMessage::fromString(str));
+        case MessageType::SSUC:
+            return std::make_unique<SetSuccessorMessage>(SetSuccessorMessage::fromString(str));
+
         default:
             throw std::runtime_error("Unknown message type");
     }
 
     throw std::runtime_error("Unknown message type");
-};
-
-std::vector<std::unique_ptr<Message>> Connection::receiveMessages() {
-    std::vector<std::unique_ptr<Message>> messages;
-    while (isReadable()) {
-        auto message = receiveMessage();
-        if (message->isComplete()) {
-            messages.push_back(std::move(message));
-        }
-    }
-    return messages;
 };
 
 bool Connection::isConnected() {

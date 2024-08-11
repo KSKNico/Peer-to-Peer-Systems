@@ -27,7 +27,7 @@ class Task {
 
 class FindTask : public Task {
    public:
-    FindTask(const Hash& target, FingerTable& fingerTable, ConnectionManager& connectionManager);
+    FindTask(const Hash& target, FingerTable& fingerTable, ConnectionManager& connectionManager, std::optional<Poco::Net::SocketAddress> nextHop);
     void processMessage(const Poco::Net::SocketAddress& from, const std::unique_ptr<Message>& message) override;
     void update() override;
     void init() override;
@@ -56,6 +56,7 @@ class JoinTask : public Task {
     void init() override;
 
    private:
+    Poco::Net::SocketAddress ownAddress;
     Poco::Net::SocketAddress joinAddress;
     FindTask findTask;
 };
@@ -80,6 +81,19 @@ class StabilizeTask : public Task {
     std::optional<Poco::Net::SocketAddress> predecessorOfSuccessor;
 };
 
+class FixFingersTask : public Task {
+   public:
+    FixFingersTask(const Poco::Net::SocketAddress& ownAddress,
+                   FingerTable& fingerTable, ConnectionManager& connectionManager);
+    void processMessage(const Poco::Net::SocketAddress& from, const std::unique_ptr<Message>& message) override;
+    void update() override;
+    void init() override;
+
+   private:
+    std::vector<FindTask> findTasks;
+    Poco::Net::SocketAddress ownAddress;
+};
+
 class CheckPredecessorTask : public Task {
    public:
     CheckPredecessorTask(const Poco::Net::SocketAddress& ownAddress,
@@ -90,6 +104,5 @@ class CheckPredecessorTask : public Task {
 
    private:
     Poco::Net::SocketAddress ownAddress;
-    bool messageSent = false;
     std::optional<Poco::Net::SocketAddress> predecessor;
 };

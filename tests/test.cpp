@@ -283,3 +283,6 @@ TEST(FingerTable, Remove) {
         ASSERT_EQ(ft1.getFinger(i), ft2.getFinger(i));
     }
 }
+
+TEST(PeerTest, Join) {
+}

@@ -170,12 +170,14 @@ class SetSuccessorMessage : public Message {
 
 class SetPredecessorMessage : public Message {
    public:
-    SetPredecessorMessage(const Poco::Net::SocketAddress &pred);
+    SetPredecessorMessage(const Poco::Net::SocketAddress &newPredecessor);
     std::string toString() const override;
     static SetPredecessorMessage fromString(const std::string &str);
+
+    Poco::Net::SocketAddress getNewPredecessor() const;
 
     static constexpr std::string head = "SPRE";
 
    private:
-    const Poco::Net::SocketAddress predecessor;
+    const Poco::Net::SocketAddress newPredecessor;
 };
