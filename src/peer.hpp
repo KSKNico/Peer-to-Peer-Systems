@@ -21,6 +21,10 @@ class Peer {
 
     void update();
 
+    void printConnections() const;
+
+    std::size_t getConnectionsCount() const;
+
    private:
     /* messages to consider processing
         - FIND

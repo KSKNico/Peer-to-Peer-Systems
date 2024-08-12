@@ -46,8 +46,16 @@ void FingerTable::setSuccessor(const Poco::Net::SocketAddress &successor) {
 }
 
 void FingerTable::setPredecessor(const Poco::Net::SocketAddress &predecessor) {
+    // if the current predecessor is not set, set it to the new predecessor
+    if (this->predecessor == ownAddress) {
+        assert(Hash(ownAddress).isBetween(Hash(predecessor), Hash(this->successor)));
+        this->predecessor = predecessor;
+        return;
+    }
+
     if (Hash(predecessor).isBetween(Hash(this->predecessor), ownHash)) {
         this->predecessor = predecessor;
+        return;
     }
 }
 

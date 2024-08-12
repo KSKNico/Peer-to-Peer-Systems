@@ -31,6 +31,8 @@ class FingerTable {
     void removeAddress(const Poco::Net::SocketAddress& address);
 
     void setSuccessor(const Poco::Net::SocketAddress& successor);
+
+    // only sets the predecessor if the new predecessor is closer to the peer's own address
     void setPredecessor(const Poco::Net::SocketAddress& predecessor);
 
     static const std::size_t FINGER_TABLE_SIZE = Hash::HASH_BIT_SIZE;

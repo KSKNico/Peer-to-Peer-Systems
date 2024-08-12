@@ -7,6 +7,7 @@
 
 Peer::Peer(Poco::Net::SocketAddress ownAddress, Poco::Net::SocketAddress remoteAddress) : connectionManager(ownAddress), fingerTable(ownAddress), taskManager(connectionManager, fingerTable) {
     auto joinTask = std::make_unique<JoinTask>(ownAddress, remoteAddress, fingerTable, connectionManager);
+    taskManager.addTask(std::move(joinTask));
 }
 
 Peer::Peer(Poco::Net::SocketAddress ownAddress) : connectionManager(ownAddress), fingerTable(ownAddress), taskManager(connectionManager, fingerTable) {}
@@ -54,4 +55,15 @@ void Peer::processMessage(const Poco::Net::SocketAddress& from, const std::uniqu
         default:
             return;
     }
+}
+
+void Peer::printConnections() const {
+    std::cout << "Established connections: " << std::endl;
+    for (const auto& addr : connectionManager.getEstablishedConnections()) {
+        std::cout << addr.toString() << "\t" << Hash(addr).toString() << std::endl;
+    }
+}
+
+std::size_t Peer::getConnectionsCount() const {
+    return connectionManager.getEstablishedConnectionsCount();
 }

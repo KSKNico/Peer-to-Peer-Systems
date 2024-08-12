@@ -12,6 +12,11 @@ void ConnectionManager::acceptAllConnections() {
         auto connection = acceptor.accept();
         auto addr = connection->getPeerAddress();
 
+        if (connection.get() == nullptr) {
+            std::cout << "Failed to accept connection" << std::endl;
+            continue;
+        }
+
         if (pendingIncomingConnections.contains(addr) || establishedConnections.contains(addr)) {
             std::cout << "Incoming connection already exists" << std::endl;
         } else {
@@ -125,4 +130,17 @@ void ConnectionManager::update() {
 
 void ConnectionManager::closeConnection(const Poco::Net::SocketAddress &address) {
     establishedConnections.erase(address);
+}
+
+std::size_t ConnectionManager::getEstablishedConnectionsCount() const {
+    return establishedConnections.size();
+}
+
+std::vector<Poco::Net::SocketAddress> ConnectionManager::getEstablishedConnections() const {
+    std::vector<Poco::Net::SocketAddress> addresses;
+    addresses.reserve(establishedConnections.size());
+    for (const auto &[addr, _] : establishedConnections) {
+        addresses.push_back(addr);
+    }
+    return addresses;
 }

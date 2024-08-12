@@ -10,6 +10,7 @@
 #include "../src/networking/connectionManager.hpp"
 #include "../src/networking/connector.hpp"
 #include "../src/networking/message.hpp"
+#include "../src/peer.hpp"
 #include "Poco/FIFOBuffer.h"
 #include "Poco/Net/ServerSocket.h"
 #include "Poco/Net/SocketAddress.h"
@@ -237,6 +238,20 @@ TEST(Connection, StreamTest) {
     }
 }
 
+TEST(Connection, Blocking) {
+    Acceptor acceptor(1234);
+    Connector connector;
+
+    // start this in a separate thread
+    std::unique_ptr<Connection> connection1;
+    std::cout << "Starting thread" << std::endl;
+    std::thread thread1([&] {
+        connection1 =
+            connector.connect(Poco::Net::SocketAddress("127.0.0.1:1234"), false);
+    });
+    thread1.join();
+}
+
 TEST(FingerTable, Hashing) {
     auto ft = FingerTable(Poco::Net::SocketAddress("1.1.1.1:1234"));
     ASSERT_EQ(Hash(Poco::Net::SocketAddress("1.1.1.1:1234")), ft.getOwnHash());
@@ -284,5 +299,45 @@ TEST(FingerTable, Remove) {
     }
 }
 
-TEST(PeerTest, Join) {
+TEST(Peer, JoinThread) {
+    std::thread thread1([] {
+        Peer peer1(Poco::Net::SocketAddress("127.0.0.1:1234"));
+        auto start = std::chrono::steady_clock::now();
+        while (true) {
+            peer1.update();
+
+            // quit after 5 seconds
+            if (std::chrono::steady_clock::now() - start > std::chrono::seconds(5)) {
+                break;
+            }
+        }
+    });
+
+    // sleep
+    Poco::Thread::sleep(1000);
+
+    auto peer2 = Peer(Poco::Net::SocketAddress("127.0.0.1:1235"), Poco::Net::SocketAddress("127.0.0.1:1234"));
+
+    for (int i = 0; i < 100; ++i) {
+        peer2.update();
+    }
+
+    peer2.printConnections();
+
+    ASSERT_EQ(peer2.getConnectionsCount(), 1);
+
+    thread1.join();
+}
+
+TEST(Peer, Join) {
+    Peer peer1(Poco::Net::SocketAddress("127.0.0.1:1234"));
+    Peer peer2(Poco::Net::SocketAddress("127.0.0.1:1235"), Poco::Net::SocketAddress("127.0.0.1:1234"));
+
+    for (int i = 0; i < 100; ++i) {
+        peer1.update();
+        peer2.update();
+    }
+
+    peer1.printConnections();
+    peer2.printConnections();
 }

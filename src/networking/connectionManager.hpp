@@ -40,6 +40,8 @@ class ConnectionManager {
 
     std::size_t getEstablishedConnectionsCount() const;
 
+    std::vector<Poco::Net::SocketAddress> getEstablishedConnections() const;
+
    private:
     const Poco::Net::SocketAddress ownAddress;
     ConnectionsMap pendingOutgoingConnections;
