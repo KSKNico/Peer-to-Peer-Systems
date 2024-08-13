@@ -1,5 +1,6 @@
 #include "connectionManager.hpp"
 
+#include <cassert>
 #include <queue>
 #include <tuple>
 
@@ -91,6 +92,8 @@ std::vector<MessagePair> ConnectionManager::receiveMessages() {
 }
 
 void ConnectionManager::updateIncomingConnections() {
+    std::vector<Poco::Net::SocketAddress> toErase;
+
     for (auto &[addr, connection] : pendingIncomingConnections) {
         if (!connection->isConnected()) {
             continue;
@@ -103,13 +106,21 @@ void ConnectionManager::updateIncomingConnections() {
         auto message = connection->receiveMessage();
         if (message->getType() == MessageType::ID) {
             if (auto idMessage = dynamic_cast<IDMessage *>(message.get())) {
+                assert(idMessage->getOwnAddress().host() == addr.host());
                 establishedConnections.insert({idMessage->getOwnAddress(), std::move(connection)});
+                toErase.push_back(addr);
             } else {
-                std::cout << "Failed to cast message to IDMessage" << std::endl;
+                throw std::runtime_error("Received invalid ID message");
             }
+        } else if (message->getType() == MessageType::INCOMPLETE) {
+            continue;
         } else {
-            std::cout << "Received invalid message from incoming connection" << std::endl;
+            throw std::runtime_error("Received invalid message type");
         }
+    }
+
+    for (const auto &addr : toErase) {
+        pendingIncomingConnections.erase(addr);
     }
 }
 

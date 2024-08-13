@@ -9,6 +9,8 @@
 #include "connection.hpp"
 #include "connector.hpp"
 
+using ConnectionPair = std::pair<Poco::Net::SocketAddress, std::unique_ptr<Connection>>;
+
 using ConnectionsMap =
     std::unordered_map<Poco::Net::SocketAddress, std::unique_ptr<Connection>, Hash::SocketAddressHasher>;
 
