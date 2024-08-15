@@ -77,7 +77,7 @@ void FingerTable::updateWithAddress(const Poco::Net::SocketAddress &address) {
 
 void FingerTable::removeAddress(const Poco::Net::SocketAddress &address) {
     Poco::Net::SocketAddress lastAddress = ownAddress;
-    for (unsigned int i = FINGER_TABLE_SIZE; i <= FINGER_TABLE_SIZE; --i) {
+    for (unsigned int i = FINGER_TABLE_SIZE - 1; i <= FINGER_TABLE_SIZE; --i) {
         if (table[i] == address) {
             table[i] = lastAddress;
         } else {

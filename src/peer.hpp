@@ -16,14 +16,21 @@
 class Peer {
    public:
     // Peer(Poco::Net::SocketAddress ownAddress, std::vector<Poco::Net::SocketAddress> remoteAddresses);
-    Peer(Poco::Net::SocketAddress ownAddress, Poco::Net::SocketAddress remoteAddress);
-    Peer(Poco::Net::SocketAddress ownAddress);
+    Peer() = delete;
+    Peer(const Poco::Net::SocketAddress& ownAddress, const Poco::Net::SocketAddress& remoteAddress);
+    Peer(const Poco::Net::SocketAddress& ownAddress);
 
     void update();
 
     void printConnections() const;
 
     std::size_t getConnectionsCount() const;
+
+    // delete copy constructor
+    Peer(const Peer&) = delete;
+    Peer& operator=(const Peer&) = delete;
+    Peer(Peer&&) = delete;
+    Peer& operator=(Peer&&) = delete;
 
    private:
     /* messages to consider processing

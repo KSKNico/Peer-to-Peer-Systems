@@ -5,12 +5,19 @@
 #include "Poco/Net/SocketReactor.h"
 #include "resultHandler.hpp"
 
-Peer::Peer(Poco::Net::SocketAddress ownAddress, Poco::Net::SocketAddress remoteAddress) : connectionManager(ownAddress), fingerTable(ownAddress), taskManager(connectionManager, fingerTable) {
+Peer::Peer(const Poco::Net::SocketAddress& ownAddress,
+           const Poco::Net::SocketAddress& remoteAddress) : ownAddress(ownAddress),
+                                                            connectionManager(ownAddress),
+                                                            fingerTable(ownAddress),
+                                                            taskManager(ownAddress, connectionManager, fingerTable) {
     auto joinTask = std::make_unique<JoinTask>(ownAddress, remoteAddress, fingerTable, connectionManager);
     taskManager.addTask(std::move(joinTask));
 }
 
-Peer::Peer(Poco::Net::SocketAddress ownAddress) : connectionManager(ownAddress), fingerTable(ownAddress), taskManager(connectionManager, fingerTable) {}
+Peer::Peer(const Poco::Net::SocketAddress& ownAddress) : ownAddress(ownAddress),
+                                                         connectionManager(ownAddress),
+                                                         fingerTable(ownAddress),
+                                                         taskManager(ownAddress, connectionManager, fingerTable) {}
 
 void Peer::update() {
     connectionManager.update();
@@ -58,10 +65,13 @@ void Peer::processMessage(const Poco::Net::SocketAddress& from, const std::uniqu
 }
 
 void Peer::printConnections() const {
-    std::cout << "Established connections: " << std::endl;
+    std::cout << "Current Peer: " << this->ownAddress << " This ID: " << Hash(this->ownAddress).toString() << std::endl;
+    std::cout << "------" << std::endl;
     for (const auto& addr : connectionManager.getEstablishedConnections()) {
         std::cout << addr.toString() << "\t" << Hash(addr).toString() << std::endl;
     }
+    std::cout << "------" << std::endl
+              << std::endl;
 }
 
 std::size_t Peer::getConnectionsCount() const {

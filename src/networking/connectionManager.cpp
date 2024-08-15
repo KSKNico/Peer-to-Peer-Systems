@@ -36,6 +36,8 @@ bool ConnectionManager::existsElseConnect(const Poco::Net::SocketAddress &addres
 }
 
 void ConnectionManager::connectTo(const Poco::Net::SocketAddress &address) {
+    assert(address != ownAddress);
+
     if (pendingOutgoingConnections.contains(address) || establishedConnections.contains(address)) {
         throw std::runtime_error("Connection already exists");
     }

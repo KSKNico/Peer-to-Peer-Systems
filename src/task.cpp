@@ -81,7 +81,7 @@ JoinTask::JoinTask(const Poco::Net::SocketAddress& ownAddress,
                    ConnectionManager& connectionManager) : Task(fingerTable, connectionManager),
                                                            ownAddress(ownAddress),
                                                            joinAddress(joinAddress),
-                                                           findTask(Hash(ownAddress), fingerTable, connectionManager) {}
+                                                           findTask(Hash(ownAddress), fingerTable, connectionManager, joinAddress) {}
 
 void JoinTask::update() {
     if (state == TaskState::FINISHED) {
@@ -91,6 +91,8 @@ void JoinTask::update() {
     if (connectionManager.isConnectionEstablished(joinAddress)) {
         findTask.init();
     }
+
+    findTask.update();
 }
 
 void JoinTask::init() {

@@ -1,4 +1,5 @@
 #include <cmath>
+#include <list>
 #include <memory>
 #include <unordered_map>
 
@@ -340,4 +341,28 @@ TEST(Peer, Join) {
 
     peer1.printConnections();
     peer2.printConnections();
+}
+
+TEST(Peer, MassJoin) {
+    std::list<Peer> peers;
+    peers.emplace_back(Poco::Net::SocketAddress("127.0.0.1:1234"));
+
+    for (int i = 0; i < 30; ++i) {
+        // set own port to 1234
+        auto port = 1235 + i;
+
+        auto addr = Poco::Net::SocketAddress("127.0.0.1:1234");
+        addr = Poco::Net::SocketAddress(addr.host().toString() + ":" + std::to_string(port));
+        peers.emplace_back(addr, Poco::Net::SocketAddress("127.0.0.1:1234"));
+    }
+
+    for (int i = 0; i < 100; ++i) {
+        for (auto &peer : peers) {
+            peer.update();
+        }
+    }
+
+    for (auto it = peers.begin(); it != peers.end(); ++it) {
+        it->printConnections();
+    }
 }

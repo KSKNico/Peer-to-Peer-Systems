@@ -2,7 +2,7 @@
 
 #include <cassert>
 
-TaskManager::TaskManager(ConnectionManager& connectionManager, FingerTable& fingerTable) : connectionManager(connectionManager), fingerTable(fingerTable) {}
+TaskManager::TaskManager(const Poco::Net::SocketAddress& ownAddress, ConnectionManager& connectionManager, FingerTable& fingerTable) : ownAddress(ownAddress), connectionManager(connectionManager), fingerTable(fingerTable) {}
 
 void TaskManager::addTask(std::unique_ptr<Task> task) {
     assert(task->getState() == TaskState::UNINITIALIZED);
@@ -15,7 +15,33 @@ void TaskManager::processMessage(const Poco::Net::SocketAddress& from, const std
     }
 }
 
+void TaskManager::launchPeriodicTasks() {
+    if (fingerTable.getSuccessor() == ownAddress) {
+        return;
+    }
+
+    if (std::chrono::system_clock::now() - lastStabilize > stabilizeInterval) {
+        lastStabilize = std::chrono::system_clock::now();
+        auto stabilizeTask = std::make_unique<StabilizeTask>(ownAddress, fingerTable, connectionManager);
+        tasks.push_back(std::move(stabilizeTask));
+    }
+
+    if (std::chrono::system_clock::now() - lastFixFingers > fixFingersInterval) {
+        lastFixFingers = std::chrono::system_clock::now();
+        auto fixFingersTask = std::make_unique<FixFingersTask>(ownAddress, fingerTable, connectionManager);
+        tasks.push_back(std::move(fixFingersTask));
+    }
+
+    if (std::chrono::system_clock::now() - lastCheckPredecessor > checkPredecessorInterval) {
+        lastCheckPredecessor = std::chrono::system_clock::now();
+        auto checkPredecessorTask = std::make_unique<CheckPredecessorTask>(ownAddress, fingerTable, connectionManager);
+        tasks.push_back(std::move(checkPredecessorTask));
+    }
+}
+
 void TaskManager::update() {
+    launchPeriodicTasks();
+
     for (auto& task : tasks) {
         task->init();
         task->update();
