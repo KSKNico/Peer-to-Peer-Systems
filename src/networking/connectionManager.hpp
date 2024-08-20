@@ -30,7 +30,8 @@ class ConnectionManager {
     std::vector<MessagePair> receiveMessages();
 
     // removes all connections that are errored or closed
-    void checkEstablishedConnections();
+    // and returns a list of addresses that were removed
+    std::vector<Poco::Net::SocketAddress> checkEstablishedConnections();
 
     void update();
 

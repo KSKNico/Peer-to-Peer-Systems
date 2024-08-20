@@ -126,12 +126,16 @@ void ConnectionManager::updateIncomingConnections() {
     }
 }
 
-void ConnectionManager::checkEstablishedConnections() {
+std::vector<Poco::Net::SocketAddress> ConnectionManager::checkEstablishedConnections() {
+    std::vector<Poco::Net::SocketAddress> erased;
     for (auto &[addr, connection] : establishedConnections) {
         if (!connection->isConnected()) {
+            erased.push_back(addr);
             establishedConnections.erase(addr);
         }
     }
+
+    return erased;
 }
 
 void ConnectionManager::update() {
