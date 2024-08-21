@@ -138,11 +138,11 @@ std::vector<Poco::Net::SocketAddress> ConnectionManager::checkEstablishedConnect
     return erased;
 }
 
-void ConnectionManager::update() {
+std::vector<Poco::Net::SocketAddress> ConnectionManager::update() {
     acceptAllConnections();
     updateOutgoingConnections();
     updateIncomingConnections();
-    checkEstablishedConnections();
+    return checkEstablishedConnections();
 }
 
 void ConnectionManager::closeConnection(const Poco::Net::SocketAddress &address) {

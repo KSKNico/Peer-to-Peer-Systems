@@ -20,15 +20,20 @@ Peer::Peer(const Poco::Net::SocketAddress& ownAddress) : ownAddress(ownAddress),
                                                          taskManager(ownAddress, connectionManager, fingerTable) {}
 
 void Peer::update() {
-    connectionManager.update();
+    auto removed = connectionManager.update();
+
+    // the removed connections should also be removed from the finger table
+    for (auto& address : removed) {
+        fingerTable.removeAddress(address);
+    }
+
+    taskManager.update();
 
     auto messagePairs = connectionManager.receiveMessages();
     for (auto& [from, message] : messagePairs) {
         taskManager.processMessage(from, message);
         this->processMessage(from, message);
     }
-
-    taskManager.update();
 }
 
 void Peer::processMessage(const Poco::Net::SocketAddress& from, const std::unique_ptr<Message>& message) {

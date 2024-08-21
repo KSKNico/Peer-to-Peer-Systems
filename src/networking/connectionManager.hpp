@@ -33,7 +33,7 @@ class ConnectionManager {
     // and returns a list of addresses that were removed
     std::vector<Poco::Net::SocketAddress> checkEstablishedConnections();
 
-    void update();
+    std::vector<Poco::Net::SocketAddress> update();
 
     // only connect if the connection does not exist yet
     bool existsElseConnect(const Poco::Net::SocketAddress& address);

@@ -1,28 +1,15 @@
 #include "timing.hpp"
 
-void Timing::updateIntervalMessageTime() {
-    lastIntervalMessageTime = std::chrono::system_clock::now();
+Timing::Timing() : started(std::chrono::system_clock::now()), lastUpdated(std::chrono::system_clock::now()) {}
+
+void Timing::update() {
+    lastUpdated = std::chrono::system_clock::now();
 }
 
-bool Timing::intervalMessageTimePassed() const {
-    auto now = std::chrono::system_clock::now();
-    return now - lastIntervalMessageTime > intervalMessageTimeDelta;
+std::chrono::system_clock::time_point Timing::getStarted() const {
+    return started;
 }
 
-void Timing::updateStabilizeMessageTime() {
-    lastStabilizeMessageTime = std::chrono::system_clock::now();
-}
-
-bool Timing::stabilizeMessageTimePassed() const {
-    auto now = std::chrono::system_clock::now();
-    return now - lastStabilizeMessageTime > stabilizeMessageTimeDelta;
-}
-
-void Timing::updateFindFingersMessageTime() {
-    lastFindFingersMessageTime = std::chrono::system_clock::now();
-}
-
-bool Timing::findFingersMessageTimePassed() const {
-    auto now = std::chrono::system_clock::now();
-    return now - lastFindFingersMessageTime > findFingersMessageTimeDelta;
+std::chrono::system_clock::time_point Timing::getLastUpdated() const {
+    return lastUpdated;
 }

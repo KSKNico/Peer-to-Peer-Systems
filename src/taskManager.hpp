@@ -5,11 +5,14 @@
 #include <vector>
 
 #include "task.hpp"
+#include "timing.hpp"
+
+using TaskPair = std::pair<std::unique_ptr<Task>, Timing>;
 
 class TaskManager {
    public:
     TaskManager(const Poco::Net::SocketAddress& ownAddress, ConnectionManager& connectionManager, FingerTable& fingerTable);
-    void addTask(std::unique_ptr<Task> task);
+    void addTask(std::unique_ptr<Task>&& task);
     void update();
     void removeCompletedTasks();
     void processMessage(const Poco::Net::SocketAddress& from, const std::unique_ptr<Message>& message);
@@ -25,12 +28,13 @@ class TaskManager {
     const std::chrono::seconds stabilizeInterval = std::chrono::seconds(1);
     const std::chrono::seconds fixFingersInterval = std::chrono::seconds(5);
     const std::chrono::seconds checkPredecessorInterval = std::chrono::seconds(10);
+    const std::chrono::seconds taskTimeout = std::chrono::seconds(5);
 
     std::chrono::time_point<std::chrono::system_clock> lastStabilize;
     std::chrono::time_point<std::chrono::system_clock> lastFixFingers;
     std::chrono::time_point<std::chrono::system_clock> lastCheckPredecessor;
 
-    std::vector<std::unique_ptr<Task>> tasks;
+    std::vector<TaskPair> tasks;
     Poco::Net::SocketAddress ownAddress;
     ConnectionManager& connectionManager;
     FingerTable& fingerTable;

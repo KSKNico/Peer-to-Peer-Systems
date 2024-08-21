@@ -1,24 +1,16 @@
 #include <chrono>
 
-
 class Timing {
-    public:
-    void updateIntervalMessageTime();
-    bool intervalMessageTimePassed() const;
+   public:
+    Timing();
 
-    void updateStabilizeMessageTime();
-    bool stabilizeMessageTimePassed() const;
+    void update();
 
-    void updateFindFingersMessageTime();
-    bool findFingersMessageTimePassed() const;
+    std::chrono::system_clock::time_point getStarted() const;
 
-    private:
-    std::chrono::system_clock::time_point lastIntervalMessageTime;
-    const std::chrono::milliseconds intervalMessageTimeDelta = std::chrono::milliseconds(1000);
+    std::chrono::system_clock::time_point getLastUpdated() const;
 
-    std::chrono::system_clock::time_point lastStabilizeMessageTime;
-    const std::chrono::milliseconds stabilizeMessageTimeDelta = std::chrono::seconds(10);
-
-    std::chrono::system_clock::time_point lastFindFingersMessageTime;
-    const std::chrono::milliseconds findFingersMessageTimeDelta = std::chrono::seconds(10);
+   private:
+    std::chrono::system_clock::time_point started;
+    std::chrono::system_clock::time_point lastUpdated;
 };
