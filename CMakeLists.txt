@@ -8,6 +8,16 @@ set(CMAKE_CXX_STANDARD 20) # Set C++ standard to C++20
 
 set(CMAKE_COLOR_MAKEFILE ON)
 
+include(FetchContent)
+FetchContent_Declare(
+      spdlog
+      GIT_REPOSITORY https://github.com/gabime/spdlog.git
+      GIT_TAG v1.14.1
+)
+# Download spdlog
+FetchContent_MakeAvailable(spdlog)
+
+
 add_subdirectory(src)
 
 # target_link_libraries(${PROJECT_NAME} Poco::Foundation Poco::Util Poco::Net)

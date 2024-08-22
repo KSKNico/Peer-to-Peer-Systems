@@ -2,6 +2,8 @@
 
 #include <cassert>
 
+#include "spdlog/spdlog.h"
+
 TaskManager::TaskManager(const Poco::Net::SocketAddress& ownAddress, ConnectionManager& connectionManager, FingerTable& fingerTable) : ownAddress(ownAddress), connectionManager(connectionManager), fingerTable(fingerTable) {}
 
 void TaskManager::addTask(std::unique_ptr<Task>&& task) {
@@ -47,15 +49,16 @@ void TaskManager::update() {
     auto it = tasks.begin();
     while (it != tasks.end()) {
         auto& [task, timing] = *it;
-        if (task->getState() == TaskState::UNINITIALIZED) {
-            continue;
-        }
 
-        if (it->second.getLastUpdated() - std::chrono::system_clock::now() > taskTimeout) {
-            tasks.erase(it);
+        // this erases only running tasks that have timed out
+        if (it->second.getLastUpdated() - std::chrono::system_clock::now() > taskTimeout &&
+            task->getState() == TaskState::RUNNING) {
+            it = tasks.erase(it);
+            spdlog::warn("Task timed out");
         } else {
             task->init();
             task->update();
+            ++it;
         }
     }
 }

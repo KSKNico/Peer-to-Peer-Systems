@@ -1,4 +1,5 @@
 #include "resultHandler.hpp"
+
 #include <iostream>
 
 void ResultHandler::updateResultWithSingleFuture(ull lowerBound) {
@@ -17,9 +18,9 @@ void ResultHandler::updateResultWithSingleFuture(ull lowerBound) {
 
 void ResultHandler::updateResultsWithFutures() {
     std::unique_lock<std::mutex> lock(futuresMutex);
-    std::vector<ull> toErase;    
+    std::vector<ull> toErase;
     for (auto &futurePair : futures) {
-        // get the status 
+        // get the status
         std::future_status status = futurePair.second.wait_for(std::chrono::seconds(0));
         if (status == std::future_status::ready) {
             // get the result
@@ -67,11 +68,10 @@ std::optional<std::vector<ull>> ResultHandler::getResults(ull lowerBound) {
     std::unique_lock<std::mutex> lock(resultsMutex);
     auto it = results.find(lowerBound);
     if (it == results.end()) {
-        return std::nullopt; 
+        return std::nullopt;
     } else {
-        return std::make_optional(it->second); 
+        return std::make_optional(it->second);
     }
-
 }
 
 void ResultHandler::submitCalculation(ull lowerBound) {
@@ -79,34 +79,28 @@ void ResultHandler::submitCalculation(ull lowerBound) {
     if (futures.find(lowerBound) != futures.end()) {
         return;
     }
-    std::cout << "i want to calc" << std::endl;
     futures[lowerBound] = std::async(std::launch::async, &ResultHandler::calculatePrimes, lowerBound);
 }
 
 std::vector<ull> ResultHandler::calculatePrimes(ull lowerBound) {
-        std::cout << "i calc " << lowerBound << std::endl;
-        std::vector<ull> primes;
-        ull upperBound = lowerBound + INTERVAL_SIZE;
-        for(ull i=lowerBound; i <= upperBound; i++)
-        {
-            bool isPrime=true;
-            if (i == 0 || i == 1){
-                isPrime= false;
-            }
-            for(ull j=2;j<i;j++)
-            {
-                if(i % j == 0)
-                {
-                    //cout <<"not prime "<< i << "\n";
-                    isPrime=false;
-                    break;
-                }
-            }
-            if(isPrime)
-            {
-                primes.push_back(i);
-                //cout << "prime "<< i << " | ";
+    std::vector<ull> primes;
+    ull upperBound = lowerBound + INTERVAL_SIZE;
+    for (ull i = lowerBound; i <= upperBound; i++) {
+        bool isPrime = true;
+        if (i == 0 || i == 1) {
+            isPrime = false;
+        }
+        for (ull j = 2; j < i; j++) {
+            if (i % j == 0) {
+                // cout <<"not prime "<< i << "\n";
+                isPrime = false;
+                break;
             }
         }
-        return primes;
+        if (isPrime) {
+            primes.push_back(i);
+            // cout << "prime "<< i << " | ";
+        }
+    }
+    return primes;
 }

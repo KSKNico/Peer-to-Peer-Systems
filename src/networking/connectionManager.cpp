@@ -5,6 +5,7 @@
 #include <tuple>
 
 #include "connection.hpp"
+#include "spdlog/spdlog.h"
 
 ConnectionManager::ConnectionManager(Poco::Net::SocketAddress ownAddress) : ownAddress(ownAddress), acceptor(ownAddress.port()) {}
 
@@ -14,12 +15,12 @@ void ConnectionManager::acceptAllConnections() {
         auto addr = connection->getPeerAddress();
 
         if (connection.get() == nullptr) {
-            std::cout << "Failed to accept connection" << std::endl;
+            spdlog::error("Failed to accept connection");
             continue;
         }
 
         if (pendingIncomingConnections.contains(addr) || establishedConnections.contains(addr)) {
-            std::cout << "Incoming connection already exists" << std::endl;
+            spdlog::warn("Incoming connection already exists");
         } else {
             pendingIncomingConnections.insert({addr, std::move(connection)});
         }

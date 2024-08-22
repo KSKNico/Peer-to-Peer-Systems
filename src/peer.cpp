@@ -6,18 +6,23 @@
 #include "resultHandler.hpp"
 
 Peer::Peer(const Poco::Net::SocketAddress& ownAddress,
-           const Poco::Net::SocketAddress& remoteAddress) : ownAddress(ownAddress),
-                                                            connectionManager(ownAddress),
-                                                            fingerTable(ownAddress),
-                                                            taskManager(ownAddress, connectionManager, fingerTable) {
+           const Poco::Net::SocketAddress& remoteAddress,
+           const spdlog::level::level_enum logLevel) : ownAddress(ownAddress),
+                                                       connectionManager(ownAddress),
+                                                       fingerTable(ownAddress),
+                                                       taskManager(ownAddress, connectionManager, fingerTable) {
     auto joinTask = std::make_unique<JoinTask>(ownAddress, remoteAddress, fingerTable, connectionManager);
     taskManager.addTask(std::move(joinTask));
+    spdlog::set_level(logLevel);
 }
 
-Peer::Peer(const Poco::Net::SocketAddress& ownAddress) : ownAddress(ownAddress),
-                                                         connectionManager(ownAddress),
-                                                         fingerTable(ownAddress),
-                                                         taskManager(ownAddress, connectionManager, fingerTable) {}
+Peer::Peer(const Poco::Net::SocketAddress& ownAddress,
+           const spdlog::level::level_enum logLevel) : ownAddress(ownAddress),
+                                                       connectionManager(ownAddress),
+                                                       fingerTable(ownAddress),
+                                                       taskManager(ownAddress, connectionManager, fingerTable) {
+    spdlog::set_level(logLevel);
+}
 
 void Peer::update() {
     auto removed = connectionManager.update();
@@ -70,7 +75,11 @@ void Peer::processMessage(const Poco::Net::SocketAddress& from, const std::uniqu
 }
 
 void Peer::printConnections() const {
-    std::cout << "Current Peer: " << this->ownAddress << " This ID: " << Hash(this->ownAddress).toString() << std::endl;
+    std::cout << "Current Peer: " << this->ownAddress
+              << " This ID: " << Hash(this->ownAddress).toString()
+              << " This successor: " << this->fingerTable.getSuccessor()
+              << " This predecessor: " << this->fingerTable.getPredecessor()
+              << std::endl;
     std::cout << "------" << std::endl;
     for (const auto& addr : connectionManager.getEstablishedConnections()) {
         std::cout << addr.toString() << "\t" << Hash(addr).toString() << std::endl;

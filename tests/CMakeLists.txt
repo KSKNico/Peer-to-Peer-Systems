@@ -35,7 +35,7 @@ find_package(Poco REQUIRED COMPONENTS Foundation Util Net Crypto)
 target_link_libraries(runTests gtest gtest_main)
 
 # Link Poco libraries to the test executable
-target_link_libraries(runTests Poco::Foundation Poco::Util Poco::Net Poco::Crypto)
+target_link_libraries(runTests Poco::Foundation Poco::Util Poco::Net Poco::Crypto spdlog::spdlog)
 
 # Add the tests to CTest
 include(GoogleTest)

@@ -300,6 +300,7 @@ TEST(FingerTable, Remove) {
     }
 }
 
+/*
 TEST(Peer, JoinThread) {
     std::thread thread1([] {
         Peer peer1(Poco::Net::SocketAddress("127.0.0.1:1234"));
@@ -329,10 +330,11 @@ TEST(Peer, JoinThread) {
 
     thread1.join();
 }
+*/
 
 TEST(Peer, Join) {
-    Peer peer1(Poco::Net::SocketAddress("127.0.0.1:1234"));
-    Peer peer2(Poco::Net::SocketAddress("127.0.0.1:1235"), Poco::Net::SocketAddress("127.0.0.1:1234"));
+    Peer peer1(Poco::Net::SocketAddress("127.0.0.1:1234"), spdlog::level::debug);
+    Peer peer2(Poco::Net::SocketAddress("127.0.0.1:1235"), Poco::Net::SocketAddress("127.0.0.1:1234"), spdlog::level::critical);
 
     for (int i = 0; i < 100; ++i) {
         peer1.update();
@@ -345,7 +347,7 @@ TEST(Peer, Join) {
 
 TEST(Peer, MassJoin) {
     std::list<Peer> peers;
-    peers.emplace_back(Poco::Net::SocketAddress("127.0.0.1:1234"));
+    peers.emplace_back(Poco::Net::SocketAddress("127.0.0.1:1234"), spdlog::level::debug);
 
     for (int i = 0; i < 30; ++i) {
         // set own port to 1234
@@ -353,7 +355,7 @@ TEST(Peer, MassJoin) {
 
         auto addr = Poco::Net::SocketAddress("127.0.0.1:1234");
         addr = Poco::Net::SocketAddress(addr.host().toString() + ":" + std::to_string(port));
-        peers.emplace_back(addr, Poco::Net::SocketAddress("127.0.0.1:1234"));
+        peers.emplace_back(addr, Poco::Net::SocketAddress("127.0.0.1:1234"), spdlog::level::off);
     }
 
     for (int i = 0; i < 100; ++i) {

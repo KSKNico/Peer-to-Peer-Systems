@@ -1,5 +1,7 @@
 #include "task.hpp"
 
+#include <spdlog/spdlog.h>
+
 #include <cassert>
 
 Task::Task(FingerTable& fingerTable, ConnectionManager& connectionManager) : fingerTable(fingerTable), connectionManager(connectionManager) {
@@ -16,6 +18,8 @@ void FindTask::init() {
     if (state != TaskState::UNINITIALIZED) {
         return;
     }
+
+    spdlog::debug("Finding target {}", target.toString());
 
     // the nextHop can be set when the search is to be started from a single known peer
     // i.e. when joining the network
@@ -65,6 +69,8 @@ bool FindTask::processMessage(const Poco::Net::SocketAddress& from, const std::u
     if (target.isBetween(Hash(from), referenceAddressHash)) {
         connectionManager.existsElseConnect(findMessage->referenceAddress);
         targetAddress = findMessage->referenceAddress;
+
+        spdlog::debug("Found target {} at {}", target.toString(), targetAddress.value().toString());
         state = TaskState::FINISHED;
     } else {
         nextHop = findMessage->referenceAddress;
@@ -101,16 +107,18 @@ void JoinTask::init() {
         return;
     }
 
+    spdlog::info("Joining network using {}", joinAddress.toString());
+
     connectionManager.existsElseConnect(joinAddress);
     state = TaskState::RUNNING;
 }
 
 bool JoinTask::processMessage(const Poco::Net::SocketAddress& from, const std::unique_ptr<Message>& message) {
-    findTask.processMessage(from, message);
+    bool findStatus = findTask.processMessage(from, message);
 
     auto targetAddressOptional = findTask.getTargetAddress();
     if (!targetAddressOptional.has_value()) {
-        return false;
+        return findStatus;
     }
 
     assert(findTask.getState() == TaskState::FINISHED);
@@ -120,6 +128,9 @@ bool JoinTask::processMessage(const Poco::Net::SocketAddress& from, const std::u
 
     // inform the new successor about the new predecessor (this peer)
     connectionManager.sendMessage(fingerTable.getSuccessor(), SetPredecessorMessage(ownAddress));
+
+    state = TaskState::FINISHED;
+    spdlog::info("Joined network with successor {}", targetAddressOptional.value().toString());
     return true;
 }
 
@@ -153,6 +164,8 @@ void StabilizeTask::init() {
     if (state != TaskState::UNINITIALIZED) {
         return;
     }
+
+    spdlog::debug("Stabilizing network");
 
     // connectionManager.existsElseConnect(fingerTable.getSuccessor());
     currentSuccessor = fingerTable.getSuccessor();
@@ -204,6 +217,8 @@ void FixFingersTask::init() {
         return;
     }
 
+    spdlog::debug("Fixing fingers");
+
     for (auto& task : findTasks) {
         task.init();
     }
@@ -252,6 +267,8 @@ void CheckPredecessorTask::init() {
         return;
     }
 
+    spdlog::debug("Checking predecessor");
+
     state = TaskState::RUNNING;
     auto predecessor = fingerTable.getPredecessor();
     if (predecessor == ownAddress) {
@@ -263,6 +280,7 @@ void CheckPredecessorTask::init() {
 
     if (!isEstablished) {
         fingerTable.setPredecessor(ownAddress);
+        spdlog::debug("Predecessor is not reachable, setting to own address");
         state = TaskState::FINISHED;
         return;
     }

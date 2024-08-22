@@ -11,14 +11,18 @@
 #include "Poco/Timespan.h"
 #include "fingerTable.hpp"
 #include "networking/connectionManager.hpp"
+#include "spdlog/spdlog.h"
 #include "taskManager.hpp"
 
 class Peer {
    public:
     // Peer(Poco::Net::SocketAddress ownAddress, std::vector<Poco::Net::SocketAddress> remoteAddresses);
     Peer() = delete;
-    Peer(const Poco::Net::SocketAddress& ownAddress, const Poco::Net::SocketAddress& remoteAddress);
-    Peer(const Poco::Net::SocketAddress& ownAddress);
+    Peer(const Poco::Net::SocketAddress& ownAddress,
+         const spdlog::level::level_enum logLevel = spdlog::level::info);
+    Peer(const Poco::Net::SocketAddress& ownAddress,
+         const Poco::Net::SocketAddress& remoteAddress,
+         const spdlog::level::level_enum logLevel = spdlog::level::info);
 
     void update();
 
