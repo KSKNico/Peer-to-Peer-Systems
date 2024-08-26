@@ -8,11 +8,13 @@
 #include "acceptor.hpp"
 #include "connection.hpp"
 #include "connector.hpp"
+#include "../timing.hpp"
 
-using ConnectionPair = std::pair<Poco::Net::SocketAddress, std::unique_ptr<Connection>>;
+using ConnectionPair = std::pair<std::unique_ptr<Connection>, Timing>;
 
+// maps addresses to connections and last update time
 using ConnectionsMap =
-    std::unordered_map<Poco::Net::SocketAddress, std::unique_ptr<Connection>, Hash::SocketAddressHasher>;
+    std::unordered_map<Poco::Net::SocketAddress, ConnectionPair, Hash::SocketAddressHasher>;
 
 // using MessageMap = std::unordered_map<Poco::Net::SocketAddress, std::queue<Message>, Hash::SocketAddressHasher>;
 

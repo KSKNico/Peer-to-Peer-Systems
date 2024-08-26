@@ -22,7 +22,7 @@ void ConnectionManager::acceptAllConnections() {
         if (pendingIncomingConnections.contains(addr) || establishedConnections.contains(addr)) {
             spdlog::warn("Incoming connection already exists");
         } else {
-            pendingIncomingConnections.insert({addr, std::move(connection)});
+            pendingIncomingConnections.insert(std::make_pair(addr, std::make_pair(std::move(connection), Timing())));
         }
     }
 }
@@ -48,7 +48,7 @@ void ConnectionManager::connectTo(const Poco::Net::SocketAddress &address) {
         throw std::runtime_error("Failed to connect outbound to " + address.toString());
     }
 
-    pendingOutgoingConnections.insert({address, std::move(connection)});
+    pendingOutgoingConnections.insert(std::make_pair(address, std::make_pair(std::move(connection), Timing())));
 }
 
 bool ConnectionManager::isConnectionEstablished(const Poco::Net::SocketAddress &address) const {
@@ -57,10 +57,12 @@ bool ConnectionManager::isConnectionEstablished(const Poco::Net::SocketAddress &
 
 void ConnectionManager::updateOutgoingConnections() {
     auto toErase = std::vector<Poco::Net::SocketAddress>();
-    for (auto &[addr, connection] : pendingOutgoingConnections) {
+    for (auto &[addr, connectionPair] : pendingOutgoingConnections) {
+        auto &[connection, timing] = connectionPair;
         if (connection->isConnected()) {
             connection->sendMessage(IDMessage(ownAddress));
-            establishedConnections.insert({addr, std::move(connection)});
+            timing.update();
+            establishedConnections.insert(std::make_pair(addr, std::make_pair(std::move(connection), timing)));
             toErase.push_back(addr);
         }
     }
@@ -72,7 +74,8 @@ void ConnectionManager::updateOutgoingConnections() {
 
 void ConnectionManager::sendMessage(const Poco::Net::SocketAddress &address, const Message &message) {
     if (establishedConnections.contains(address)) {
-        establishedConnections.at(address)->sendMessage(message);
+        establishedConnections.at(address).first->sendMessage(message);
+        establishedConnections.at(address).second.update();
     } else {
         throw std::runtime_error("Connection does not exist");
     }
@@ -81,7 +84,8 @@ void ConnectionManager::sendMessage(const Poco::Net::SocketAddress &address, con
 std::vector<MessagePair> ConnectionManager::receiveMessages() {
     std::vector<MessagePair> messages;
     messages.reserve(establishedConnections.size());
-    for (auto &[addr, connection] : establishedConnections) {
+    for (auto &[addr, connectionPair] : establishedConnections) {
+        auto &[connection, timing] = connectionPair;
         if (!connection->isReadable()) {
             continue;
         }
@@ -89,6 +93,7 @@ std::vector<MessagePair> ConnectionManager::receiveMessages() {
         std::unique_ptr<Message> message = connection->receiveMessage();
         if (message->isComplete() && !message->isErrored()) {
             messages.push_back({addr, std::move(message)});
+            timing.update();
         }
     }
     return messages;
@@ -97,7 +102,8 @@ std::vector<MessagePair> ConnectionManager::receiveMessages() {
 void ConnectionManager::updateIncomingConnections() {
     std::vector<Poco::Net::SocketAddress> toErase;
 
-    for (auto &[addr, connection] : pendingIncomingConnections) {
+    for (auto &[addr, connectionPair] : pendingIncomingConnections) {
+        auto &[connection, timing] = connectionPair;
         if (!connection->isConnected()) {
             continue;
         }
@@ -110,7 +116,9 @@ void ConnectionManager::updateIncomingConnections() {
         if (message->getType() == MessageType::ID) {
             if (auto idMessage = dynamic_cast<IDMessage *>(message.get())) {
                 assert(idMessage->getOwnAddress().host() == addr.host());
-                establishedConnections.insert({idMessage->getOwnAddress(), std::move(connection)});
+                timing.update();
+                establishedConnections.insert(std::make_pair(idMessage->getOwnAddress(), 
+                std::make_pair(std::move(connection), timing)));
                 toErase.push_back(addr);
             } else {
                 throw std::runtime_error("Received invalid ID message");
@@ -129,7 +137,8 @@ void ConnectionManager::updateIncomingConnections() {
 
 std::vector<Poco::Net::SocketAddress> ConnectionManager::checkEstablishedConnections() {
     std::vector<Poco::Net::SocketAddress> erased;
-    for (auto &[addr, connection] : establishedConnections) {
+    for (auto &[addr, connectionPair] : establishedConnections) {
+        auto &[connection, _] = connectionPair;
         if (!connection->isConnected()) {
             erased.push_back(addr);
             establishedConnections.erase(addr);
