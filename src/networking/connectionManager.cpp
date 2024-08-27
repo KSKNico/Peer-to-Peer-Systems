@@ -28,7 +28,9 @@ void ConnectionManager::acceptAllConnections() {
 }
 
 bool ConnectionManager::existsElseConnect(const Poco::Net::SocketAddress &address) {
-    if (pendingOutgoingConnections.contains(address) || establishedConnections.contains(address) || pendingIncomingConnections.contains(address)) {
+    if (pendingOutgoingConnections.contains(address) || 
+        establishedConnections.contains(address) || 
+        pendingIncomingConnections.contains(address)) {
         return true;
     }
 

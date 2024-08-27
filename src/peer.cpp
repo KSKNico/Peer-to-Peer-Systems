@@ -77,12 +77,29 @@ void Peer::processMessage(const Poco::Net::SocketAddress& from, const std::uniqu
 void Peer::printConnections() const {
     std::cout << "Current Peer: " << this->ownAddress
               << " This ID: " << Hash(this->ownAddress).toString()
-              << " This successor: " << this->fingerTable.getSuccessor()
-              << " This predecessor: " << this->fingerTable.getPredecessor()
               << std::endl;
     std::cout << "------" << std::endl;
     for (const auto& addr : connectionManager.getEstablishedConnections()) {
         std::cout << addr.toString() << "\t" << Hash(addr).toString() << std::endl;
+    }
+    std::cout << "------" << std::endl
+              << std::endl;
+}
+
+void Peer::printFingerTable() const {
+    Poco::Net::SocketAddress lastFinger;
+    std::cout << "Finger Table for " << this->ownAddress << std::endl;
+    std::cout << "This successor " << fingerTable.getSuccessor() << std::endl;
+    std::cout << "This predecessor " << fingerTable.getPredecessor() << std::endl;
+    std::cout << "------" << std::endl;
+    lastFinger = this->fingerTable.getFinger(0);
+    std::cout << "0\t" << lastFinger << std::endl;
+    for (std::size_t i = 0; i < FingerTable::FINGER_TABLE_SIZE; ++i) {
+        if (lastFinger == this->fingerTable.getFinger(i)) {
+            continue;
+        }
+        std::cout << i << "\t" << this->fingerTable.getFinger(i) << std::endl;
+        lastFinger = this->fingerTable.getFinger(i);
     }
     std::cout << "------" << std::endl
               << std::endl;

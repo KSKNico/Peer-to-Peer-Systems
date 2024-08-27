@@ -27,6 +27,7 @@ class Peer {
     void update();
 
     void printConnections() const;
+    void printFingerTable() const;
 
     std::size_t getConnectionsCount() const;
 
