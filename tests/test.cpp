@@ -341,8 +341,8 @@ TEST(Peer, Join) {
         peer2.update();
     }
 
-    peer1.printConnections();
-    peer2.printConnections();
+    peer1.printFingerTable();
+    peer2.printFingerTable();
 }
 
 TEST(Peer, MassJoin) {
@@ -365,6 +365,6 @@ TEST(Peer, MassJoin) {
     }
 
     for (auto it = peers.begin(); it != peers.end(); ++it) {
-        it->printConnections();
+        it->printFingerTable();
     }
 }
