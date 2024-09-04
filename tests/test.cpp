@@ -2,6 +2,7 @@
 #include <list>
 #include <memory>
 #include <unordered_map>
+#include <chrono>
 
 #include "../src/fingerTable.hpp"
 #include "../src/globalDefinitions.hpp"
@@ -367,4 +368,18 @@ TEST(Peer, MassJoin) {
     for (auto it = peers.begin(); it != peers.end(); ++it) {
         it->printFingerTable();
     }
+}
+
+TEST(Peer, PeriodicTasks) {
+    auto peer1 = Peer(Poco::Net::SocketAddress("127.0.0.1:1234"), spdlog::level::debug);
+    auto peer2 = Peer(Poco::Net::SocketAddress("127.0.0.1:1235"), Poco::Net::SocketAddress("127.0.0.1:1234"), spdlog::level::debug);
+
+    auto start = std::chrono::system_clock::now();
+    while (start - std::chrono::system_clock::now() < std::chrono::seconds(30)) {
+        peer1.update();
+        peer2.update();
+    }
+
+    peer1.printFingerTable();
+    peer2.printFingerTable();
 }
