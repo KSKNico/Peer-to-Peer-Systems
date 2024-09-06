@@ -30,9 +30,9 @@ class TaskManager {
     const std::chrono::seconds checkPredecessorInterval = std::chrono::seconds(10);
     const std::chrono::seconds taskTimeout = std::chrono::seconds(5);
 
-    std::chrono::time_point<std::chrono::system_clock> lastStabilize;
-    std::chrono::time_point<std::chrono::system_clock> lastFixFingers;
-    std::chrono::time_point<std::chrono::system_clock> lastCheckPredecessor;
+    std::chrono::time_point<std::chrono::steady_clock> lastStabilize;
+    std::chrono::time_point<std::chrono::steady_clock> lastFixFingers;
+    std::chrono::time_point<std::chrono::steady_clock> lastCheckPredecessor;
 
     std::vector<TaskPair> tasks;
     Poco::Net::SocketAddress ownAddress;

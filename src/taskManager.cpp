@@ -24,20 +24,20 @@ void TaskManager::launchPeriodicTasks() {
         return;
     }
 
-    if (std::chrono::system_clock::now() - lastStabilize > stabilizeInterval) {
-        lastStabilize = std::chrono::system_clock::now();
+    if (std::chrono::steady_clock::now() - lastStabilize > stabilizeInterval) {
+        lastStabilize = std::chrono::steady_clock::now();
         auto stabilizeTask = std::make_unique<StabilizeTask>(ownAddress, fingerTable, connectionManager);
         addTask(std::move(stabilizeTask));
     }
 
-    if (std::chrono::system_clock::now() - lastFixFingers > fixFingersInterval) {
-        lastFixFingers = std::chrono::system_clock::now();
+    if (std::chrono::steady_clock::now() - lastFixFingers > fixFingersInterval) {
+        lastFixFingers = std::chrono::steady_clock::now();
         auto fixFingersTask = std::make_unique<FixFingersTask>(ownAddress, fingerTable, connectionManager);
         addTask(std::move(fixFingersTask));
     }
 
-    if (std::chrono::system_clock::now() - lastCheckPredecessor > checkPredecessorInterval) {
-        lastCheckPredecessor = std::chrono::system_clock::now();
+    if (std::chrono::steady_clock::now() - lastCheckPredecessor > checkPredecessorInterval) {
+        lastCheckPredecessor = std::chrono::steady_clock::now();
         auto checkPredecessorTask = std::make_unique<CheckPredecessorTask>(ownAddress, fingerTable, connectionManager);
         addTask(std::move(checkPredecessorTask));
     }
@@ -51,7 +51,7 @@ void TaskManager::update() {
         auto& [task, timing] = *it;
 
         // this erases only running tasks that have timed out
-        if (it->second.getLastUpdated() - std::chrono::system_clock::now() > taskTimeout &&
+        if (Timing::since(it->second.getLastUpdated()) > taskTimeout &&
             task->getState() == TaskState::RUNNING) {
             it = tasks.erase(it);
             spdlog::warn("Task timed out");

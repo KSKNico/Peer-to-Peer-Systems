@@ -374,8 +374,8 @@ TEST(Peer, PeriodicTasks) {
     auto peer1 = Peer(Poco::Net::SocketAddress("127.0.0.1:1234"), spdlog::level::debug);
     auto peer2 = Peer(Poco::Net::SocketAddress("127.0.0.1:1235"), Poco::Net::SocketAddress("127.0.0.1:1234"), spdlog::level::debug);
 
-    auto start = std::chrono::system_clock::now();
-    while (start - std::chrono::system_clock::now() < std::chrono::seconds(30)) {
+    auto start = std::chrono::steady_clock::now();
+    while (Timing::since(start) < std::chrono::seconds(10)) {
         peer1.update();
         peer2.update();
     }
