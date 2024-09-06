@@ -8,6 +8,7 @@ TaskManager::TaskManager(const Poco::Net::SocketAddress& ownAddress, ConnectionM
 
 void TaskManager::addTask(std::unique_ptr<Task>&& task) {
     assert(task->getState() == TaskState::UNINITIALIZED);
+    spdlog::debug("Adding task");
     tasks.push_back({std::move(task), Timing()});
 }
 
