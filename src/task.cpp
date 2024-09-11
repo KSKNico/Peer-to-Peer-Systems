@@ -123,6 +123,12 @@ bool JoinTask::processMessage(const Poco::Net::SocketAddress& from, const std::u
 
     assert(findTask.getState() == TaskState::FINISHED);
 
+    if (targetAddressOptional.value() == ownAddress) {
+        spdlog::info("Joining network has failed because the target address is the same as the own address ({})", ownAddress.toString());
+        state = TaskState::FINISHED;
+        return true;
+    }
+
     fingerTable.updateWithAddress(targetAddressOptional.value());
     fingerTable.setSuccessor(targetAddressOptional.value());
 

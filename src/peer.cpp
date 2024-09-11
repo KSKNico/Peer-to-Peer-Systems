@@ -14,6 +14,7 @@ Peer::Peer(const Poco::Net::SocketAddress& ownAddress,
     auto joinTask = std::make_unique<JoinTask>(ownAddress, remoteAddress, fingerTable, connectionManager);
     taskManager.addTask(std::move(joinTask));
     spdlog::set_level(logLevel);
+    spdlog::info("Starting peer at {}", ownAddress.toString());
 }
 
 Peer::Peer(const Poco::Net::SocketAddress& ownAddress,
@@ -22,6 +23,7 @@ Peer::Peer(const Poco::Net::SocketAddress& ownAddress,
                                                        fingerTable(ownAddress),
                                                        taskManager(ownAddress, connectionManager, fingerTable) {
     spdlog::set_level(logLevel);
+    spdlog::info("Starting bootsstrapping peer at {}", ownAddress.toString());
 }
 
 void Peer::update() {

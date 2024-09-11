@@ -50,6 +50,7 @@ void ConnectionManager::connectTo(const Poco::Net::SocketAddress &address) {
         throw std::runtime_error("Failed to connect outbound to " + address.toString());
     }
 
+    spdlog::debug("Opening connection to {}", address.toString());
     pendingOutgoingConnections.insert(std::make_pair(address, std::make_pair(std::move(connection), Timing())));
 }
 
@@ -66,6 +67,7 @@ void ConnectionManager::updateOutgoingConnections() {
             timing.update();
             establishedConnections.insert(std::make_pair(addr, std::make_pair(std::move(connection), timing)));
             toErase.push_back(addr);
+            spdlog::debug("Outgoing connection to {} established", addr.toString());
         }
     }
 
@@ -122,6 +124,7 @@ void ConnectionManager::updateIncomingConnections() {
                 establishedConnections.insert(std::make_pair(idMessage->getOwnAddress(), 
                 std::make_pair(std::move(connection), timing)));
                 toErase.push_back(addr);
+                spdlog::debug("Incoming connection from {} established", addr.toString());
             } else {
                 throw std::runtime_error("Received invalid ID message");
             }
