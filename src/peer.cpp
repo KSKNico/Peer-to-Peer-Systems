@@ -1,6 +1,7 @@
 #include "peer.hpp"
 
 #include <iostream>
+#include <spdlog/sinks/stdout_color_sinks.h>
 
 #include "Poco/Net/SocketReactor.h"
 #include "resultHandler.hpp"
@@ -11,10 +12,13 @@ Peer::Peer(const Poco::Net::SocketAddress& ownAddress,
                                                        connectionManager(ownAddress),
                                                        fingerTable(ownAddress),
                                                        taskManager(ownAddress, connectionManager, fingerTable) {
-    auto joinTask = std::make_unique<JoinTask>(ownAddress, remoteAddress, fingerTable, connectionManager);
+                                                    
+    createLogger(logLevel);
+    spdlog::get(ownAddress.toString())->set_level(logLevel);
+    spdlog::get(ownAddress.toString())->info("Starting peer at {} with log level {}", ownAddress.toString(), (int) logLevel);
+    auto joinTask = std::make_unique<JoinTask>(remoteAddress, fingerTable, connectionManager, ownAddress);
     taskManager.addTask(std::move(joinTask));
-    spdlog::set_level(logLevel);
-    spdlog::info("Starting peer at {}", ownAddress.toString());
+    
 }
 
 Peer::Peer(const Poco::Net::SocketAddress& ownAddress,
@@ -22,8 +26,9 @@ Peer::Peer(const Poco::Net::SocketAddress& ownAddress,
                                                        connectionManager(ownAddress),
                                                        fingerTable(ownAddress),
                                                        taskManager(ownAddress, connectionManager, fingerTable) {
-    spdlog::set_level(logLevel);
-    spdlog::info("Starting bootsstrapping peer at {}", ownAddress.toString());
+    createLogger(logLevel);
+    spdlog::get(ownAddress.toString())->set_level(logLevel);
+    spdlog::get(ownAddress.toString())->info("Starting bootstrapping peer at {} with log level {}", ownAddress.toString(), (int) logLevel);
 }
 
 void Peer::update() {
@@ -109,4 +114,11 @@ void Peer::printFingerTable() const {
 
 std::size_t Peer::getConnectionsCount() const {
     return connectionManager.getEstablishedConnectionsCount();
+}
+
+void Peer::createLogger(const spdlog::level::level_enum logLevel) {
+    sink = std::make_shared<spdlog::sinks::stdout_color_sink_mt>();
+    logger = std::make_shared<spdlog::logger>(ownAddress.toString(), sink);
+    logger->set_level(logLevel);
+    spdlog::register_logger(logger);
 }

@@ -2,6 +2,8 @@
 
 #include <unordered_map>
 #include <vector>
+#include <spdlog/spdlog.h>
+#include <spdlog/sinks/stdout_color_sinks.h>
 
 #include "Poco/Net/NetException.h"
 #include "Poco/Net/ServerSocket.h"
@@ -11,7 +13,6 @@
 #include "Poco/Timespan.h"
 #include "fingerTable.hpp"
 #include "networking/connectionManager.hpp"
-#include "spdlog/spdlog.h"
 #include "taskManager.hpp"
 
 class Peer {
@@ -28,6 +29,8 @@ class Peer {
 
     void printConnections() const;
     void printFingerTable() const;
+
+    void createLogger(const spdlog::level::level_enum logLevel);
 
     std::size_t getConnectionsCount() const;
 
@@ -49,6 +52,8 @@ class Peer {
     void processMessage(const Poco::Net::SocketAddress& from, const std::unique_ptr<Message>& message);
 
     const Poco::Net::SocketAddress ownAddress;
+    std::shared_ptr<spdlog::logger> logger;
+    std::shared_ptr<spdlog::sinks::stdout_color_sink_mt> sink;
     ConnectionManager connectionManager;
     FingerTable fingerTable;
     TaskManager taskManager;

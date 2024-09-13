@@ -6,12 +6,15 @@
 
 #include "task.hpp"
 #include "timing.hpp"
+#include "spdlog/spdlog.h"
 
 using TaskPair = std::pair<std::unique_ptr<Task>, Timing>;
 
 class TaskManager {
    public:
-    TaskManager(const Poco::Net::SocketAddress& ownAddress, ConnectionManager& connectionManager, FingerTable& fingerTable);
+    TaskManager(const Poco::Net::SocketAddress& ownAddress, 
+    ConnectionManager& connectionManager, 
+    FingerTable& fingerTable);
     void addTask(std::unique_ptr<Task>&& task);
     void update();
     void removeCompletedTasks();

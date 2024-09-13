@@ -8,7 +8,7 @@ TaskManager::TaskManager(const Poco::Net::SocketAddress& ownAddress, ConnectionM
 
 void TaskManager::addTask(std::unique_ptr<Task>&& task) {
     assert(task->getState() == TaskState::UNINITIALIZED);
-    spdlog::debug("Adding task");
+    spdlog::get(ownAddress.toString())->debug("Adding task");
     tasks.push_back({std::move(task), Timing()});
 }
 
@@ -27,19 +27,19 @@ void TaskManager::launchPeriodicTasks() {
 
     if (std::chrono::steady_clock::now() - lastStabilize > stabilizeInterval) {
         lastStabilize = std::chrono::steady_clock::now();
-        auto stabilizeTask = std::make_unique<StabilizeTask>(ownAddress, fingerTable, connectionManager);
+        auto stabilizeTask = std::make_unique<StabilizeTask>(fingerTable, connectionManager, ownAddress);
         addTask(std::move(stabilizeTask));
     }
 
     if (std::chrono::steady_clock::now() - lastFixFingers > fixFingersInterval) {
         lastFixFingers = std::chrono::steady_clock::now();
-        auto fixFingersTask = std::make_unique<FixFingersTask>(ownAddress, fingerTable, connectionManager);
+        auto fixFingersTask = std::make_unique<FixFingersTask>(fingerTable, connectionManager, ownAddress);
         addTask(std::move(fixFingersTask));
     }
 
     if (std::chrono::steady_clock::now() - lastCheckPredecessor > checkPredecessorInterval) {
         lastCheckPredecessor = std::chrono::steady_clock::now();
-        auto checkPredecessorTask = std::make_unique<CheckPredecessorTask>(ownAddress, fingerTable, connectionManager);
+        auto checkPredecessorTask = std::make_unique<CheckPredecessorTask>(fingerTable, connectionManager, ownAddress);
         addTask(std::move(checkPredecessorTask));
     }
 }
@@ -55,7 +55,7 @@ void TaskManager::update() {
         if (Timing::since(it->second.getLastUpdated()) > taskTimeout &&
             task->getState() == TaskState::RUNNING) {
             it = tasks.erase(it);
-            spdlog::warn("Task timed out");
+            spdlog::get(ownAddress.toString())->warn("Task timed out");
         } else {
             task->init();
             task->update();

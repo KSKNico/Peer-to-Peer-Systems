@@ -4,22 +4,26 @@
 
 #include <cassert>
 
-Task::Task(FingerTable& fingerTable, ConnectionManager& connectionManager) : fingerTable(fingerTable), connectionManager(connectionManager) {
-}
+Task::Task(FingerTable& fingerTable, ConnectionManager& connectionManager, const Poco::Net::SocketAddress& ownAddress) : 
+fingerTable(fingerTable), connectionManager(connectionManager), ownAddress(ownAddress) {}
 
 TaskState Task::getState() const {
     return state;
 }
 
-FindTask::FindTask(const Hash& target, FingerTable& fingerTable, ConnectionManager& connectionManager,
-                   std::optional<Poco::Net::SocketAddress> nextHop = std::nullopt) : Task(fingerTable, connectionManager), target(target), nextHop(nextHop) {}
+FindTask::FindTask(const Hash& target, 
+                FingerTable& fingerTable, 
+                ConnectionManager& connectionManager, 
+                const Poco::Net::SocketAddress& ownAddress,
+                std::optional<Poco::Net::SocketAddress> nextHop = std::nullopt) : 
+                Task(fingerTable, connectionManager, ownAddress), target(target), nextHop(nextHop) {}
 
 void FindTask::init() {
     if (state != TaskState::UNINITIALIZED) {
         return;
     }
 
-    spdlog::debug("Finding target {}", target.toString());
+    spdlog::get(ownAddress.toString())->debug("Finding target {}", target.toString());
 
     // the nextHop can be set when the search is to be started from a single known peer
     // i.e. when joining the network
@@ -40,6 +44,14 @@ void FindTask::update() {
         return;
     }
 
+    if (nextHop.value() == ownAddress) {
+        spdlog::get(ownAddress.toString())->debug("Target is for this peer");
+        targetAddress = ownAddress;
+        state = TaskState::FINISHED;
+        nextHop = std::nullopt;
+        return;
+    }
+    
     connectionManager.existsElseConnect(nextHop.value());
     if (connectionManager.isConnectionEstablished(nextHop.value())) {
         connectionManager.sendMessage(nextHop.value(), FindMessage(target));
@@ -70,7 +82,7 @@ bool FindTask::processMessage(const Poco::Net::SocketAddress& from, const std::u
         connectionManager.existsElseConnect(findMessage->referenceAddress);
         targetAddress = findMessage->referenceAddress;
 
-        spdlog::debug("Found target {} at {}", target.toString(), targetAddress.value().toString());
+        spdlog::get(ownAddress.toString())->debug("Found target {} at {}", target.toString(), targetAddress.value().toString());
         state = TaskState::FINISHED;
     } else {
         nextHop = findMessage->referenceAddress;
@@ -82,13 +94,13 @@ std::optional<Poco::Net::SocketAddress> FindTask::getTargetAddress() const {
     return targetAddress;
 }
 
-JoinTask::JoinTask(const Poco::Net::SocketAddress& ownAddress,
-                   const Poco::Net::SocketAddress& joinAddress,
+JoinTask::JoinTask(const Poco::Net::SocketAddress& joinAddress,
                    FingerTable& fingerTable,
-                   ConnectionManager& connectionManager) : Task(fingerTable, connectionManager),
+                   ConnectionManager& connectionManager,
+                   const Poco::Net::SocketAddress& ownAddress) : Task(fingerTable, connectionManager, ownAddress),
                                                            ownAddress(ownAddress),
                                                            joinAddress(joinAddress),
-                                                           findTask(Hash(ownAddress), fingerTable, connectionManager, joinAddress) {}
+                                                           findTask(Hash(ownAddress), fingerTable, connectionManager, ownAddress, joinAddress) {}
 
 void JoinTask::update() {
     if (state == TaskState::FINISHED) {
@@ -107,7 +119,7 @@ void JoinTask::init() {
         return;
     }
 
-    spdlog::info("Joining network using {}", joinAddress.toString());
+    spdlog::get(ownAddress.toString())->info("Joining network using {}", joinAddress.toString());
 
     connectionManager.existsElseConnect(joinAddress);
     state = TaskState::RUNNING;
@@ -124,7 +136,7 @@ bool JoinTask::processMessage(const Poco::Net::SocketAddress& from, const std::u
     assert(findTask.getState() == TaskState::FINISHED);
 
     if (targetAddressOptional.value() == ownAddress) {
-        spdlog::info("Joining network has failed because the target address is the same as the own address ({})", ownAddress.toString());
+        spdlog::get(ownAddress.toString())->info("Joining network has failed because the target address is the same as the own address ({})", ownAddress.toString());
         state = TaskState::FINISHED;
         return true;
     }
@@ -136,12 +148,13 @@ bool JoinTask::processMessage(const Poco::Net::SocketAddress& from, const std::u
     connectionManager.sendMessage(fingerTable.getSuccessor(), SetPredecessorMessage(ownAddress));
 
     state = TaskState::FINISHED;
-    spdlog::info("Joined network with successor {}", targetAddressOptional.value().toString());
+    spdlog::get(ownAddress.toString())->info("Joined network with successor {}", targetAddressOptional.value().toString());
     return true;
 }
 
-StabilizeTask::StabilizeTask(const Poco::Net::SocketAddress& ownAddress,
-                             FingerTable& fingerTable, ConnectionManager& connectionManager) : Task(fingerTable, connectionManager), ownAddress(ownAddress) {}
+StabilizeTask::StabilizeTask(FingerTable& fingerTable, 
+ConnectionManager& connectionManager, 
+const Poco::Net::SocketAddress& ownAddress) : Task(fingerTable, connectionManager, ownAddress) {}
 
 bool StabilizeTask::processMessage(const Poco::Net::SocketAddress& from, const std::unique_ptr<Message>& message) {
     if (state == TaskState::FINISHED) {
@@ -171,7 +184,7 @@ void StabilizeTask::init() {
         return;
     }
 
-    spdlog::debug("Stabilizing network");
+    spdlog::get(ownAddress.toString())->debug("Stabilizing network");
 
     // connectionManager.existsElseConnect(fingerTable.getSuccessor());
     currentSuccessor = fingerTable.getSuccessor();
@@ -209,10 +222,10 @@ void StabilizeTask::update() {
     messageSent = true;
 }
 
-FixFingersTask::FixFingersTask(const Poco::Net::SocketAddress& ownAddress, FingerTable& fingerTable, ConnectionManager& connectionManager) : Task(fingerTable, connectionManager), ownAddress(ownAddress) {
+FixFingersTask::FixFingersTask(FingerTable& fingerTable, ConnectionManager& connectionManager, const Poco::Net::SocketAddress& ownAddress) : Task(fingerTable, connectionManager, ownAddress) {
     findTasks.reserve(FingerTable::FINGER_TABLE_SIZE);
     for (std::size_t i = 0; i < FingerTable::FINGER_TABLE_SIZE; ++i) {
-        findTasks.push_back(FindTask(fingerTable.getFingerHashValue(i), fingerTable, connectionManager));
+        findTasks.push_back(FindTask(fingerTable.getFingerHashValue(i), fingerTable, connectionManager, ownAddress));
     }
 
     assert(findTasks.size() == FingerTable::FINGER_TABLE_SIZE);
@@ -223,7 +236,7 @@ void FixFingersTask::init() {
         return;
     }
 
-    spdlog::debug("Fixing fingers");
+    spdlog::get(ownAddress.toString())->debug("Fixing fingers");
 
     for (auto& task : findTasks) {
         task.init();
@@ -266,14 +279,14 @@ bool FixFingersTask::processMessage(const Poco::Net::SocketAddress& from, const 
     return std::any_of(results.begin(), results.end(), [](bool v) { return v; });
 }
 
-CheckPredecessorTask::CheckPredecessorTask(const Poco::Net::SocketAddress& ownAddress, FingerTable& fingerTable, ConnectionManager& connectionManager) : Task(fingerTable, connectionManager), ownAddress(ownAddress) {}
+CheckPredecessorTask::CheckPredecessorTask(FingerTable& fingerTable, ConnectionManager& connectionManager, const Poco::Net::SocketAddress& ownAddress) : Task(fingerTable, connectionManager, ownAddress) {}
 
 void CheckPredecessorTask::init() {
     if (state != TaskState::UNINITIALIZED) {
         return;
     }
 
-    spdlog::debug("Checking predecessor");
+    spdlog::get(ownAddress.toString())->debug("Checking predecessor");
 
     state = TaskState::RUNNING;
     auto predecessor = fingerTable.getPredecessor();
@@ -286,7 +299,7 @@ void CheckPredecessorTask::init() {
 
     if (!isEstablished) {
         fingerTable.setPredecessor(ownAddress);
-        spdlog::debug("Predecessor is not reachable, setting to own address");
+        spdlog::get(ownAddress.toString())->debug("Predecessor is not reachable, setting to own address");
         state = TaskState::FINISHED;
         return;
     }
@@ -297,5 +310,7 @@ void CheckPredecessorTask::init() {
 void CheckPredecessorTask::update() {}
 
 bool CheckPredecessorTask::processMessage(const Poco::Net::SocketAddress& from, const std::unique_ptr<Message>& message) {
+    (void) from;
+    (void) message;
     return true;
 }

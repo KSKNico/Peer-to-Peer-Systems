@@ -21,7 +21,7 @@ using ConnectionsMap =
 class ConnectionManager {
    public:
     ConnectionManager() = delete;
-    ConnectionManager(Poco::Net::SocketAddress ownAddress);
+    ConnectionManager(const Poco::Net::SocketAddress ownAddress);
     void acceptAllConnections();
 
     bool isConnectionEstablished(const Poco::Net::SocketAddress& address) const;

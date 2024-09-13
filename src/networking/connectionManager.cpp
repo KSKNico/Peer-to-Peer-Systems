@@ -7,20 +7,24 @@
 #include "connection.hpp"
 #include "spdlog/spdlog.h"
 
-ConnectionManager::ConnectionManager(Poco::Net::SocketAddress ownAddress) : ownAddress(ownAddress), acceptor(ownAddress.port()) {}
+ConnectionManager::ConnectionManager(const Poco::Net::SocketAddress ownAddress) : ownAddress(ownAddress), acceptor(ownAddress.port()) {
+    // spdlog::get(ownAddress.toString())->debug("ConnectionManager created with own address: {}", this->ownAddress.toString());
+}
 
 void ConnectionManager::acceptAllConnections() {
     while (acceptor.hasConnection()) {
         auto connection = acceptor.accept();
         auto addr = connection->getPeerAddress();
 
+        assert(ownAddress != connection->getPeerAddress()); 
+
         if (connection.get() == nullptr) {
-            spdlog::error("Failed to accept connection");
+            spdlog::get(ownAddress.toString())->error("Failed to accept connection");
             continue;
         }
 
         if (pendingIncomingConnections.contains(addr) || establishedConnections.contains(addr)) {
-            spdlog::warn("Incoming connection already exists");
+            spdlog::get(ownAddress.toString())->warn("Incoming connection already exists");
         } else {
             pendingIncomingConnections.insert(std::make_pair(addr, std::make_pair(std::move(connection), Timing())));
         }
@@ -50,7 +54,7 @@ void ConnectionManager::connectTo(const Poco::Net::SocketAddress &address) {
         throw std::runtime_error("Failed to connect outbound to " + address.toString());
     }
 
-    spdlog::debug("Opening connection to {}", address.toString());
+    spdlog::get(ownAddress.toString())->debug("Opening connection to {}", address.toString());
     pendingOutgoingConnections.insert(std::make_pair(address, std::make_pair(std::move(connection), Timing())));
 }
 
@@ -67,7 +71,7 @@ void ConnectionManager::updateOutgoingConnections() {
             timing.update();
             establishedConnections.insert(std::make_pair(addr, std::make_pair(std::move(connection), timing)));
             toErase.push_back(addr);
-            spdlog::debug("Outgoing connection to {} established", addr.toString());
+            spdlog::get(ownAddress.toString())->debug("Outgoing connection to {} established", addr.toString());
         }
     }
 
@@ -118,16 +122,33 @@ void ConnectionManager::updateIncomingConnections() {
 
         auto message = connection->receiveMessage();
         if (message->getType() == MessageType::ID) {
-            if (auto idMessage = dynamic_cast<IDMessage *>(message.get())) {
-                assert(idMessage->getOwnAddress().host() == addr.host());
-                timing.update();
-                establishedConnections.insert(std::make_pair(idMessage->getOwnAddress(), 
-                std::make_pair(std::move(connection), timing)));
-                toErase.push_back(addr);
-                spdlog::debug("Incoming connection from {} established", addr.toString());
-            } else {
+            auto idMessage = dynamic_cast<IDMessage *>(message.get());
+
+            if (idMessage == nullptr) {
                 throw std::runtime_error("Received invalid ID message");
             }
+
+            if (establishedConnections.contains(idMessage->getOwnAddress())) {
+                spdlog::get(ownAddress.toString())->warn("Incoming connection already exists");
+                toErase.push_back(addr);
+                continue;
+            }
+
+            if (idMessage->getOwnAddress() == ownAddress) {
+                throw std::runtime_error("Received connection from self");
+            } else {
+                spdlog::get(ownAddress.toString())->debug("Own address: {}, remote address: {}, remote peer server socket IP: {}", 
+                ownAddress.toString(), addr.toString(), idMessage->getOwnAddress().toString());
+            }
+
+            assert(idMessage->getOwnAddress().host() == addr.host());
+
+            timing.update();
+            establishedConnections.insert(std::make_pair(idMessage->getOwnAddress(), 
+            std::make_pair(std::move(connection), timing)));
+            toErase.push_back(addr);
+            spdlog::get(ownAddress.toString())->debug("Incoming connection from {} established (remote peer server socket IP: {})", addr.toString(),
+                          idMessage->getOwnAddress().toString());
         } else if (message->getType() == MessageType::INCOMPLETE) {
             continue;
         } else {

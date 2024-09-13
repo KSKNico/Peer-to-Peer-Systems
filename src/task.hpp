@@ -12,7 +12,9 @@ enum class TaskState { UNINITIALIZED,
 
 class Task {
    public:
-    Task(FingerTable& fingerTable, ConnectionManager& connectionManager);
+    Task(FingerTable& fingerTable, 
+        ConnectionManager& connectionManager, 
+        const Poco::Net::SocketAddress& ownAddress);
     virtual ~Task() = default;
     virtual bool processMessage(const Poco::Net::SocketAddress& from, const std::unique_ptr<Message>& message) = 0;
     virtual void update() = 0;
@@ -23,11 +25,16 @@ class Task {
     TaskState state = TaskState::UNINITIALIZED;
     FingerTable& fingerTable;
     ConnectionManager& connectionManager;
+    Poco::Net::SocketAddress ownAddress;
 };
 
 class FindTask : public Task {
    public:
-    FindTask(const Hash& target, FingerTable& fingerTable, ConnectionManager& connectionManager, std::optional<Poco::Net::SocketAddress> nextHop);
+    FindTask(const Hash& target,
+            FingerTable& fingerTable, 
+            ConnectionManager& connectionManager, 
+            const Poco::Net::SocketAddress& ownAddress,
+            std::optional<Poco::Net::SocketAddress> nextHop);
     bool processMessage(const Poco::Net::SocketAddress& from, const std::unique_ptr<Message>& message) override;
     void update() override;
     void init() override;
@@ -49,8 +56,10 @@ class JoinTask : public Task {
    public:
     // requires the address of the peer where the join takes place
     // first a find is conducted on the own address to find the successor of this peer
-    JoinTask(const Poco::Net::SocketAddress& ownAddress, const Poco::Net::SocketAddress& joinAddress,
-             FingerTable& fingerTable, ConnectionManager& connectionManager);
+    JoinTask(const Poco::Net::SocketAddress& joinAddress,
+             FingerTable& fingerTable, 
+             ConnectionManager& connectionManager, 
+             const Poco::Net::SocketAddress& ownAddress);
     bool processMessage(const Poco::Net::SocketAddress& from, const std::unique_ptr<Message>& message) override;
     void update() override;
     void init() override;
@@ -68,8 +77,9 @@ class JoinTask : public Task {
 // he might have a closer predecessor then p is discarded
 class StabilizeTask : public Task {
    public:
-    StabilizeTask(const Poco::Net::SocketAddress& ownAddress,
-                  FingerTable& fingerTable, ConnectionManager& connectionManager);
+    StabilizeTask(FingerTable& fingerTable, 
+                  ConnectionManager& connectionManager,
+                  const Poco::Net::SocketAddress& ownAddress);
     bool processMessage(const Poco::Net::SocketAddress& from, const std::unique_ptr<Message>& message) override;
     void update() override;
     void init() override;
@@ -83,8 +93,9 @@ class StabilizeTask : public Task {
 
 class FixFingersTask : public Task {
    public:
-    FixFingersTask(const Poco::Net::SocketAddress& ownAddress,
-                   FingerTable& fingerTable, ConnectionManager& connectionManager);
+    FixFingersTask(FingerTable& fingerTable, 
+                   ConnectionManager& connectionManager, 
+                   const Poco::Net::SocketAddress& ownAddress);
     bool processMessage(const Poco::Net::SocketAddress& from, const std::unique_ptr<Message>& message) override;
     void update() override;
     void init() override;
@@ -96,8 +107,9 @@ class FixFingersTask : public Task {
 
 class CheckPredecessorTask : public Task {
    public:
-    CheckPredecessorTask(const Poco::Net::SocketAddress& ownAddress,
-                         FingerTable& fingerTable, ConnectionManager& connectionManager);
+    CheckPredecessorTask(FingerTable& fingerTable, 
+                         ConnectionManager& connectionManager, 
+                         const Poco::Net::SocketAddress& ownAddress);
     bool processMessage(const Poco::Net::SocketAddress& from, const std::unique_ptr<Message>& message) override;
     void update() override;
     void init() override;

@@ -334,6 +334,8 @@ TEST(Peer, JoinThread) {
 */
 
 TEST(Peer, Join) {
+    spdlog::shutdown();
+
     Peer peer1(Poco::Net::SocketAddress("127.0.0.1:1234"), spdlog::level::debug);
     Peer peer2(Poco::Net::SocketAddress("127.0.0.1:1235"), Poco::Net::SocketAddress("127.0.0.1:1234"), spdlog::level::critical);
 
@@ -347,6 +349,8 @@ TEST(Peer, Join) {
 }
 
 TEST(Peer, MassJoin) {
+    spdlog::shutdown();
+
     std::list<Peer> peers;
     peers.emplace_back(Poco::Net::SocketAddress("127.0.0.1:1234"), spdlog::level::debug);
 
@@ -371,6 +375,8 @@ TEST(Peer, MassJoin) {
 }
 
 TEST(Peer, PeriodicTasks) {
+    spdlog::shutdown();
+
     auto peer1 = Peer(Poco::Net::SocketAddress("127.0.0.1:1234"), spdlog::level::debug);
     auto peer2 = Peer(Poco::Net::SocketAddress("127.0.0.1:1235"), Poco::Net::SocketAddress("127.0.0.1:1234"), spdlog::level::debug);
 
