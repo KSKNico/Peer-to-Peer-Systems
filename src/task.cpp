@@ -126,6 +126,10 @@ void JoinTask::init() {
 }
 
 bool JoinTask::processMessage(const Poco::Net::SocketAddress& from, const std::unique_ptr<Message>& message) {
+    if (state == TaskState::FINISHED) {
+        return false;
+    }
+
     bool findStatus = findTask.processMessage(from, message);
 
     auto targetAddressOptional = findTask.getTargetAddress();

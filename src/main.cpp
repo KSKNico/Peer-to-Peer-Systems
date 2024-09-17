@@ -1,6 +1,7 @@
 #include <future>
 #include <iostream>
 #include "peer.hpp"
+#include "timing.hpp"
 
 #include "Poco/Net/NetworkInterface.h"
 #include "Poco/Net/SocketAddress.h"
@@ -30,9 +31,16 @@ int main(int argc, char* argv[]) {
         return 1;
     }
 
+
+    std::chrono::seconds interval(1);
+    std::chrono::time_point last = std::chrono::system_clock::now();
     while (true) {
         peer->update();
-        peer->printConnections();
+
+        if (Timing::since(last) > interval) {
+            peer->printFingerTable();
+            last = std::chrono::system_clock::now();
+        }
     }
 
     
