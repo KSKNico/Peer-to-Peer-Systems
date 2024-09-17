@@ -136,9 +136,6 @@ void ConnectionManager::updateIncomingConnections() {
 
             if (idMessage->getOwnAddress() == ownAddress) {
                 throw std::runtime_error("Received connection from self");
-            } else {
-                spdlog::get(ownAddress.toString())->debug("Own address: {}, remote address: {}, remote peer server socket IP: {}", 
-                ownAddress.toString(), addr.toString(), idMessage->getOwnAddress().toString());
             }
 
             assert(idMessage->getOwnAddress().host() == addr.host());
