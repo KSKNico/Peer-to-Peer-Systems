@@ -337,7 +337,7 @@ TEST(Peer, Join) {
     spdlog::shutdown();
 
     Peer peer1(Poco::Net::SocketAddress("127.0.0.1:1234"), spdlog::level::debug);
-    Peer peer2(Poco::Net::SocketAddress("127.0.0.1:1235"), Poco::Net::SocketAddress("127.0.0.1:1234"), spdlog::level::critical);
+    Peer peer2(Poco::Net::SocketAddress("127.0.0.1:1235"), Poco::Net::SocketAddress("127.0.0.1:1234"), spdlog::level::debug);
 
     for (int i = 0; i < 100; ++i) {
         peer1.update();
@@ -388,4 +388,14 @@ TEST(Peer, PeriodicTasks) {
 
     peer1.printFingerTable();
     peer2.printFingerTable();
+}
+
+TEST(Peer, Bootstrapping) {
+    spdlog::shutdown();
+
+    auto peer1 = Peer(Poco::Net::SocketAddress("127.0.0.1:1234"), spdlog::level::debug);
+
+    while (peer1.getConnectionsCount() == 0) {
+        peer1.update();
+    }
 }
