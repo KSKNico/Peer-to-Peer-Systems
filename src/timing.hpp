@@ -21,7 +21,6 @@ class Timing {
         return std::chrono::duration_cast<result_t>(clock_t::now() - start);
     }
 
-
    private:
     std::chrono::steady_clock::time_point started;
     std::chrono::steady_clock::time_point lastUpdated;

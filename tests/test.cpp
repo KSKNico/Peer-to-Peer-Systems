@@ -339,10 +339,15 @@ TEST(Peer, Join) {
     Peer peer1(Poco::Net::SocketAddress("127.0.0.1:1234"), spdlog::level::debug);
     Peer peer2(Poco::Net::SocketAddress("127.0.0.1:1235"), Poco::Net::SocketAddress("127.0.0.1:1234"), spdlog::level::debug);
 
-    for (int i = 0; i < 100; ++i) {
+    // execute for 3 seconds
+    auto start = std::chrono::steady_clock::now();
+    while (Timing::since(start) < std::chrono::seconds(3)) {
         peer1.update();
         peer2.update();
     }
+
+    EXPECT_EQ(peer1.getSuccessor(), Poco::Net::SocketAddress("127.0.0.1:1235"));
+    EXPECT_EQ(peer2.getSuccessor(), Poco::Net::SocketAddress("127.0.0.1:1234"));
 
     peer1.printFingerTable();
     peer2.printFingerTable();
@@ -390,6 +395,8 @@ TEST(Peer, PeriodicTasks) {
     peer2.printFingerTable();
 }
 
+/*
+// this test requires external action by starting a separate instance
 TEST(Peer, Bootstrapping) {
     spdlog::shutdown();
 
@@ -399,3 +406,4 @@ TEST(Peer, Bootstrapping) {
         peer1.update();
     }
 }
+*/

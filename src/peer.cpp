@@ -112,6 +112,14 @@ void Peer::printFingerTable() const {
               << std::endl;
 }
 
+Poco::Net::SocketAddress Peer::getSuccessor() const {
+    return fingerTable.getSuccessor();
+}
+
+Poco::Net::SocketAddress Peer::getPredecessor() const {
+    return fingerTable.getPredecessor();
+}
+
 std::size_t Peer::getConnectionsCount() const {
     return connectionManager.getEstablishedConnectionsCount();
 }

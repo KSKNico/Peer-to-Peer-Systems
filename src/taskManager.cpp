@@ -25,19 +25,19 @@ void TaskManager::launchPeriodicTasks() {
         return;
     }
 
-    if (std::chrono::steady_clock::now() - lastStabilize > stabilizeInterval) {
+    if (Timing::since(lastStabilize) > stabilizeInterval) {
         lastStabilize = std::chrono::steady_clock::now();
         auto stabilizeTask = std::make_unique<StabilizeTask>(fingerTable, connectionManager, ownAddress);
         addTask(std::move(stabilizeTask));
     }
 
-    if (std::chrono::steady_clock::now() - lastFixFingers > fixFingersInterval) {
+    if (Timing::since(lastFixFingers) > fixFingersInterval) {
         lastFixFingers = std::chrono::steady_clock::now();
         auto fixFingersTask = std::make_unique<FixFingersTask>(fingerTable, connectionManager, ownAddress);
         addTask(std::move(fixFingersTask));
     }
 
-    if (std::chrono::steady_clock::now() - lastCheckPredecessor > checkPredecessorInterval) {
+    if (Timing::since(lastCheckPredecessor) > checkPredecessorInterval) {
         lastCheckPredecessor = std::chrono::steady_clock::now();
         auto checkPredecessorTask = std::make_unique<CheckPredecessorTask>(fingerTable, connectionManager, ownAddress);
         addTask(std::move(checkPredecessorTask));

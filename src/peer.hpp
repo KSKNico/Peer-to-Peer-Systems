@@ -33,6 +33,8 @@ class Peer {
     void createLogger(const spdlog::level::level_enum logLevel);
 
     std::size_t getConnectionsCount() const;
+    Poco::Net::SocketAddress getSuccessor() const;
+    Poco::Net::SocketAddress getPredecessor() const;
 
     // delete copy constructor
     Peer(const Peer&) = delete;
@@ -41,12 +43,13 @@ class Peer {
     Peer& operator=(Peer&&) = delete;
 
    private:
-    /* messages to consider processing
+    /* messages to consider processing:
         - FIND
         - GSUC
         - GPRE
         - SSUC
         - SPRE
+
         all other message need to be processed by the task manager
     */
     void processMessage(const Poco::Net::SocketAddress& from, const std::unique_ptr<Message>& message);
