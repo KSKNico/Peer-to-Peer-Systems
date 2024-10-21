@@ -153,6 +153,7 @@ bool JoinTask::processMessage(const Poco::Net::SocketAddress& from, const std::u
 
     state = TaskState::FINISHED;
     spdlog::get(ownAddress.toString())->info("Joined network with successor {}", targetAddressOptional.value().toString());
+    assert(fingerTable.getSuccessor() != ownAddress);
     return true;
 }
 
