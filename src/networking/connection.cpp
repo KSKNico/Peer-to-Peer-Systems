@@ -4,6 +4,7 @@
 
 #include "../globalDefinitions.hpp"
 #include "../hash.hpp"
+#include "spdlog/spdlog.h"
 
 enum class ConnectionState {
     UNINITIALIZED,
@@ -41,6 +42,7 @@ void Connection::sendMessages(const std::vector<Message>& messages) {
 };
 
 std::unique_ptr<Message> Connection::receiveMessage() {
+    std::cout << "RECEIVED" << std::endl;
     str.clear();
     std::getline(stream, str, MESSAGE_TERMINATOR);
 
@@ -48,6 +50,7 @@ std::unique_ptr<Message> Connection::receiveMessage() {
 
     // check for eofbit
     if (stream.bad() || stream.fail()) {
+        stream.clear();
         return std::make_unique<ErroredMessage>();
     }
 
@@ -63,7 +66,7 @@ std::unique_ptr<Message> Connection::receiveMessage() {
 
     std::string head = Message::extractHead(str);
     MessageType type = Message::getMessageTypeFromString(head);
-
+    // spdlog::get(socket.address().toString())->debug("Received message of type {}", head);
     switch (type) {
         case MessageType::ID:
             return std::make_unique<IDMessage>(IDMessage::fromString(str));
@@ -100,7 +103,11 @@ bool Connection::isConnected() {
 };
 
 bool Connection::isReadable() {
-    return socket.poll(0, Poco::Net::Socket::SELECT_READ);
+    if (socket.poll(0, Poco::Net::Socket::SELECT_READ)) {
+        return true;
+    }
+
+    return stream.rdbuf()->in_avail() > 0;
 };
 
 bool Connection::isWritable() {

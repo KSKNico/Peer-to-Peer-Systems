@@ -4,3 +4,4 @@ bin
 .idea/
 Makefile
 cmake_install.cmake
+uml/

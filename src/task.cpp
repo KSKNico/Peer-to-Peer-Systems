@@ -70,8 +70,10 @@ bool FindTask::processMessage(const Poco::Net::SocketAddress& from, const std::u
     }
 
     auto findMessage = dynamic_cast<const FindResponseMessage*>(message.get());
+    spdlog::get(ownAddress.toString())->debug("Received find response message");
 
     if (target != findMessage->target) {
+        spdlog::get(ownAddress.toString())->debug("Received find response message with wrong target");
         return false;
     }
 
@@ -130,6 +132,7 @@ bool JoinTask::processMessage(const Poco::Net::SocketAddress& from, const std::u
         return false;
     }
 
+    // the find task is responsible for processing the message
     bool findStatus = findTask.processMessage(from, message);
 
     auto targetAddressOptional = findTask.getTargetAddress();

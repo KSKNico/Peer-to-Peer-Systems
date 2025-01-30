@@ -29,6 +29,10 @@ class Connection {
     Connection(const Connection&) = delete;
     Connection& operator=(const Connection&) = delete;
 
+    // delete move constructor and move assignment operator
+    Connection(Connection&&) = delete;
+    Connection& operator=(Connection&&) = delete;
+
    private:
     Poco::Net::StreamSocket socket;
     Poco::Net::SocketStream stream;

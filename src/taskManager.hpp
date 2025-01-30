@@ -8,6 +8,7 @@
 #include "timing.hpp"
 #include "spdlog/spdlog.h"
 
+// contains the task and timing information about it
 using TaskPair = std::pair<std::unique_ptr<Task>, Timing>;
 
 class TaskManager {

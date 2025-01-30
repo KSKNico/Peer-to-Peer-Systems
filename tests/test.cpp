@@ -356,26 +356,29 @@ TEST(Peer, Join) {
 TEST(Peer, MassJoin) {
     spdlog::shutdown();
 
-    std::list<Peer> peers;
-    peers.emplace_back(Poco::Net::SocketAddress("127.0.0.1:1234"), spdlog::level::debug);
+    std::vector<std::unique_ptr<Peer>> peers;
+    // address of the bootstrap node
+    auto bootstrapAddr = Poco::Net::SocketAddress("127.0.0.1:1234");
+    peers.push_back(std::make_unique<Peer>(bootstrapAddr, spdlog::level::debug));
 
     for (int i = 0; i < 30; ++i) {
         // set own port to 1234
         auto port = 1235 + i;
 
-        auto addr = Poco::Net::SocketAddress("127.0.0.1:1234");
-        addr = Poco::Net::SocketAddress(addr.host().toString() + ":" + std::to_string(port));
-        peers.emplace_back(addr, Poco::Net::SocketAddress("127.0.0.1:1234"), spdlog::level::off);
+        // the other addresses are based on the bootstrap address
+        auto addr = Poco::Net::SocketAddress(bootstrapAddr.host().toString() + ":" + std::to_string(port));
+        peers.push_back(std::make_unique<Peer>(addr, Poco::Net::SocketAddress("127.0.0.1:1234"), 
+                        spdlog::level::off));
     }
 
     for (int i = 0; i < 100; ++i) {
         for (auto &peer : peers) {
-            peer.update();
+            peer->update();
         }
     }
 
     for (auto it = peers.begin(); it != peers.end(); ++it) {
-        it->printFingerTable();
+        (*it)->printFingerTable();
     }
 }
 

@@ -66,13 +66,14 @@ void ConnectionManager::updateOutgoingConnections() {
     auto toErase = std::vector<Poco::Net::SocketAddress>();
     for (auto &[addr, connectionPair] : pendingOutgoingConnections) {
         auto &[connection, timing] = connectionPair;
-        if (connection->isConnected()) {
-            connection->sendMessage(IDMessage(ownAddress));
-            timing.update();
-            establishedConnections.insert(std::make_pair(addr, std::make_pair(std::move(connection), timing)));
-            toErase.push_back(addr);
-            spdlog::get(ownAddress.toString())->debug("Outgoing connection to {} established", addr.toString());
+        if (!connection->isConnected()) {
+            continue;
         }
+        connection->sendMessage(IDMessage(ownAddress));
+        timing.update();
+        establishedConnections.insert(std::make_pair(addr, std::make_pair(std::move(connection), timing)));
+        toErase.push_back(addr);
+        spdlog::get(ownAddress.toString())->debug("Sent outgoing ID message to {}", addr.toString());
     }
 
     for (const auto &addr : toErase) {
@@ -84,6 +85,7 @@ void ConnectionManager::sendMessage(const Poco::Net::SocketAddress &address, con
     if (establishedConnections.contains(address)) {
         establishedConnections.at(address).first->sendMessage(message);
         establishedConnections.at(address).second.update();
+        spdlog::get(ownAddress.toString())->debug("Message sent to {}", address.toString());
     } else {
         throw std::runtime_error("Connection does not exist");
     }
@@ -99,6 +101,10 @@ std::vector<MessagePair> ConnectionManager::receiveMessages() {
         }
 
         std::unique_ptr<Message> message = connection->receiveMessage();
+        spdlog::get(ownAddress.toString())->debug("Received {} message from {}", 
+        Message::extractHead(message->toString()),
+        addr.toString());
+
         if (message->isComplete() && !message->isErrored()) {
             messages.push_back({addr, std::move(message)});
             timing.update();
@@ -144,8 +150,9 @@ void ConnectionManager::updateIncomingConnections() {
             establishedConnections.insert(std::make_pair(idMessage->getOwnAddress(), 
             std::make_pair(std::move(connection), timing)));
             toErase.push_back(addr);
-            spdlog::get(ownAddress.toString())->debug("Incoming connection from {} established (remote peer server socket IP: {})", addr.toString(),
-                          idMessage->getOwnAddress().toString());
+            spdlog::get(ownAddress.toString())->debug("Incoming connection from {} established (remote peer server socket IP: {})", 
+                        addr.toString(),
+                        idMessage->getOwnAddress().toString());
         } else if (message->getType() == MessageType::INCOMPLETE) {
             continue;
         } else {
