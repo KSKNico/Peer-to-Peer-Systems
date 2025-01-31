@@ -85,7 +85,9 @@ void ConnectionManager::sendMessage(const Poco::Net::SocketAddress &address, con
     if (establishedConnections.contains(address)) {
         establishedConnections.at(address).first->sendMessage(message);
         establishedConnections.at(address).second.update();
-        spdlog::get(ownAddress.toString())->debug("Message sent to {}", address.toString());
+        spdlog::get(ownAddress.toString())->debug("{} message sent to {}",
+        Message::extractHead(message.toString()),
+        address.toString());
     } else {
         throw std::runtime_error("Connection does not exist");
     }

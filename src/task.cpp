@@ -84,7 +84,10 @@ bool FindTask::processMessage(const Poco::Net::SocketAddress& from, const std::u
         connectionManager.existsElseConnect(findMessage->referenceAddress);
         targetAddress = findMessage->referenceAddress;
 
-        spdlog::get(ownAddress.toString())->debug("Found target {} at {}", target.toString(), targetAddress.value().toString());
+        spdlog::get(ownAddress.toString())->debug("Found target {} at {}", 
+        target.toString(), 
+        targetAddress.value().toString());
+        
         state = TaskState::FINISHED;
     } else {
         nextHop = findMessage->referenceAddress;

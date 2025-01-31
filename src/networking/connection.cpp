@@ -42,7 +42,6 @@ void Connection::sendMessages(const std::vector<Message>& messages) {
 };
 
 std::unique_ptr<Message> Connection::receiveMessage() {
-    std::cout << "RECEIVED" << std::endl;
     str.clear();
     std::getline(stream, str, MESSAGE_TERMINATOR);
 

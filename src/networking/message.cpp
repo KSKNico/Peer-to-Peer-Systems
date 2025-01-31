@@ -47,6 +47,8 @@ MessageType Message::getMessageTypeFromString(const std::string &str) {
         return MessageType::JOIN;
     } else if (head == FindMessage::head) {
         return MessageType::FIND;
+    } else if (head == FindResponseMessage::head) {
+        return MessageType::FINDR;
     } else {
         throw std::runtime_error("Unknown message type: " + head);
     }
@@ -138,7 +140,7 @@ std::string ErroredMessage::toString() const {
 }
 
 FindMessage::FindMessage(const Hash &target) : target(target) {
-    type = MessageType::JOIN;
+    type = MessageType::FIND;
 }
 
 std::string FindMessage::toString() const {
