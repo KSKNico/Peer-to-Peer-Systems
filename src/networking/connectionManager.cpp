@@ -89,7 +89,10 @@ void ConnectionManager::sendMessage(const Poco::Net::SocketAddress &address, con
         Message::extractHead(message.toString()),
         address.toString());
     } else {
-        throw std::runtime_error("Connection does not exist");
+        for (auto &c : this->getEstablishedConnections()) {
+            spdlog::get(ownAddress.toString())->error("Established connection: {}", c.toString());
+        }
+        throw std::runtime_error("Connection does not exist to " + address.toString());
     }
 }
 

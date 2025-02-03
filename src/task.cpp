@@ -80,7 +80,7 @@ bool FindTask::processMessage(const Poco::Net::SocketAddress& from, const std::u
     assert(!nextHop.has_value());
 
     auto referenceAddressHash = Hash(findMessage->referenceAddress);
-    if (target.isBetween(Hash(from), referenceAddressHash)) {
+    if (Hash(from) == referenceAddressHash) {
         connectionManager.existsElseConnect(findMessage->referenceAddress);
         targetAddress = findMessage->referenceAddress;
 
@@ -103,7 +103,6 @@ JoinTask::JoinTask(const Poco::Net::SocketAddress& joinAddress,
                    FingerTable& fingerTable,
                    ConnectionManager& connectionManager,
                    const Poco::Net::SocketAddress& ownAddress) : Task(fingerTable, connectionManager, ownAddress),
-                                                           ownAddress(ownAddress),
                                                            joinAddress(joinAddress),
                                                            findTask(Hash(ownAddress), fingerTable, connectionManager, ownAddress, joinAddress) {}
 
@@ -146,7 +145,9 @@ bool JoinTask::processMessage(const Poco::Net::SocketAddress& from, const std::u
     assert(findTask.getState() == TaskState::FINISHED);
 
     if (targetAddressOptional.value() == ownAddress) {
-        spdlog::get(ownAddress.toString())->info("Joining network has failed because the target address is the same as the own address ({})", ownAddress.toString());
+        spdlog::get(ownAddress.toString())
+        ->info("Joining network has failed because the target address is the same as the own address ({})", ownAddress.toString());
+
         state = TaskState::FINISHED;
         return true;
     }
@@ -195,7 +196,8 @@ void StabilizeTask::init() {
         return;
     }
 
-    spdlog::get(ownAddress.toString())->debug("Stabilizing network");
+    std::cout << ownAddress.toString() << std::endl;
+    spdlog::get(ownAddress.toString())->debug("Stabilizing network for {}", ownAddress.toString());
 
     // connectionManager.existsElseConnect(fingerTable.getSuccessor());
     currentSuccessor = fingerTable.getSuccessor();

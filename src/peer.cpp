@@ -45,7 +45,7 @@ void Peer::update() {
     for (auto& [from, message] : messagePairs) {
         taskManager.processMessage(from, message);
         this->processMessage(from, message);
-        spdlog::get(ownAddress.toString())->debug("Message {}", message->toString());
+        // spdlog::get(ownAddress.toString())->debug("Message {}", message->toString());
     }
 }
 

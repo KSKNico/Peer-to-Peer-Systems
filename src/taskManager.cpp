@@ -22,6 +22,7 @@ void TaskManager::processMessage(const Poco::Net::SocketAddress& from, const std
 
 void TaskManager::launchPeriodicTasks() {
     if (fingerTable.getSuccessor() == ownAddress) {
+        // this means that we haven't joined the network yet
         return;
     }
 

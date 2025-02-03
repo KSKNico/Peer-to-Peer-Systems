@@ -16,10 +16,12 @@ class Task {
         ConnectionManager& connectionManager, 
         const Poco::Net::SocketAddress& ownAddress);
     virtual ~Task() = default;
+    Task() = delete;
     virtual bool processMessage(const Poco::Net::SocketAddress& from, const std::unique_ptr<Message>& message) = 0;
     virtual void update() = 0;
     virtual void init() = 0;
     virtual TaskState getState() const;
+
 
    protected:
     TaskState state = TaskState::UNINITIALIZED;
@@ -65,7 +67,6 @@ class JoinTask : public Task {
     void init() override;
 
    private:
-    Poco::Net::SocketAddress ownAddress;
     Poco::Net::SocketAddress joinAddress;
     FindTask findTask;
 };
@@ -87,7 +88,6 @@ class StabilizeTask : public Task {
    private:
     bool messageSent = false;
     Poco::Net::SocketAddress currentSuccessor;
-    Poco::Net::SocketAddress ownAddress;
     std::optional<Poco::Net::SocketAddress> predecessorOfSuccessor;
 };
 
@@ -102,7 +102,6 @@ class FixFingersTask : public Task {
 
    private:
     std::vector<FindTask> findTasks;
-    Poco::Net::SocketAddress ownAddress;
 };
 
 class CheckPredecessorTask : public Task {
@@ -115,6 +114,5 @@ class CheckPredecessorTask : public Task {
     void init() override;
 
    private:
-    Poco::Net::SocketAddress ownAddress;
     std::optional<Poco::Net::SocketAddress> predecessor;
 };

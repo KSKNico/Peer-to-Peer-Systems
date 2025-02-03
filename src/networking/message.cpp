@@ -49,6 +49,18 @@ MessageType Message::getMessageTypeFromString(const std::string &str) {
         return MessageType::FIND;
     } else if (head == FindResponseMessage::head) {
         return MessageType::FINDR;
+    } else if (head == SetPredecessorMessage::head) {
+        return MessageType::SPRE;
+    } else if (head == SetSuccessorMessage::head) {
+        return MessageType::SSUC;
+    } else if (head == GetSuccessorMessage::head) {
+        return MessageType::GSUC;
+    } else if (head == GetSuccessorResponseMessage::head) {
+        return MessageType::GSUCR;
+    } else if (head == GetPredecessorMessage::head) {
+        return MessageType::GPRE;
+    } else if (head == GetPredecessorResponseMessage::head) {
+        return MessageType::GPRER;
     } else {
         throw std::runtime_error("Unknown message type: " + head);
     }

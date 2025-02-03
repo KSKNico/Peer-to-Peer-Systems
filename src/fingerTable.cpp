@@ -40,6 +40,11 @@ Poco::Net::SocketAddress FingerTable::getSuccessor() const {
 }
 
 void FingerTable::setSuccessor(const Poco::Net::SocketAddress &successor) {
+    if (this->successor == ownAddress) {
+        // this means that the peer is the only peer in the network
+        this->successor = successor;
+    }
+
     if (Hash(successor).isBetween(ownHash, Hash(this->successor))) {
         this->successor = successor;
     }
