@@ -96,7 +96,8 @@ void Peer::printConnections() const {
 
 void Peer::printFingerTable() const {
     Poco::Net::SocketAddress lastFinger;
-    std::cout << "Finger Table for " << this->ownAddress << std::endl;
+    std::cout << "Finger Table for " << this->ownAddress << " (" 
+    << Hash::hashSocketAddress(this->ownAddress).toString() << ")" << std::endl;
     std::cout << "This successor " << fingerTable.getSuccessor() << std::endl;
     std::cout << "This predecessor " << fingerTable.getPredecessor() << std::endl;
     std::cout << "------" << std::endl;

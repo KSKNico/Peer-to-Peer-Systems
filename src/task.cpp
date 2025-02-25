@@ -36,6 +36,8 @@ void FindTask::init() {
 }
 
 void FindTask::update() {
+    assert(messagesSent <= 10);
+
     if (state == TaskState::FINISHED) {
         return;
     }
@@ -54,7 +56,9 @@ void FindTask::update() {
     
     connectionManager.existsElseConnect(nextHop.value());
     if (connectionManager.isConnectionEstablished(nextHop.value())) {
+        spdlog::get(ownAddress.toString())->debug("Looking for target {} at {}", target.toString(), nextHop.value().toString());
         connectionManager.sendMessage(nextHop.value(), FindMessage(target));
+        this->messagesSent++;
         lastSentTo = nextHop.value();
         nextHop = std::nullopt;
     }
@@ -70,6 +74,7 @@ bool FindTask::processMessage(const Poco::Net::SocketAddress& from, const std::u
     }
 
     auto findMessage = dynamic_cast<const FindResponseMessage*>(message.get());
+    // std::cout << from.toString() << " ---> " << this->ownAddress.toString() << std::endl;
     spdlog::get(ownAddress.toString())->debug("Received find response message");
 
     if (target != findMessage->target) {
@@ -157,6 +162,7 @@ bool JoinTask::processMessage(const Poco::Net::SocketAddress& from, const std::u
 
     // inform the new successor about the new predecessor (this peer)
     connectionManager.sendMessage(fingerTable.getSuccessor(), SetPredecessorMessage(ownAddress));
+    this->messagesSent++;
 
     state = TaskState::FINISHED;
     spdlog::get(ownAddress.toString())->info("Joined network with successor {}", targetAddressOptional.value().toString());
@@ -196,7 +202,6 @@ void StabilizeTask::init() {
         return;
     }
 
-    std::cout << ownAddress.toString() << std::endl;
     spdlog::get(ownAddress.toString())->debug("Stabilizing network for {}", ownAddress.toString());
 
     // connectionManager.existsElseConnect(fingerTable.getSuccessor());
@@ -216,6 +221,7 @@ void StabilizeTask::update() {
             return;
         }
         connectionManager.sendMessage(predecessorOfSuccessor.value(), SetPredecessorMessage(ownAddress));
+        this->messagesSent++;
         state = TaskState::FINISHED;
         return;
     }
@@ -232,6 +238,7 @@ void StabilizeTask::update() {
 
     assert(!messageSent);
     connectionManager.sendMessage(currentSuccessor, GetPredecessorMessage());
+    this->messagesSent++;
     messageSent = true;
 }
 

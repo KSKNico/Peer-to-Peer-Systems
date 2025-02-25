@@ -28,6 +28,7 @@ class Task {
     FingerTable& fingerTable;
     ConnectionManager& connectionManager;
     Poco::Net::SocketAddress ownAddress;
+    unsigned int messagesSent = 0;
 };
 
 class FindTask : public Task {

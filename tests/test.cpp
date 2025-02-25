@@ -382,6 +382,38 @@ TEST(Peer, MassJoin) {
     }
 }
 
+TEST(Peer, ThreePeerJoin) {
+    spdlog::shutdown();
+
+    auto peer1 = Peer(Poco::Net::SocketAddress("127.0.0.1:1234"), spdlog::level::err);
+
+    auto start = std::chrono::steady_clock::now();
+    while(Timing::since(start) < std::chrono::seconds(5)) {
+        peer1.update();
+    }
+
+    auto peer2 = Peer(Poco::Net::SocketAddress("127.0.0.1:1235"), Poco::Net::SocketAddress("127.0.0.1:1234"),
+    spdlog::level::err);
+
+    while(Timing::since(start) < std::chrono::seconds(10)) {
+        peer1.update();
+        peer2.update();
+    }
+
+    auto peer3 = Peer(Poco::Net::SocketAddress("127.0.0.1:1236"), Poco::Net::SocketAddress("127.0.0.1:1234"),
+    spdlog::level::debug);
+
+    while(Timing::since(start) < std::chrono::seconds(15)) {
+        peer1.update();
+        peer2.update();
+        peer3.update();
+    }
+
+    peer1.printFingerTable();
+    peer2.printFingerTable();
+    peer3.printFingerTable();
+}
+
 TEST(Peer, PeriodicTasks) {
     spdlog::shutdown();
 

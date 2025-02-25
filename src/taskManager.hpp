@@ -29,10 +29,10 @@ class TaskManager {
    private:
     void launchPeriodicTasks();
 
-    const std::chrono::seconds stabilizeInterval = std::chrono::seconds(1);
-    const std::chrono::seconds fixFingersInterval = std::chrono::seconds(5);
+    const std::chrono::seconds stabilizeInterval = std::chrono::seconds(5);
+    const std::chrono::seconds fixFingersInterval = std::chrono::seconds(10);
     const std::chrono::seconds checkPredecessorInterval = std::chrono::seconds(10);
-    const std::chrono::seconds taskTimeout = std::chrono::seconds(5);
+    const std::chrono::seconds taskTimeout = std::chrono::seconds(10);
 
     std::chrono::time_point<std::chrono::steady_clock> lastStabilize;
     std::chrono::time_point<std::chrono::steady_clock> lastFixFingers;
