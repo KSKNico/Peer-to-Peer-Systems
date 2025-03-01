@@ -74,25 +74,31 @@ class JoinMessage : public Message {
 // used to find a peer that is responsible for a certain hash
 class FindMessage : public Message {
    public:
-    FindMessage(const Hash &hash);
+    FindMessage(const Hash &hash, const Poco::Net::SocketAddress &origin);
     std::string toString() const override;
     static FindMessage fromString(const std::string &);
 
     static constexpr std::string head = "FIND";
 
+    // target that needs to be found in the network
     const Hash target;
+
+    // what peer has initially issued this find task
+    const Poco::Net::SocketAddress origin;
 };
 
-// contains the IP address of the next peer for the find message
+// contains the hash that has been found
+// this message is to be sent back by the correct peer 
+// to the peer that started the find task
 class FindResponseMessage : public Message {
    public:
-    FindResponseMessage(const Hash &target, const Poco::Net::SocketAddress &addr);
+    FindResponseMessage(const Hash &target);
     std::string toString() const override;
     static FindResponseMessage fromString(const std::string &);
 
     static constexpr std::string head = "FINDR";
 
-    const Poco::Net::SocketAddress referenceAddress;
+    // target that has been found
     const Hash target;
 };
 

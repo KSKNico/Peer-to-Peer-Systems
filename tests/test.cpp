@@ -29,7 +29,7 @@ TEST(Message, IDMessageTest) {
 }
 
 TEST(Message, FindMessageTest) {
-    FindMessage msg = FindMessage(Hash::hashInterval(123));
+    FindMessage msg = FindMessage(Hash::hashInterval(123), Poco::Net::SocketAddress("127.0.0.1:1234"));
     ASSERT_EQ(msg.target, Hash::hashInterval(123));
 
     // compare strings
@@ -40,9 +40,8 @@ TEST(Message, FindMessageTest) {
 }
 
 TEST(Message, FindResponseMessageTest) {
-    auto msg = FindResponseMessage(Hash::hashInterval(123), Poco::Net::SocketAddress("127.0.0.1:1234"));
+    auto msg = FindResponseMessage(Hash::hashInterval(123));
     ASSERT_EQ(msg.target, Hash::hashInterval(123));
-    ASSERT_EQ(msg.referenceAddress, Poco::Net::SocketAddress("127.0.0.1:1234"));
 
     // compare strings
     auto str = msg.toString();

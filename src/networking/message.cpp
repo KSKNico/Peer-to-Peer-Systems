@@ -151,36 +151,34 @@ std::string ErroredMessage::toString() const {
     return "";
 }
 
-FindMessage::FindMessage(const Hash &target) : target(target) {
+FindMessage::FindMessage(const Hash &target, const Poco::Net::SocketAddress& origin) : target(target), origin(origin) {
     type = MessageType::FIND;
 }
 
 std::string FindMessage::toString() const {
-    return head + MESSAGE_DELIMITER + target.toString();
+    return head + MESSAGE_DELIMITER + target.toString() + MESSAGE_DELIMITER + origin.toString();
 }
 
+// message looks like this "FIND,<target>,<origin>"
 FindMessage FindMessage::fromString(const std::string &str) {
     Hash target = Hash::fromString(str.substr(str.find(MESSAGE_DELIMITER) + 1));
-    return FindMessage(target);
+    Poco::Net::SocketAddress origin = Poco::Net::SocketAddress(str.substr(str.rfind(MESSAGE_DELIMITER) + 1));
+    return FindMessage(target, origin);
 }
 
-FindResponseMessage::FindResponseMessage(const Hash &target, const Poco::Net::SocketAddress &referenceAddress) : referenceAddress(referenceAddress), target(target) {
+FindResponseMessage::FindResponseMessage(const Hash &target) : target(target) {
     type = MessageType::FINDR;
 }
 
 std::string FindResponseMessage::toString() const {
-    return head + MESSAGE_DELIMITER + target.toString() + MESSAGE_DELIMITER + referenceAddress.toString();
+    return head + MESSAGE_DELIMITER + target.toString();
 }
 
-// message looks like this "FINDR,<target>,<address>"
+// message looks like this "FINDR,<target>"
 FindResponseMessage FindResponseMessage::fromString(const std::string &str) {
-    std::size_t firstDelimiter = str.find(MESSAGE_DELIMITER);
-    std::size_t secondDelimiter = str.find(MESSAGE_DELIMITER, firstDelimiter + 1);
+    auto target = Hash::fromString(str.substr(str.find(MESSAGE_DELIMITER) + 1));
 
-    std::string target = str.substr(firstDelimiter + 1, secondDelimiter - firstDelimiter - 1);
-    std::string address = str.substr(secondDelimiter + 1);
-
-    return FindResponseMessage(Hash::fromString(target), Poco::Net::SocketAddress(address));
+    return FindResponseMessage(target);
 }
 
 GetSuccessorMessage GetSuccessorMessage::fromString(const std::string &str) {

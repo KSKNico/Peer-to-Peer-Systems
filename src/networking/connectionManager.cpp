@@ -62,6 +62,17 @@ bool ConnectionManager::isConnectionEstablished(const Poco::Net::SocketAddress &
     return establishedConnections.contains(address);
 }
 
+void ConnectionManager::connectToAndSend(const Poco::Net::SocketAddress &address, 
+    std::unique_ptr<Message> message) {
+    if (pendingOutgoingConnections.contains(address) || establishedConnections.contains(address)) {
+        return;
+    }
+
+    connectTo(address);
+    messageBuffers.insert({address, std::move(message)});
+    return;
+}
+
 void ConnectionManager::updateOutgoingConnections() {
     auto toErase = std::vector<Poco::Net::SocketAddress>();
     for (auto &[addr, connectionPair] : pendingOutgoingConnections) {
@@ -92,7 +103,8 @@ void ConnectionManager::sendMessage(const Poco::Net::SocketAddress &address, con
         for (auto &c : this->getEstablishedConnections()) {
             spdlog::get(ownAddress.toString())->error("Established connection: {}", c.toString());
         }
-        throw std::runtime_error("Connection does not exist to " + address.toString());
+        throw std::runtime_error("Connection from " + ownAddress.toString() + " does not exist to " 
+        + address.toString());
     }
 }
 
@@ -183,10 +195,21 @@ std::vector<Poco::Net::SocketAddress> ConnectionManager::checkEstablishedConnect
     return erased;
 }
 
+void ConnectionManager::sendAllBufferedMessages() {
+    for (auto &[addr, message] : messageBuffers) {
+        if (!establishedConnections.contains(addr)) {
+            continue;
+        }
+        sendMessage(addr, *message);
+    }
+    messageBuffers.clear();
+}
+
 std::vector<Poco::Net::SocketAddress> ConnectionManager::update() {
     acceptAllConnections();
     updateOutgoingConnections();
     updateIncomingConnections();
+    sendAllBufferedMessages();
     return checkEstablishedConnections();
 }
 

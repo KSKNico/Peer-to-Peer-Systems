@@ -57,12 +57,31 @@ void Peer::processMessage(const Poco::Net::SocketAddress& from, const std::uniqu
     switch (msgType) {
         case MessageType::FIND:
             findMessage = dynamic_cast<FindMessage*>(message.get());
-            if (Hash(findMessage->target).isBetween(Hash(from), Hash(ownAddress))) {
-                connectionManager.sendMessage(from, FindResponseMessage(findMessage->target, ownAddress));
-            } else {
-                next = fingerTable.getClosestPrecedingFinger(findMessage->target);
-                connectionManager.sendMessage(from, FindResponseMessage(findMessage->target, next));
+
+
+            if (fingerTable.getPredecessor() == ownAddress && fingerTable.getSuccessor() == ownAddress) {
+                connectionManager.connectToAndSend(findMessage->origin, 
+                std::make_unique<FindResponseMessage>(findMessage->target));
+                return;
             }
+
+            // the FIND is looking for this peer
+            if (findMessage->target == Hash(ownAddress)) {
+                connectionManager.connectToAndSend(findMessage->origin, 
+                std::make_unique<FindResponseMessage>(findMessage->target));
+                return;
+            }
+
+            // the FIND is looking for this peer
+            if (findMessage->target.isBetween(Hash(fingerTable.getPredecessor()), Hash(ownAddress))) {
+                connectionManager.connectToAndSend(findMessage->origin, 
+                std::make_unique<FindResponseMessage>(findMessage->target));
+                return;
+            }
+    
+            // another peer can be queried
+            next = fingerTable.getClosestPrecedingFinger(findMessage->target);
+            connectionManager.sendMessage(next, *findMessage);
             return;
         case MessageType::GSUC:
             connectionManager.sendMessage(from, GetSuccessorResponseMessage(fingerTable.getSuccessor()));

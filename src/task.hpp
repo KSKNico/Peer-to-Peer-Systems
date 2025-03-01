@@ -31,13 +31,14 @@ class Task {
     unsigned int messagesSent = 0;
 };
 
+// task that finds the peer responsible for the target hash
 class FindTask : public Task {
    public:
     FindTask(const Hash& target,
             FingerTable& fingerTable, 
             ConnectionManager& connectionManager, 
             const Poco::Net::SocketAddress& ownAddress,
-            std::optional<Poco::Net::SocketAddress> nextHop);
+            std::optional<Poco::Net::SocketAddress> initialPeer = std::nullopt);
     bool processMessage(const Poco::Net::SocketAddress& from, const std::unique_ptr<Message>& message) override;
     void update() override;
     void init() override;
@@ -47,11 +48,15 @@ class FindTask : public Task {
     const Hash target;
     Poco::Net::SocketAddress lastSentTo;
 
-    // this is the next hop to send a find message to
-    std::optional<Poco::Net::SocketAddress> nextHop;
+    // this is the initial peer for joining the network if the joining peer has 
+    // no fingertable yet
+    std::optional<Poco::Net::SocketAddress> initialPeer;
 
     // target address that is responsible for target
     std::optional<Poco::Net::SocketAddress> targetAddress;
+
+    // this is the peer that the find task needs to send a find message to
+    Poco::Net::SocketAddress sendTo;
 };
 
 // is supposed to run on the peer that is joining a network

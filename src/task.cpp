@@ -15,8 +15,8 @@ FindTask::FindTask(const Hash& target,
                 FingerTable& fingerTable, 
                 ConnectionManager& connectionManager, 
                 const Poco::Net::SocketAddress& ownAddress,
-                std::optional<Poco::Net::SocketAddress> nextHop = std::nullopt) : 
-                Task(fingerTable, connectionManager, ownAddress), target(target), nextHop(nextHop) {}
+                std::optional<Poco::Net::SocketAddress> initialPeer) : 
+                Task(fingerTable, connectionManager, ownAddress), target(target), initialPeer(initialPeer) {}
 
 void FindTask::init() {
     if (state != TaskState::UNINITIALIZED) {
@@ -25,12 +25,20 @@ void FindTask::init() {
 
     spdlog::get(ownAddress.toString())->debug("Finding target {}", target.toString());
 
-    // the nextHop can be set when the search is to be started from a single known peer
-    // i.e. when joining the network
-    if (!nextHop.has_value()) {
-        nextHop = fingerTable.getClosestPrecedingFinger(target);
-        // connectionManager.existsElseConnect(nextHop.value());
+    if (!initialPeer.has_value()) {
+        sendTo = fingerTable.getClosestPrecedingFinger(target);
+    } else {
+        // this means there is no initial Peer provided therefore
+        // the first peer to query is the peer provided (initialPeer)
+        sendTo = initialPeer.value();
     }
+
+    if (sendTo == ownAddress) {
+        targetAddress = ownAddress;
+        state = TaskState::FINISHED;
+        return;
+    }
+    connectionManager.existsElseConnect(sendTo);
 
     state = TaskState::RUNNING;
 }
@@ -42,10 +50,14 @@ void FindTask::update() {
         return;
     }
 
-    if (!nextHop.has_value()) {
+    if (connectionManager.isConnectionEstablished(sendTo) && messagesSent == 0) {
+        connectionManager.sendMessage(sendTo, FindMessage(target, ownAddress));
+        this->messagesSent++;
+        lastSentTo = sendTo;
         return;
     }
 
+    /*
     if (nextHop.value() == ownAddress) {
         spdlog::get(ownAddress.toString())->debug("Target is for this peer");
         targetAddress = ownAddress;
@@ -62,10 +74,11 @@ void FindTask::update() {
         lastSentTo = nextHop.value();
         nextHop = std::nullopt;
     }
+    */
 }
 
 bool FindTask::processMessage(const Poco::Net::SocketAddress& from, const std::unique_ptr<Message>& message) {
-    if (state == TaskState::FINISHED || from != lastSentTo) {
+    if (state == TaskState::FINISHED) {
         return false;
     }
 
@@ -73,19 +86,19 @@ bool FindTask::processMessage(const Poco::Net::SocketAddress& from, const std::u
         return false;
     }
 
-    auto findMessage = dynamic_cast<const FindResponseMessage*>(message.get());
-    // std::cout << from.toString() << " ---> " << this->ownAddress.toString() << std::endl;
-    spdlog::get(ownAddress.toString())->debug("Received find response message");
+    auto findResponseMessage = dynamic_cast<const FindResponseMessage*>(message.get());
 
-    if (target != findMessage->target) {
-        spdlog::get(ownAddress.toString())->debug("Received find response message with wrong target");
+    if (findResponseMessage->target != target) {
         return false;
     }
 
-    assert(!nextHop.has_value());
+    // std::cout << from.toString() << " ---> " << this->ownAddress.toString() << std::endl;
+    spdlog::get(ownAddress.toString())->debug("Received find response message");
 
-    auto referenceAddressHash = Hash(findMessage->referenceAddress);
-    if (Hash(from) == referenceAddressHash) {
+    targetAddress = from;
+
+    state = TaskState::FINISHED;
+    /*
         connectionManager.existsElseConnect(findMessage->referenceAddress);
         targetAddress = findMessage->referenceAddress;
 
@@ -97,6 +110,7 @@ bool FindTask::processMessage(const Poco::Net::SocketAddress& from, const std::u
     } else {
         nextHop = findMessage->referenceAddress;
     }
+    */
     return true;
 }
 

@@ -16,6 +16,11 @@ using ConnectionPair = std::pair<std::unique_ptr<Connection>, Timing>;
 using ConnectionsMap =
     std::unordered_map<Poco::Net::SocketAddress, ConnectionPair, Hash::SocketAddressHasher>;
 
+using MessageBuffers = std::unordered_map<
+    Poco::Net::SocketAddress, 
+    std::unique_ptr<Message>,
+    Hash::SocketAddressHasher>;
+
 // using MessageMap = std::unordered_map<Poco::Net::SocketAddress, std::queue<Message>, Hash::SocketAddressHasher>;
 
 class ConnectionManager {
@@ -27,6 +32,7 @@ class ConnectionManager {
     bool isConnectionEstablished(const Poco::Net::SocketAddress& address) const;
 
     void connectTo(const Poco::Net::SocketAddress& address);
+    void connectToAndSend(const Poco::Net::SocketAddress& address, std::unique_ptr<Message> message);
     void sendMessage(const Poco::Net::SocketAddress& address, const Message& message);
     void closeConnection(const Poco::Net::SocketAddress& address);
     std::vector<MessagePair> receiveMessages();
@@ -43,6 +49,8 @@ class ConnectionManager {
     void updateOutgoingConnections();
     void updateIncomingConnections();
 
+    void sendAllBufferedMessages();
+
     std::size_t getEstablishedConnectionsCount() const;
 
     std::vector<Poco::Net::SocketAddress> getEstablishedConnections() const;
@@ -51,6 +59,8 @@ class ConnectionManager {
     const Poco::Net::SocketAddress ownAddress;
     ConnectionsMap pendingOutgoingConnections;
     ConnectionsMap pendingIncomingConnections;
+
+    MessageBuffers messageBuffers;  
 
     // established connections are connections where an ID exchange has been completed
     ConnectionsMap establishedConnections;
