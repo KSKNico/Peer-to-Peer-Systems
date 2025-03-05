@@ -58,12 +58,29 @@ void Peer::processMessage(const Poco::Net::SocketAddress& from, const std::uniqu
         case MessageType::FIND:
             findMessage = dynamic_cast<FindMessage*>(message.get());
 
+            spdlog::get(ownAddress.toString())->debug("Received FIND message from {} with target {} and origin {}", 
+            from.toString(), 
+            findMessage->target.toString(), 
+            findMessage->origin.toString());
 
-            if (fingerTable.getPredecessor() == ownAddress && fingerTable.getSuccessor() == ownAddress) {
+            
+
+
+            if (fingerTable.getPredecessor() == ownAddress || fingerTable.getSuccessor() == ownAddress) {
                 connectionManager.connectToAndSend(findMessage->origin, 
                 std::make_unique<FindResponseMessage>(findMessage->target));
                 return;
             }
+
+            // we have no redirecting or answering to do if the target is between the from and the own address
+            // because this peer is responsible for the target
+            if (findMessage->target.isBetween(Hash(from), Hash(ownAddress))) {
+                // do nothing
+                return;
+            }
+            
+
+            printFingerTable();
 
             // the FIND is looking for this peer
             if (findMessage->target == Hash(ownAddress)) {
@@ -72,8 +89,11 @@ void Peer::processMessage(const Poco::Net::SocketAddress& from, const std::uniqu
                 return;
             }
 
+
+
             // the FIND is looking for this peer
             if (findMessage->target.isBetween(Hash(fingerTable.getPredecessor()), Hash(ownAddress))) {
+                spdlog::get(ownAddress.toString())->debug("Sending FIND to origin {}", findMessage->origin.toString());
                 connectionManager.connectToAndSend(findMessage->origin, 
                 std::make_unique<FindResponseMessage>(findMessage->target));
                 return;
@@ -81,6 +101,8 @@ void Peer::processMessage(const Poco::Net::SocketAddress& from, const std::uniqu
     
             // another peer can be queried
             next = fingerTable.getClosestPrecedingFinger(findMessage->target);
+            spdlog::get(ownAddress.toString())->debug("Forwarding FIND message to {}", next.toString());
+
             connectionManager.sendMessage(next, *findMessage);
             return;
         case MessageType::GSUC:
@@ -94,7 +116,7 @@ void Peer::processMessage(const Poco::Net::SocketAddress& from, const std::uniqu
             return;
         case MessageType::SPRE:
             setPredecessorMessage = dynamic_cast<SetPredecessorMessage*>(message.get());
-            fingerTable.setPredecessor(setPredecessorMessage->getNewPredecessor());
+            fingerTable.updatePredecessor(setPredecessorMessage->getNewPredecessor());
             return;
         default:
             return;

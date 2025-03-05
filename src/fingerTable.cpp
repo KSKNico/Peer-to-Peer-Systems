@@ -40,44 +40,55 @@ Poco::Net::SocketAddress FingerTable::getSuccessor() const {
     return successor;
 }
 
-void FingerTable::setSuccessor(const Poco::Net::SocketAddress &successor) {
+void FingerTable::updateSuccessor(const Poco::Net::SocketAddress &successor) {
     spdlog::get(this->ownAddress.toString())->debug("Setting successor to {}", successor.toString());
 
-    if (this->successor == ownAddress) {
+    if (this->successor == ownAddress && this->predecessor == ownAddress) {
         // this means that the peer is the only peer in the network
-        this->successor = successor;
-        
-        // if the predecessor is the peer itself then the predecessor must be the new successor
-        if (this->predecessor == ownAddress) {
-            this->predecessor = successor;
-        }
+        setSuccessor(successor);
+        setPredecessor(successor);
         return;
     }
 
     if (Hash(successor).isBetween(ownHash, Hash(this->successor))) {
-        this->successor = successor;
+        setSuccessor(successor);
+        return;
     }
+
+    spdlog::get(this->ownAddress.toString())->warn("Successor wasn't updated");
 }
 
-void FingerTable::setPredecessor(const Poco::Net::SocketAddress &predecessor) {
+void FingerTable::updatePredecessor(const Poco::Net::SocketAddress &predecessor) {
     // if there is no successor and no predecessor, set the predecessor to the new predecessor
     if (this->successor == ownAddress && this->predecessor == ownAddress) {
-        this->predecessor = predecessor;
-        this->successor = predecessor;
+        setPredecessor(predecessor);
+        setSuccessor(predecessor);
         return;
     }
 
     // if the current predecessor is not set, set it to the new predecessor
     if (this->predecessor == ownAddress) {
         assert(Hash(ownAddress).isBetween(Hash(predecessor), Hash(this->successor)));
-        this->predecessor = predecessor;
+        setPredecessor(predecessor);
         return;
     }
 
     if (Hash(predecessor).isBetween(Hash(this->predecessor), ownHash)) {
-        this->predecessor = predecessor;
+        setPredecessor(predecessor);
         return;
     }
+
+    spdlog::get(this->ownAddress.toString())->warn("Predecessor wasn't updated");
+}
+
+void FingerTable::setSuccessor(const Poco::Net::SocketAddress &successor) {
+    updateWithAddress(successor);
+    this->successor = successor;
+}
+
+void FingerTable::setPredecessor(const Poco::Net::SocketAddress &predecessor) {
+    updateWithAddress(predecessor);
+    this->predecessor = predecessor;
 }
 
 Poco::Net::SocketAddress FingerTable::getPredecessor() const {

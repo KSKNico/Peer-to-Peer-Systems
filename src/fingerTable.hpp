@@ -30,14 +30,17 @@ class FingerTable {
     // is the reverse of updateWithAddress
     void removeAddress(const Poco::Net::SocketAddress& address);
 
-    void setSuccessor(const Poco::Net::SocketAddress& successor);
+    void updateSuccessor(const Poco::Net::SocketAddress& successor);
 
     // only sets the predecessor if the new predecessor is closer to the peer's own address
-    void setPredecessor(const Poco::Net::SocketAddress& predecessor);
+    void updatePredecessor(const Poco::Net::SocketAddress& predecessor);
 
     static const std::size_t FINGER_TABLE_SIZE = Hash::HASH_BIT_SIZE;
 
    private:
+    void setSuccessor(const Poco::Net::SocketAddress& successor);
+    void setPredecessor(const Poco::Net::SocketAddress& predecessor);
+
     const Poco::Net::SocketAddress ownAddress;
     const Hash ownHash;
     Poco::Net::SocketAddress successor;

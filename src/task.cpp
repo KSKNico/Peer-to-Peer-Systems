@@ -82,6 +82,18 @@ bool FindTask::processMessage(const Poco::Net::SocketAddress& from, const std::u
         return false;
     }
 
+    // one special case!: where the from is before the target and the target is before the own address
+    // the message type is FIND and not FINDR!
+    if (message->getType() == MessageType::FIND) {
+        auto findMessage = dynamic_cast<const FindMessage*>(message.get());
+
+        if (Hash(target).isBetween(from, Hash(ownAddress))) {
+            targetAddress = ownAddress;
+            state = TaskState::FINISHED;
+            return true;
+        }
+    }
+
     if (message->getType() != MessageType::FINDR) {
         return false;
     }
@@ -172,7 +184,7 @@ bool JoinTask::processMessage(const Poco::Net::SocketAddress& from, const std::u
     }
 
     fingerTable.updateWithAddress(targetAddressOptional.value());
-    fingerTable.setSuccessor(targetAddressOptional.value());
+    fingerTable.updateSuccessor(targetAddressOptional.value());
 
     // inform the new successor about the new predecessor (this peer)
     connectionManager.sendMessage(fingerTable.getSuccessor(), SetPredecessorMessage(ownAddress));
@@ -205,7 +217,7 @@ bool StabilizeTask::processMessage(const Poco::Net::SocketAddress& from, const s
     if (predecessor != ownAddress) {
         assert(Hash(predecessor).isBetween(fingerTable.getOwnHash(), Hash(currentSuccessor)));
         predecessorOfSuccessor = predecessor;
-        fingerTable.setSuccessor(predecessor);
+        fingerTable.updateSuccessor(predecessor);
     }
 
     return true;
@@ -332,7 +344,7 @@ void CheckPredecessorTask::init() {
     auto isEstablished = connectionManager.isConnectionEstablished(predecessor);
 
     if (!isEstablished) {
-        fingerTable.setPredecessor(ownAddress);
+        fingerTable.updatePredecessor(ownAddress);
         spdlog::get(ownAddress.toString())->debug("Predecessor is not reachable, setting to own address");
         state = TaskState::FINISHED;
         return;

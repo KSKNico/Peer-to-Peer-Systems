@@ -64,12 +64,14 @@ bool ConnectionManager::isConnectionEstablished(const Poco::Net::SocketAddress &
 
 void ConnectionManager::connectToAndSend(const Poco::Net::SocketAddress &address, 
     std::unique_ptr<Message> message) {
+    messageBuffers.insert({address, std::move(message)});
+
     if (pendingOutgoingConnections.contains(address) || establishedConnections.contains(address)) {
         return;
     }
 
     connectTo(address);
-    messageBuffers.insert({address, std::move(message)});
+
     return;
 }
 
