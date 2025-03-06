@@ -32,6 +32,46 @@ std::string Message::extractHead(const std::string &str) {
     return head;
 }
 
+std::unique_ptr<Message> Message::fromString(const std::string &str) {
+    MessageType type = getMessageTypeFromString(str);
+
+    switch(type) {
+        case MessageType::ID:
+            return std::make_unique<IDMessage>(IDMessage::fromString(str));
+        case MessageType::JOIN:
+            return std::make_unique<JoinMessage>(JoinMessage::fromString(str));
+        case MessageType::FIND:
+            return std::make_unique<FindMessage>(FindMessage::fromString(str));
+        case MessageType::FINDR:
+            return std::make_unique<FindResponseMessage>(FindResponseMessage::fromString(str));
+        case MessageType::GSUC:
+            return std::make_unique<GetSuccessorMessage>(GetSuccessorMessage::fromString(str));
+        case MessageType::GSUCR:
+            return std::make_unique<GetSuccessorResponseMessage>(GetSuccessorResponseMessage::fromString(str));
+        case MessageType::SPRE:
+            return std::make_unique<SetPredecessorMessage>(SetPredecessorMessage::fromString(str));
+        case MessageType::SSUC:
+            return std::make_unique<SetSuccessorMessage>(SetSuccessorMessage::fromString(str));
+        case MessageType::GPRE:
+            return std::make_unique<GetPredecessorMessage>(GetPredecessorMessage::fromString(str));
+        case MessageType::GPRER:
+            return std::make_unique<GetPredecessorResponseMessage>(GetPredecessorResponseMessage::fromString(str));
+        case MessageType::STORE:
+            return std::make_unique<StoreMessage>(StoreMessage::fromString(str));
+        case MessageType::QUERY:
+            return std::make_unique<QueryMessage>(QueryMessage::fromString(str));
+        case MessageType::QRESP:
+            return std::make_unique<QueryResponseMessage>(QueryResponseMessage::fromString(str));
+        case MessageType::INCOMPLETE:
+            return std::make_unique<IncompleteMessage>(IncompleteMessage(str));
+        case MessageType::ERRORED:
+            return std::make_unique<ErroredMessage>();
+        default:
+            throw std::runtime_error("Unknown message type");
+            
+    }
+}
+
 MessageType Message::getMessageTypeFromString(const std::string &str) {
     std::string head;
     for (std::size_t i = 0; i < str.size(); i++) {
@@ -61,6 +101,12 @@ MessageType Message::getMessageTypeFromString(const std::string &str) {
         return MessageType::GPRE;
     } else if (head == GetPredecessorResponseMessage::head) {
         return MessageType::GPRER;
+    } else if (head == StoreMessage::head) {
+        return MessageType::STORE;
+    } else if (head == QueryMessage::head) {
+        return MessageType::QUERY;
+    } else if (head == QueryResponseMessage::head) {
+        return MessageType::QRESP;
     } else {
         throw std::runtime_error("Unknown message type: " + head);
     }
@@ -266,3 +312,98 @@ SetPredecessorMessage SetPredecessorMessage::fromString(const std::string &str) 
 Poco::Net::SocketAddress SetPredecessorMessage::getNewPredecessor() const {
     return newPredecessor;
 }
+
+
+// MARK: - StoreMessage
+StoreMessage::StoreMessage(uint64_t query, const std::vector<uint64_t> &results) : query(query), results(results) {
+    type = MessageType::STORE;
+}
+
+std::string StoreMessage::toString() const {
+    std::stringstream ss;
+    ss << head << MESSAGE_DELIMITER << query << MESSAGE_DELIMITER;
+    for (const auto &result : results) {
+        ss << result << RESULT_DELIMITER;
+    }
+    return ss.str();
+}
+
+StoreMessage StoreMessage::fromString(const std::string &str) {
+    std::size_t delimiter = str.find(MESSAGE_DELIMITER);
+    std::string query = str.substr(delimiter + 1);
+    std::size_t resultDelimiter = query.find(MESSAGE_DELIMITER);
+    std::string queryStr = query.substr(0, resultDelimiter);
+    std::string resultsStr = query.substr(resultDelimiter + 1);
+    std::vector<uint64_t> results;
+    std::size_t pos = 0;
+    while ((pos = resultsStr.find(RESULT_DELIMITER)) != std::string::npos) {
+        results.push_back(std::stoull(resultsStr.substr(0, pos)));
+        resultsStr.erase(0, pos + 1);
+    }
+    return StoreMessage(std::stoull(queryStr), results);
+}
+
+std::uint64_t StoreMessage::getQuery() const {
+    return query;
+}
+
+std::vector<uint64_t> StoreMessage::getResults() const {
+    return results;
+}
+
+// MARK: - QueryMessage
+QueryMessage::QueryMessage(uint64_t query) : query(query) {
+    type = MessageType::QUERY;
+}
+
+std::string QueryMessage::toString() const {
+    return head + MESSAGE_DELIMITER + std::to_string(query);
+}
+
+QueryMessage QueryMessage::fromString(const std::string &str) {
+    std::size_t delimiter = str.find(MESSAGE_DELIMITER);
+    std::string query = str.substr(delimiter + 1);
+    return QueryMessage(std::stoull(query));
+}
+
+std::uint64_t QueryMessage::getQuery() const {
+    return query;
+}
+
+QueryResponseMessage::QueryResponseMessage(std::uint64_t query, const std::vector<std::uint64_t> &results) : 
+    query(query), results(results) {
+    type = MessageType::QRESP;
+}
+
+std::string QueryResponseMessage::toString() const {
+    std::stringstream ss;
+    ss << head << MESSAGE_DELIMITER << query << MESSAGE_DELIMITER;
+    for (const auto &result : results) {
+        ss << result << RESULT_DELIMITER;
+    }
+    return ss.str();
+}
+
+QueryResponseMessage QueryResponseMessage::fromString(const std::string &str) {
+    std::size_t delimiter = str.find(MESSAGE_DELIMITER);
+    std::string query = str.substr(delimiter + 1);
+    std::size_t resultDelimiter = query.find(MESSAGE_DELIMITER);
+    std::string queryStr = query.substr(0, resultDelimiter);
+    std::string resultsStr = query.substr(resultDelimiter + 1);
+    std::vector<std::uint64_t> results;
+    std::size_t pos = 0;
+    while ((pos = resultsStr.find(RESULT_DELIMITER)) != std::string::npos) {
+        results.push_back(std::stoull(resultsStr.substr(0, pos)));
+        resultsStr.erase(0, pos + 1);
+    }
+    return QueryResponseMessage(std::stoull(queryStr), results);
+}
+
+std::uint64_t QueryResponseMessage::getQuery() const {
+    return query;
+}
+
+std::vector<std::uint64_t> QueryResponseMessage::getResults() const {
+    return results;
+}
+

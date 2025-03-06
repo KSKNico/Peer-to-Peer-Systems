@@ -64,8 +64,6 @@ void Peer::processMessage(const Poco::Net::SocketAddress& from, const std::uniqu
             findMessage->origin.toString());
 
             
-
-
             if (fingerTable.getPredecessor() == ownAddress || fingerTable.getSuccessor() == ownAddress) {
                 connectionManager.connectToAndSend(findMessage->origin, 
                 std::make_unique<FindResponseMessage>(findMessage->target));
@@ -78,9 +76,6 @@ void Peer::processMessage(const Poco::Net::SocketAddress& from, const std::uniqu
                 // do nothing
                 return;
             }
-            
-
-            printFingerTable();
 
             // the FIND is looking for this peer
             if (findMessage->target == Hash(ownAddress)) {
@@ -88,8 +83,6 @@ void Peer::processMessage(const Poco::Net::SocketAddress& from, const std::uniqu
                 std::make_unique<FindResponseMessage>(findMessage->target));
                 return;
             }
-
-
 
             // the FIND is looking for this peer
             if (findMessage->target.isBetween(Hash(fingerTable.getPredecessor()), Hash(ownAddress))) {

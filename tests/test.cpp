@@ -50,6 +50,28 @@ TEST(Message, FindResponseMessageTest) {
     ASSERT_EQ(msg.toString(), newMsg.toString());
 }
 
+TEST(Message, StoreMessageTest) {
+    auto query = 10000000;
+    auto results = std::vector<uint64_t>({10000019, 10000079, 10000103, 10000121});
+
+    auto msg = StoreMessage(query, results);
+    
+    // both the query and the results should be the same
+    ASSERT_EQ(msg.getQuery(), query);
+    ASSERT_EQ(msg.getResults(), results);
+
+    // compare strings
+    auto str = msg.toString();
+    auto newMsg = StoreMessage::fromString(str);
+
+    ASSERT_EQ(msg.toString(), newMsg.toString());
+
+    // test the fromString function
+    auto newMsg2 = StoreMessage::fromString("STORE,10000000,10000019;10000079;10000103;10000121;");
+    ASSERT_EQ(newMsg2.getQuery(), 10000000);
+    ASSERT_EQ(newMsg2.getResults(), results);
+}
+
 TEST(Hash, SocketAddress) {
     Poco::Net::SocketAddress addr("127.0.0.1:1234");
 

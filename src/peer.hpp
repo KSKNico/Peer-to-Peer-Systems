@@ -36,6 +36,8 @@ class Peer {
     Poco::Net::SocketAddress getSuccessor() const;
     Poco::Net::SocketAddress getPredecessor() const;
 
+    bool isJoined() const;
+
     // delete copy constructor
     Peer(const Peer&) = delete;
     Peer& operator=(const Peer&) = delete;

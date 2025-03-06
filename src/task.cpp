@@ -85,7 +85,7 @@ bool FindTask::processMessage(const Poco::Net::SocketAddress& from, const std::u
     // one special case!: where the from is before the target and the target is before the own address
     // the message type is FIND and not FINDR!
     if (message->getType() == MessageType::FIND) {
-        auto findMessage = dynamic_cast<const FindMessage*>(message.get());
+        // auto findMessage = dynamic_cast<const FindMessage*>(message.get());
 
         if (Hash(target).isBetween(from, Hash(ownAddress))) {
             targetAddress = ownAddress;

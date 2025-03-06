@@ -20,6 +20,9 @@ enum class MessageType {
     SPRE,
     GPRE,
     GPRER,
+    STORE,
+    QUERY,
+    QRESP,
     INCOMPLETE,
     ERRORED,
     UNKNOWN,
@@ -32,6 +35,8 @@ class Message {
     virtual std::string toString() const = 0;
     // static Message fromString(const std::string &str);
     // static std::string extractHead(const Poco::FIFOBuffer &buffer);
+    static std::unique_ptr<Message> fromString(const std::string &str);
+
     static std::string extractHead(const std::string &str);
 
     static MessageType getMessageTypeFromString(const std::string &str);
@@ -186,4 +191,50 @@ class SetPredecessorMessage : public Message {
 
    private:
     const Poco::Net::SocketAddress newPredecessor;
+};
+
+class QueryMessage : public Message {
+    public:
+     QueryMessage(uint64_t query);
+     std::string toString() const override;
+     static QueryMessage fromString(const std::string &str);
+    
+     static constexpr std::string head = "QUERY";
+    
+     uint64_t getQuery() const;
+    
+    private:
+     const uint64_t query;
+};
+
+class StoreMessage : public Message {
+    public:
+    StoreMessage(uint64_t query, const std::vector<uint64_t> &results);
+    std::string toString() const override;
+    static StoreMessage fromString(const std::string &str);
+
+    static constexpr std::string head = "STORE";
+
+    uint64_t getQuery() const;
+    std::vector<uint64_t> getResults() const;
+
+    private:
+    const std::uint64_t query;
+    const std::vector<uint64_t> results;
+};
+
+class QueryResponseMessage : public Message {
+    public:
+    QueryResponseMessage(uint64_t query, const std::vector<uint64_t> &results);
+    std::string toString() const override;
+    static QueryResponseMessage fromString(const std::string &str);
+
+    static constexpr std::string head = "QRESP";
+
+    std::uint64_t getQuery() const;
+    std::vector<uint64_t> getResults() const;
+
+    private:
+    const std::uint64_t query;
+    const std::vector<uint64_t> results;
 };

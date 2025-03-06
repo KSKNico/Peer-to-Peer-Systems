@@ -2,7 +2,7 @@
 
 #include <iostream>
 
-void ResultHandler::updateResultWithSingleFuture(ull lowerBound) {
+void ResultHandler::updateResultWithSingleFuture(uint64_t lowerBound) {
     std::unique_lock<std::mutex> lock(futuresMutex);
     auto it = futures.find(lowerBound);
     if (it == futures.end()) {
@@ -10,7 +10,7 @@ void ResultHandler::updateResultWithSingleFuture(ull lowerBound) {
     }
     std::future_status status = it->second.wait_for(std::chrono::seconds(0));
     if (status == std::future_status::ready) {
-        std::vector<ull> results = it->second.get();
+        std::vector<uint64_t> results = it->second.get();
         addResults(lowerBound, results);
         futures.erase(it);
     }
@@ -18,13 +18,13 @@ void ResultHandler::updateResultWithSingleFuture(ull lowerBound) {
 
 void ResultHandler::updateResultsWithFutures() {
     std::unique_lock<std::mutex> lock(futuresMutex);
-    std::vector<ull> toErase;
+    std::vector<uint64_t> toErase;
     for (auto &futurePair : futures) {
         // get the status
         std::future_status status = futurePair.second.wait_for(std::chrono::seconds(0));
         if (status == std::future_status::ready) {
             // get the result
-            std::vector<ull> results = futurePair.second.get();
+            std::vector<uint64_t> results = futurePair.second.get();
             addResults(futurePair.first, results);
             toErase.push_back(futurePair.first);
         } else if (status == std::future_status::timeout) {
@@ -33,17 +33,17 @@ void ResultHandler::updateResultsWithFutures() {
             // do nothing
         }
     }
-    for (ull lowerBound : toErase) {
+    for (uint64_t lowerBound : toErase) {
         futures.erase(lowerBound);
     }
 }
 
-bool ResultHandler::isActivelyCalculated(ull lowerBound) {
+bool ResultHandler::isActivelyCalculated(uint64_t lowerBound) {
     std::unique_lock<std::mutex> lock(futuresMutex);
     return futures.find(lowerBound) != futures.end();
 }
 
-ull ResultHandler::getHighest() {
+uint64_t ResultHandler::getHighest() {
     updateResultsWithFutures();
     std::unique_lock<std::mutex> lock(resultsMutex);
     if (results.empty()) {
@@ -52,18 +52,18 @@ ull ResultHandler::getHighest() {
     return results.rbegin()->first;
 }
 
-bool ResultHandler::hasResults(ull lowerBound) {
+bool ResultHandler::hasResults(uint64_t lowerBound) {
     updateResultWithSingleFuture(lowerBound);
     std::unique_lock<std::mutex> lock(resultsMutex);
     return results.find(lowerBound) != results.end();
 }
 
-void ResultHandler::addResults(ull lowerBound, std::vector<ull> primeNumbers) {
+void ResultHandler::addResults(uint64_t lowerBound, std::vector<uint64_t> primeNumbers) {
     std::unique_lock<std::mutex> lock(resultsMutex);
     results[lowerBound] = primeNumbers;
 }
 
-std::optional<std::vector<ull>> ResultHandler::getResults(ull lowerBound) {
+std::optional<std::vector<uint64_t>> ResultHandler::getResults(uint64_t lowerBound) {
     updateResultWithSingleFuture(lowerBound);
     std::unique_lock<std::mutex> lock(resultsMutex);
     auto it = results.find(lowerBound);
@@ -74,7 +74,7 @@ std::optional<std::vector<ull>> ResultHandler::getResults(ull lowerBound) {
     }
 }
 
-void ResultHandler::submitCalculation(ull lowerBound) {
+void ResultHandler::submitCalculation(uint64_t lowerBound) {
     std::unique_lock<std::mutex> lock(futuresMutex);
     if (futures.find(lowerBound) != futures.end()) {
         return;
@@ -82,15 +82,15 @@ void ResultHandler::submitCalculation(ull lowerBound) {
     futures[lowerBound] = std::async(std::launch::async, &ResultHandler::calculatePrimes, lowerBound);
 }
 
-std::vector<ull> ResultHandler::calculatePrimes(ull lowerBound) {
-    std::vector<ull> primes;
-    ull upperBound = lowerBound + INTERVAL_SIZE;
-    for (ull i = lowerBound; i <= upperBound; i++) {
+std::vector<uint64_t> ResultHandler::calculatePrimes(uint64_t lowerBound) {
+    std::vector<uint64_t> primes;
+    uint64_t upperBound = lowerBound + INTERVAL_SIZE;
+    for (uint64_t i = lowerBound; i <= upperBound; i++) {
         bool isPrime = true;
         if (i == 0 || i == 1) {
             isPrime = false;
         }
-        for (ull j = 2; j < i; j++) {
+        for (uint64_t j = 2; j < i; j++) {
             if (i % j == 0) {
                 // cout <<"not prime "<< i << "\n";
                 isPrime = false;
