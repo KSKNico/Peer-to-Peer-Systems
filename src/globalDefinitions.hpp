@@ -1,9 +1,12 @@
 #pragma once
 
 #include <cstdint>
+#include <map>
+#include <vector>
 
 using resultType = std::uint64_t;
 using resultContainer = std::vector<resultType>;
+using resultMap = std::map<resultType, resultContainer>;
 
 constexpr unsigned int MAX_MESSAGE_SIZE = 10240;
 constexpr char MESSAGE_DELIMITER = ',';

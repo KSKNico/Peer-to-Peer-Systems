@@ -62,4 +62,6 @@ class Peer {
     ConnectionManager connectionManager;
     FingerTable fingerTable;
     TaskManager taskManager;
+
+    
 };

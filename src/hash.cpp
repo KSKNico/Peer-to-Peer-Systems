@@ -1,7 +1,9 @@
+#include "globalDefinitions.hpp"
 #include "hash.hpp"
 
 #include <algorithm>
 #include <cassert>
+
 
 Poco::SHA2Engine Hash::engine = Poco::SHA2Engine(Poco::SHA2Engine::ALGORITHM::SHA_256);
 
@@ -19,7 +21,7 @@ Hash Hash::hashSocketAddress(Poco::Net::SocketAddress const &address) {
     return Hash(hashValue);
 }
 
-Hash Hash::hashInterval(unsigned long long intervalStart) {
+Hash Hash::hashInterval(resultType intervalStart) {
     engine.update(std::to_string(intervalStart));
     auto d = engine.digest();
     HashType hashValue = 0;

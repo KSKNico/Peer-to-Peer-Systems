@@ -8,6 +8,8 @@
 
 constexpr uint64_t INTERVAL_SIZE = 1000;
 
+
+// stores the results that the peer has calculated
 class ResultHandler {
     public:
 
@@ -36,6 +38,7 @@ class ResultHandler {
 
     private:
     // calculates the prime numbers between the given lowerBound and lowerBound + INTERVAL_SIZE
+    // i. e. the interval [lowerBound, lowerBound + INTERVAL_SIZE)
     // should not be called directly, use submitCalculation instead
     static std::vector<uint64_t> calculatePrimes(uint64_t lowerBound);
 

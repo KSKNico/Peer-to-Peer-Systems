@@ -122,3 +122,19 @@ class CheckPredecessorTask : public Task {
    private:
     std::optional<Poco::Net::SocketAddress> predecessor;
 };
+
+class CalculatePrimeTask : public Task {
+    public:
+     CalculatePrimeTask(FingerTable& fingerTable, 
+                        ConnectionManager& connectionManager, 
+                        const Poco::Net::SocketAddress& ownAddress,
+                        std::optional<uint64_t> lowerBound);
+     bool processMessage(const Poco::Net::SocketAddress& from, const std::unique_ptr<Message>& message) override;
+     void update() override;
+     void init() override;
+    
+    private:
+     std::optional<uint64_t> toCalculate;
+     bool calculated = false;
+     std::vector<uint64_t> primes;
+};

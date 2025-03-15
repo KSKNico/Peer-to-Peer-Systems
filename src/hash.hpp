@@ -7,6 +7,8 @@
 #include <memory>
 #include <sstream>
 
+#include "globalDefinitions.hpp"
+
 #include "Poco/Net/SocketAddress.h"
 #include "Poco/SHA2Engine.h"
 
@@ -25,7 +27,7 @@ class Hash {
 
     static Hash hashSocketAddress(Poco::Net::SocketAddress const& addr);
 
-    static Hash hashInterval(unsigned long long intervalStart);
+    static Hash hashInterval(resultType intervalStart);
 
     // returns true if this hash is in the interval (start, end]
     // this means "end" is responsible for this hash
