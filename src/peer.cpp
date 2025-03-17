@@ -11,7 +11,8 @@ Peer::Peer(const Poco::Net::SocketAddress& ownAddress,
            const spdlog::level::level_enum logLevel) : ownAddress(ownAddress),
                                                        connectionManager(ownAddress),
                                                        fingerTable(ownAddress),
-                                                       taskManager(ownAddress, connectionManager, fingerTable) {
+                                                       taskManager(ownAddress, connectionManager, fingerTable),
+                                                       resultStorage(fingerTable) {
                                                     
     createLogger(logLevel);
     spdlog::get(ownAddress.toString())->set_level(logLevel);
@@ -25,7 +26,8 @@ Peer::Peer(const Poco::Net::SocketAddress& ownAddress,
            const spdlog::level::level_enum logLevel) : ownAddress(ownAddress),
                                                        connectionManager(ownAddress),
                                                        fingerTable(ownAddress),
-                                                       taskManager(ownAddress, connectionManager, fingerTable) {
+                                                       taskManager(ownAddress, connectionManager, fingerTable),
+                                                       resultStorage(fingerTable) {
     createLogger(logLevel);
     spdlog::get(ownAddress.toString())->set_level(logLevel);
     spdlog::get(ownAddress.toString())->info("Starting bootstrapping peer at {} with log level {}", ownAddress.toString(), (int) logLevel);
@@ -111,6 +113,10 @@ void Peer::processMessage(const Poco::Net::SocketAddress& from, const std::uniqu
             setPredecessorMessage = dynamic_cast<SetPredecessorMessage*>(message.get());
             fingerTable.updatePredecessor(setPredecessorMessage->getNewPredecessor());
             return;
+        case MessageType::STORE:
+            resultStorage.addResults(dynamic_cast<StoreMessage*>(message.get())->getQuery(),
+                                     dynamic_cast<StoreMessage*>(message.get())->getResults());
+        
         default:
             return;
     }

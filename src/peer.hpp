@@ -14,6 +14,8 @@
 #include "fingerTable.hpp"
 #include "networking/connectionManager.hpp"
 #include "taskManager.hpp"
+#include "resultHandler.hpp"
+#include "resultStorage.hpp"
 
 class Peer {
    public:
@@ -62,6 +64,8 @@ class Peer {
     ConnectionManager connectionManager;
     FingerTable fingerTable;
     TaskManager taskManager;
+    ResultHandler resultHandler;
+     ResultStorage resultStorage;
 
     
 };
