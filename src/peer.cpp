@@ -55,6 +55,9 @@ void Peer::processMessage(const Poco::Net::SocketAddress& from, const std::uniqu
     auto msgType = message->getType();
     SetPredecessorMessage* setPredecessorMessage;
     FindMessage* findMessage;
+    QueryMessage* queryMessage;
+    resultType query;
+
     Poco::Net::SocketAddress next;
     switch (msgType) {
         case MessageType::FIND:
@@ -116,6 +119,17 @@ void Peer::processMessage(const Poco::Net::SocketAddress& from, const std::uniqu
         case MessageType::STORE:
             resultStorage.addResults(dynamic_cast<StoreMessage*>(message.get())->getQuery(),
                                      dynamic_cast<StoreMessage*>(message.get())->getResults());
+            return;
+        case MessageType::QUERY:
+            queryMessage = dynamic_cast<QueryMessage*>(message.get());
+            query = queryMessage->getQuery();
+            if (resultStorage.hasResults(query)) {
+                auto results = resultStorage.getResults(query).value();
+                connectionManager.sendMessage(from, QueryResponseMessage(query, results));
+            } else {
+                connectionManager.sendMessage(fingerTable.getSuccessor(), *queryMessage);
+            }
+            return;
         
         default:
             return;

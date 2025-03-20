@@ -43,6 +43,7 @@ bool ResultHandler::isActivelyCalculated(uint64_t lowerBound) {
     return futures.find(lowerBound) != futures.end();
 }
 
+/*
 uint64_t ResultHandler::getHighest() {
     updateResultsWithFutures();
     std::unique_lock<std::mutex> lock(resultsMutex);
@@ -51,6 +52,7 @@ uint64_t ResultHandler::getHighest() {
     }
     return results.rbegin()->first;
 }
+*/
 
 bool ResultHandler::hasResults(uint64_t lowerBound) {
     updateResultWithSingleFuture(lowerBound);

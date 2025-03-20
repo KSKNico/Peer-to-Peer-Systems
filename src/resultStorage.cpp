@@ -32,6 +32,10 @@ bool ResultStorage::hasResults(uint64_t lowerBound) {
     return allResults.find(lowerBound) != allResults.end();
 }
 
+resultType ResultStorage::getHighestResults() {
+    return (allResults.rbegin())->first;
+}
+
 std::optional<resultContainer> ResultStorage::getResults(uint64_t lowerBound) {
     if (!hasResults(lowerBound)) {
         return std::nullopt;

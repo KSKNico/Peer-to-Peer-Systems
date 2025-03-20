@@ -17,7 +17,7 @@ class ResultHandler {
 
     // returns the highest lowerBound for which results are available
     // meaning that the results for lowerBound + INTERVAL_SIZE are not yet available
-    uint64_t getHighest();
+    // uint64_t getHighest();
 
     // adds the results for the given lowerBound
     void addResults(uint64_t lowerBound, std::vector<uint64_t> results);

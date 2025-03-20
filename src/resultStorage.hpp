@@ -33,6 +33,8 @@ class ResultStorage {
     // and returns them in a map
     resultMap removeResults();
 
+    resultType getHighestResults();
+
     private:
     FingerTable &fingerTable;
 
