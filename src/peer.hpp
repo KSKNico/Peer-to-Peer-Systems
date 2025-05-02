@@ -38,6 +38,8 @@ class Peer {
     Poco::Net::SocketAddress getSuccessor() const;
     Poco::Net::SocketAddress getPredecessor() const;
 
+    resultType getHighestInterval();
+
     bool isJoined() const;
 
     // delete copy constructor

@@ -127,13 +127,21 @@ void Peer::processMessage(const Poco::Net::SocketAddress& from, const std::uniqu
                 auto results = resultStorage.getResults(query).value();
                 connectionManager.sendMessage(from, QueryResponseMessage(query, results));
             } else {
-                connectionManager.sendMessage(fingerTable.getSuccessor(), *queryMessage);
+                // send an empty response
+                connectionManager.sendMessage(from, QueryResponseMessage());
             }
             return;
         
         default:
             return;
     }
+}
+
+resultType Peer::getHighestInterval() {
+    if (resultStorage.getHighestResults() == 0) {
+        return 0;
+    }
+    return resultStorage.getHighestResults();
 }
 
 void Peer::printConnections() const {

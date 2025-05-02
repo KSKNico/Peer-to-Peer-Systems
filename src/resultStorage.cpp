@@ -5,6 +5,12 @@
 ResultStorage::ResultStorage(FingerTable& fingerTable) : fingerTable(fingerTable) {}
 
 bool ResultStorage::isResponsibleForResult(uint64_t lowerBound) {
+    if (Hash(fingerTable.getPredecessor()) == fingerTable.getOwnHash()) {
+        // this means no peer is before this peer
+        // so this peer is responsible for the time being
+        return true;
+    }
+
     return Hash::hashInterval(lowerBound)
         .isBetween(Hash::hashSocketAddress(fingerTable.getPredecessor()), 
                    fingerTable.getOwnHash());
@@ -33,7 +39,10 @@ bool ResultStorage::hasResults(uint64_t lowerBound) {
 }
 
 resultType ResultStorage::getHighestResults() {
-    return (allResults.rbegin())->first;
+    if (allResults.rbegin() == allResults.rend()) {
+        return 0;
+    }
+    return allResults.rbegin()->first;
 }
 
 std::optional<resultContainer> ResultStorage::getResults(uint64_t lowerBound) {

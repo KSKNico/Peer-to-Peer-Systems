@@ -3,6 +3,7 @@
 #include <cstdint>
 #include <string>
 #include <vector>
+#include <optional>
 
 #include "../hash.hpp"
 #include "Poco/Buffer.h"
@@ -225,16 +226,17 @@ class StoreMessage : public Message {
 
 class QueryResponseMessage : public Message {
     public:
-    QueryResponseMessage(uint64_t query, const std::vector<uint64_t> &results);
+    QueryResponseMessage(resultType query, const resultContainer &results);
+    QueryResponseMessage() = default;
     std::string toString() const override;
     static QueryResponseMessage fromString(const std::string &str);
 
     static constexpr std::string head = "QRESP";
 
-    std::uint64_t getQuery() const;
-    std::vector<uint64_t> getResults() const;
+    std::optional<resultType> getQuery() const;
+    std::optional<resultContainer> getResults() const;
 
     private:
-    const std::uint64_t query;
-    const std::vector<uint64_t> results;
+    const std::optional<resultType> query;
+    const std::optional<resultContainer> results;
 };

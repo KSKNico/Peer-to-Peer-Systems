@@ -376,21 +376,34 @@ QueryResponseMessage::QueryResponseMessage(std::uint64_t query, const std::vecto
 }
 
 std::string QueryResponseMessage::toString() const {
+    // if the optinals are empty, we need to return just the head
     std::stringstream ss;
-    ss << head << MESSAGE_DELIMITER << query << MESSAGE_DELIMITER;
-    for (const auto &result : results) {
-        ss << result << RESULT_DELIMITER;
-    }
-    return ss.str();
+
+    if (!query.has_value() || !results.has_value()) {
+        ss << head;
+        return ss.str();
+    } else {
+        ss << head << MESSAGE_DELIMITER << query.value() << MESSAGE_DELIMITER;
+        for (const auto &result : results.value()) {
+            ss << result << RESULT_DELIMITER;
+        }
+        return ss.str();
+    }      
 }
 
 QueryResponseMessage QueryResponseMessage::fromString(const std::string &str) {
     std::size_t delimiter = str.find(MESSAGE_DELIMITER);
+
+    if (delimiter == std::string::npos) {
+        // that means the message contains only the head
+        return QueryResponseMessage();
+    }
+
     std::string query = str.substr(delimiter + 1);
     std::size_t resultDelimiter = query.find(MESSAGE_DELIMITER);
     std::string queryStr = query.substr(0, resultDelimiter);
     std::string resultsStr = query.substr(resultDelimiter + 1);
-    std::vector<std::uint64_t> results;
+    resultContainer results;
     std::size_t pos = 0;
     while ((pos = resultsStr.find(RESULT_DELIMITER)) != std::string::npos) {
         results.push_back(std::stoull(resultsStr.substr(0, pos)));
@@ -399,11 +412,11 @@ QueryResponseMessage QueryResponseMessage::fromString(const std::string &str) {
     return QueryResponseMessage(std::stoull(queryStr), results);
 }
 
-std::uint64_t QueryResponseMessage::getQuery() const {
+std::optional<resultType> QueryResponseMessage::getQuery() const {
     return query;
 }
 
-std::vector<std::uint64_t> QueryResponseMessage::getResults() const {
+std::optional<resultContainer> QueryResponseMessage::getResults() const {
     return results;
 }
 
