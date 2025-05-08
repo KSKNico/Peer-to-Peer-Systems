@@ -56,7 +56,7 @@ void Peer::processMessage(const Poco::Net::SocketAddress& from, const std::uniqu
     SetPredecessorMessage* setPredecessorMessage;
     FindMessage* findMessage;
     QueryMessage* queryMessage;
-    resultType query;
+    std::optional<resultType> query;
 
     Poco::Net::SocketAddress next;
     switch (msgType) {
@@ -123,9 +123,18 @@ void Peer::processMessage(const Poco::Net::SocketAddress& from, const std::uniqu
         case MessageType::QUERY:
             queryMessage = dynamic_cast<QueryMessage*>(message.get());
             query = queryMessage->getQuery();
-            if (resultStorage.hasResults(query)) {
-                auto results = resultStorage.getResults(query).value();
-                connectionManager.sendMessage(from, QueryResponseMessage(query, results));
+            if (!query.has_value()) {
+                // if there is no value, send the highest Results
+                auto highestInterval = resultStorage.getHighestResults();
+                connectionManager.sendMessage(from, QueryResponseMessage(highestInterval, resultStorage.getResults(highestInterval).value()));
+            } else if (resultStorage.hasResults(query.value())) {
+                auto results = resultStorage.getResults(query.value());
+                if (!results.has_value()) {
+                    // send an empty response
+                    connectionManager.sendMessage(from, QueryResponseMessage());
+                    return;
+                }
+                connectionManager.sendMessage(from, QueryResponseMessage(query.value(), results.value()));
             } else {
                 // send an empty response
                 connectionManager.sendMessage(from, QueryResponseMessage());

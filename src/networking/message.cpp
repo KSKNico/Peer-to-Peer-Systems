@@ -352,26 +352,43 @@ std::vector<uint64_t> StoreMessage::getResults() const {
 }
 
 // MARK: - QueryMessage
-QueryMessage::QueryMessage(uint64_t query) : query(query) {
+QueryMessage::QueryMessage() {
+    type = MessageType::QUERY;
+}
+
+QueryMessage::QueryMessage(resultType query) : query(query) {
     type = MessageType::QUERY;
 }
 
 std::string QueryMessage::toString() const {
-    return head + MESSAGE_DELIMITER + std::to_string(query);
+    if (!query.has_value()) {
+        return head;
+    }
+    return head + MESSAGE_DELIMITER + std::to_string(query.value());
 }
 
 QueryMessage QueryMessage::fromString(const std::string &str) {
     std::size_t delimiter = str.find(MESSAGE_DELIMITER);
-    std::string query = str.substr(delimiter + 1);
-    return QueryMessage(std::stoull(query));
+    if (delimiter == std::string::npos) {
+        return QueryMessage();
+    }
+    std::string queryStr = str.substr(delimiter + 1);
+    if (queryStr.empty()) {
+        return QueryMessage();
+    }
+    return QueryMessage(std::stoull(queryStr));
 }
 
-std::uint64_t QueryMessage::getQuery() const {
+std::optional<resultType> QueryMessage::getQuery() const {
     return query;
 }
 
 QueryResponseMessage::QueryResponseMessage(std::uint64_t query, const std::vector<std::uint64_t> &results) : 
     query(query), results(results) {
+    type = MessageType::QRESP;
+}
+
+QueryResponseMessage::QueryResponseMessage() {
     type = MessageType::QRESP;
 }
 

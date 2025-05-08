@@ -194,18 +194,24 @@ class SetPredecessorMessage : public Message {
     const Poco::Net::SocketAddress newPredecessor;
 };
 
+// the query message is used to ask results
+// the response to a query message is always a QueryResponseMessage
+// if the query message does not contain a query it request the highest available results on the peer
+// if the query message contains a query it requests the results that the peer stores with that intervals
+// if there are no results or the requested query is not found on the peer, it sends an empty QueryResponseMessage
 class QueryMessage : public Message {
     public:
-     QueryMessage(uint64_t query);
+     QueryMessage(resultType query);
+     QueryMessage();
      std::string toString() const override;
      static QueryMessage fromString(const std::string &str);
     
      static constexpr std::string head = "QUERY";
     
-     uint64_t getQuery() const;
+     std::optional<resultType> getQuery() const;
     
     private:
-     const uint64_t query;
+     const std::optional<resultType> query;
 };
 
 class StoreMessage : public Message {
@@ -224,10 +230,11 @@ class StoreMessage : public Message {
     const std::vector<uint64_t> results;
 };
 
+// the query response message can be empty if the query was not found
 class QueryResponseMessage : public Message {
     public:
     QueryResponseMessage(resultType query, const resultContainer &results);
-    QueryResponseMessage() = default;
+    QueryResponseMessage();
     std::string toString() const override;
     static QueryResponseMessage fromString(const std::string &str);
 
