@@ -128,12 +128,8 @@ void Peer::processMessage(const Poco::Net::SocketAddress& from, const std::uniqu
                 auto highestInterval = resultStorage.getHighestResults();
                 connectionManager.sendMessage(from, QueryResponseMessage(highestInterval, resultStorage.getResults(highestInterval).value()));
             } else if (resultStorage.hasResults(query.value())) {
+                // the result storage has a value for the query, send it
                 auto results = resultStorage.getResults(query.value());
-                if (!results.has_value()) {
-                    // send an empty response
-                    connectionManager.sendMessage(from, QueryResponseMessage());
-                    return;
-                }
                 connectionManager.sendMessage(from, QueryResponseMessage(query.value(), results.value()));
             } else {
                 // send an empty response
