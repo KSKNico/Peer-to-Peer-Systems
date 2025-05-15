@@ -360,3 +360,68 @@ bool CheckPredecessorTask::processMessage(const Poco::Net::SocketAddress& from, 
     (void) message;
     return true;
 }
+
+GetHighestUnknownIntervalTask::GetHighestUnknownIntervalTask(
+    ResultStorage& resultStorage,
+    FingerTable& fingerTable, 
+    ConnectionManager& connectionManager, 
+    const Poco::Net::SocketAddress& ownAddress) 
+: Task(fingerTable, connectionManager, ownAddress), resultStorage(resultStorage) {}
+
+void GetHighestUnknownIntervalTask::init() {
+    if (state != TaskState::UNINITIALIZED) {
+        return;
+    }
+
+    // the currently highest interval is the highest interval that this peer has initially
+    updateNextHighestInterval(resultStorage.getHighestResults());
+
+
+    state = TaskState::RUNNING;
+}
+
+void GetHighestUnknownIntervalTask::update() {
+    if (state == TaskState::FINISHED) {
+        return;
+    }
+
+    if (highestInterval.has_value()) {
+        state = TaskState::FINISHED;
+        return;
+    }
+
+    if (!findTask.has_value()) {
+        auto findInterval = currentlyHighestInterval + INTERVAL_SIZE;
+        findTask.emplace(
+            Hash::hashInterval(findInterval), fingerTable, connectionManager, ownAddress
+        );
+        findTask->init();
+    }
+
+    findTask->update();
+
+
+    auto nextHighestInterval = highestInterval.value() + INTERVAL_SIZE;
+    
+}
+
+void GetHighestUnknownIntervalTask::updateNextHighestInterval(resultType interval) {
+    if (interval > currentlyHighestInterval) {
+            highestInterval = interval;
+    }
+}
+
+bool GetHighestUnknownIntervalTask::processMessage(const Poco::Net::SocketAddress& from, const std::unique_ptr<Message>& message) {
+    if (state == TaskState::FINISHED) {
+        return false;
+    }
+
+    if (message->getType() != MessageType::GPRER) {
+        return false;
+    }
+
+    if (findTask.has_value()) {
+        findTask->processMessage(from, message);
+    } 
+    return true;
+}

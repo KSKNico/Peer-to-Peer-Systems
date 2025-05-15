@@ -451,6 +451,13 @@ TEST(Peer, PeriodicTasks) {
     peer2.printFingerTable();
 }
 
+TEST(Peer, StoreAndQueryResults) {
+    spdlog::shutdown();
+
+    auto peer1 = Peer(Poco::Net::SocketAddress("127.0.0.1:1234"), spdlog::level::debug);
+    auto peer2 = Peer(Poco::Net::SocketAddress("127.0.0.1:1234"), Poco::Net::SocketAddress("127.0.0.1:1235"), spdlog::level::debug);
+}
+
 /*
 // this test requires external action by starting a separate instance
 TEST(Peer, Bootstrapping) {

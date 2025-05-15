@@ -38,6 +38,7 @@ bool ResultStorage::hasResults(uint64_t lowerBound) {
     return allResults.find(lowerBound) != allResults.end();
 }
 
+// returns the interval for which results are available
 resultType ResultStorage::getHighestResults() {
     if (allResults.rbegin() == allResults.rend()) {
         return 0;

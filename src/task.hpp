@@ -5,6 +5,7 @@
 #include "hash.hpp"
 #include "networking/connectionManager.hpp"
 #include "networking/message.hpp"
+#include "resultStorage.hpp"
 
 enum class TaskState { UNINITIALIZED,
                        RUNNING,
@@ -137,4 +138,32 @@ class CalculatePrimeTask : public Task {
      std::optional<uint64_t> toCalculate;
      bool calculated = false;
      std::vector<uint64_t> primes;
+};
+
+
+// this task searched through the entire chord network to find the highest unknown interval
+// this interval can then be calculated by the 
+// 1. look for the highest unknown interval in your own result storage
+// 2. do a find in the network to find the responsible peer
+// 3. ask the peer for its highest unknown interval
+// 4. if the peer has a higher unknown interval then the one you have, then ask the peer for its highest unknown interval
+class GetHighestUnknownIntervalTask : public Task {
+    public:
+     GetHighestUnknownIntervalTask(ResultStorage& resultStorage,
+                                   FingerTable& fingerTable, 
+                                   ConnectionManager& connectionManager, 
+                                   const Poco::Net::SocketAddress& ownAddress);
+     bool processMessage(const Poco::Net::SocketAddress& from, const std::unique_ptr<Message>& message) override;
+     void update() override;
+     void init() override;
+
+     void updateNextHighestInterval(resultType interval);
+    
+    private:
+     ResultStorage& resultStorage;
+     std::optional<resultType> highestInterval;
+     resultType currentlyHighestInterval = 0;
+     resultContainer currentlyHighestResults;
+     
+     std::optional<FindTask> findTask;
 };

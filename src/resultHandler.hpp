@@ -6,7 +6,9 @@
 #include <future>
 #include <optional>
 
-constexpr uint64_t INTERVAL_SIZE = 1000;
+#include "globalDefinitions.hpp"
+
+
 
 
 // stores the results that the peer has calculated
